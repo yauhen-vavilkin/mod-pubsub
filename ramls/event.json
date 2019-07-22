@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Event data model",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "UUID",
+      "$ref": "uuid.json"
+    },
+    "eventType": {
+      "description": "Unique Event type, human-readable String, not UUID",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Event metadata",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "description": "Tenant id",
+          "type": "string"
+        },
+        "eventTTL": {
+          "description": "Time-to-live (TTL) for event in minutes",
+          "type": "integer"
+        },
+        "correlationId": {
+          "description": "Id to track related events, can be a meaningful string or a UUID",
+          "type": "string"
+        },
+        "originalEventId": {
+          "description": "Id of the event that started the sequence of related events",
+          "$ref": "uuid.json"
+        },
+        "publisherCallback": {
+          "description": "Allows a publisher to provide a callback endpoint or an error Event Type to be notified that despite the fact that there are subscribers for such an event type no one has received the event within the specified period of time",
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "description": "Callback endpoint",
+              "type": "string"
+            },
+            "eventType": {
+              "description": "Error Event Type",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "tenantId",
+        "eventTTL"
+      ]
+    },
+    "eventPayload": {
+      "description": "A payload for the event can be of any type of serializable data and it is up to a publisher and a consumer to agree on the data structures they want to exchange",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "eventType",
+    "metadata"
+  ]
+}
