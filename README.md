@@ -83,6 +83,22 @@ curl -w '\n' -X POST -D -   \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
 
+## REST Client
+
+Provides RMB generated Client to call the module's endpoints. The Client is packaged into the lightweight jar.
+
+### Maven dependency 
+
+```xml
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>mod-pubsub-client</artifactId>
+      <version>x.y.z</version>
+      <type>jar</type>
+    </dependency>
+```
+Where x.y.z - version of mod-pubsub.
+
 ## Issue tracker
 
 See project [MODPUBSUB](https://issues.folio.org/browse/MODPUBSUB)
