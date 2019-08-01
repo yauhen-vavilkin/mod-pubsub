@@ -2,3 +2,5 @@
 * Initial module setup
 * Defined EventDescriptor and Event schemas
 * Changed project structure to contain server and client parts. Client builds as a lightweight java library
+* Extended Event schema
+* Added samples

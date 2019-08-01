@@ -15,6 +15,7 @@
     "metadata": {
       "description": "Event metadata",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "tenantId": {
           "description": "Tenant id",
@@ -45,6 +46,24 @@
               "type": "string"
             }
           }
+        },
+        "createdDate": {
+          "description": "Timestamp when event was created",
+          "type": "string",
+          "format": "date-time"
+        },
+        "publishedDate": {
+          "description": "Timestamp when event was initially published to the underlying topic",
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "description": "Username of the user whose action caused an event",
+          "type": "string"
+        },
+        "publishedBy": {
+          "description": "Name of the module that published an event",
+          "type": "string"
         }
       },
       "required": [
