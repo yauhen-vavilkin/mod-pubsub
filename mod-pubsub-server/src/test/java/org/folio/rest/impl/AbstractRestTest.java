@@ -26,17 +26,19 @@ public abstract class AbstractRestTest {
   private static final String TENANT_ID = "diku";
   private static final String TOKEN = "token";
   private static final String HTTP_PORT = "http.port";
+  static RequestSpecification spec;
   private static int port;
   private static String useExternalDatabase;
   private static Vertx vertx;
-  static RequestSpecification spec;
 
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
-    Async async = context.async();
     vertx = Vertx.vertx();
-    port = NetworkUtils.nextFreePort();
-    String okapiUrl = "http://localhost:" + port;
+    runDatabase();
+    deployVerticle(context);
+  }
+
+  private static void runDatabase() throws Exception {
     PostgresClient.stopEmbeddedPostgres();
     PostgresClient.closeAllClients();
     useExternalDatabase = System.getProperty(
@@ -63,6 +65,12 @@ public abstract class AbstractRestTest {
           "to 'external', 'environment' or 'embedded'";
         throw new Exception(message);
     }
+  }
+
+  private static void deployVerticle(final TestContext context) {
+    Async async = context.async();
+    port = NetworkUtils.nextFreePort();
+    String okapiUrl = "http://localhost:" + port;
 
     TenantClient tenantClient = new TenantClient(okapiUrl, TENANT_ID, TOKEN);
 

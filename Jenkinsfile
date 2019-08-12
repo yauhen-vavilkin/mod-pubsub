@@ -7,7 +7,7 @@ buildMvn {
   doDocker = {
     buildJavaDocker {
       publishMaster = 'yes'
-      healthChk = 'yes'
+      healthChk = 'no'
       healthChkCmd = 'curl -sS --fail -o /dev/null  http://localhost:8081/apidocs/ || exit 1'
     }
   }
