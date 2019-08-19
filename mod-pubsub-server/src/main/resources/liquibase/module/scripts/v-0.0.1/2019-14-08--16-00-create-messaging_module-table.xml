@@ -1,0 +1,39 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2019-14-08--16-00-create-module_role_enum-type" author="RuslanLavrov">
+    <sql>
+      CREATE TYPE ${database.defaultSchemaName}.module_role_enum AS ENUM ('PUBLISHER','SUBSCRIBER');
+    </sql>
+  </changeSet>
+
+  <changeSet id="2019-14-08--16-10-create-messaging_module-table" author="RuslanLavrov">
+    <createTable tableName="messaging_module">
+      <column name="id" type="int" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="event_type_id" type="text">
+        <constraints nullable="false" foreignKeyName="fk_event_type_id" references="event_type(id)"/>
+      </column>
+      <column name="module_id" type="int">
+        <constraints nullable="false" foreignKeyName="fk_module_id" references="module(id)"/>
+      </column>
+      <column name="tenant_id" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="role" type="${database.defaultSchemaName}.module_role_enum">
+        <constraints nullable="false"/>
+      </column>
+      <column name="is_applied" type="boolean" defaultValue="true">
+        <constraints nullable="false"/>
+      </column>
+      <column name="subscriber_callback" type="text">
+        <constraints nullable="true"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>
