@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Describes types of events the module publishes",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "moduleName": {
+      "description": "Publisher module name",
+      "type": "string"
+    },
+    "eventDescriptors": {
+      "description": "List event descriptors which module publishes",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "./eventDescriptor.json"
+      }
+    }
+  },
+  "required": [
+    "moduleName",
+    "eventDescriptors"
+  ]
+}

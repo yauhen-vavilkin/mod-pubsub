@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Module config file schema to describe module event types",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "publications": {
+      "description": "List event descriptors which the module publishes",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "./eventDescriptor.json"
+      }
+    },
+    "subscriptions": {
+      "description": "List of event types the module is subscribed",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "./subscriptionDefinition.json"
+      }
+    }
+  },
+  "required": [
+    "publications",
+    "subscriptions"
+  ]
+}

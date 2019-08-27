@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Describes subscription to particular event type",
+  "javaType": "org.folio.rest.jaxrs.model.SubscriptionDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventType": {
+      "description": "Unique Event type, human-readable String, not UUID",
+      "type": "string"
+    },
+    "callbackAddress": {
+      "description": "Endpoint to deliver events of certain event type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "eventType",
+    "callbackEndpoint"
+  ]
+}

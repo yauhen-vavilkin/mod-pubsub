@@ -8,3 +8,5 @@
 * Applied Spring DI maintenance
 * Added stub implementations for EventService and EventDao
 * Added scripts to create module specific tables: module, event_type, messaging_module
+* Defined MessagingDescriptor, PublisherDescriptor and SubscriberDescriptor schemas.
+* Added PubSubClientUtil to read MessagingDescriptor file.

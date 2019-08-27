@@ -11,6 +11,42 @@ See the file "[LICENSE](LICENSE)" for more information.
 FOLIO publisher-subscriber module to provide event-driven approach.
 It is responsible for maintaining the registrations of event types and for coordinating distribution of events to the appropriate subscribers (modules).
 
+## Messaging descriptor
+
+In order that the module can acting as Publishers and/or Subscribers should defined JSON config file on name `MessagingDescriptor.json`. 
+This config file should contain a set of event types the module deals with. 
+Publisher module should provide event descriptors for generated events. 
+For subscriber module, should specifies a set of event type and callback endpoint for delivery events of this type.
+\
+MessagingDescriptor contains follow parts:
+* publications - list of event descriptors describing events that this module produces, can be ommited if module does not generate any events.
+* subscriptions - set of event types and endpoints (callback address) for receiving events of specified types, can be ommited if module does not receive any events.
+
+\
+MessagingDescriptor.json example:
+```
+{
+  "publications": [
+    {
+      "eventType": "CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA",
+      "description": "Created SRS Marc Bibliographic Record with order data in 9xx fields",
+      "eventTTL": 1,
+      "signed": false
+    }
+  ],
+  "subscriptions": [
+    {
+      "eventType": "CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA",
+      "callbackAddress": ""
+    },
+    {
+      "eventType": "CREATED_SRS_MARC_BIB_RECORD_WITH_INVOICE_DATA",
+      "callbackAddress": ""
+    }
+  ]
+}
+```
+
 ## Compiling
 
 ```

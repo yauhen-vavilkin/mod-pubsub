@@ -1,0 +1,13 @@
+{
+  "moduleName": "mod-source-record-manager",
+  "subscriptionDefinitions": [
+    {
+      "eventType": "CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA",
+      "callbackAddress": ""
+    },
+    {
+      "eventType": "CREATED_SRS_MARC_BIB_RECORD_WITH_INVOICE_DATA",
+      "callbackAddress": ""
+    }
+  ]
+}

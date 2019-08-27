@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "Event Descriptor data model",
+  "javaType": "org.folio.rest.jaxrs.model.EventDescriptor",
   "type": "object",
   "additionalProperties": false,
   "properties": {
