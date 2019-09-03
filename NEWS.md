@@ -10,3 +10,4 @@
 * Added scripts to create module specific tables: module, event_type, messaging_module
 * Defined MessagingDescriptor, PublisherDescriptor and SubscriberDescriptor schemas.
 * Added PubSubClientUtil to read MessagingDescriptor file.
+* Added schemas for audit trail

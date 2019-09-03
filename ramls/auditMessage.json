@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Message payload for event",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "UUID",
+      "$ref": "uuid.json"
+    },
+    "eventId": {
+      "description": "Unique Event type id, UUID",
+      "$ref": "uuid.json"
+    },
+    "eventType": {
+      "description": "Unique Event type, human-readable String, not UUID",
+      "type": "string"
+    },
+    "tenantId": {
+      "description": "Tenant id",
+      "type": "string"
+    },
+    "createdBy": {
+      "description": "Username of the user whose action caused an event",
+      "type": "string"
+    },
+    "auditDate": {
+      "description": "Date of event's state in timestamp",
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "description": "Current state of the message",
+      "type": "string",
+      "$ref": "./auditMessageState.json"
+    }
+  },
+  "required": [
+    "id",
+    "eventId",
+    "tenantId"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Enum of possible states for audit messages",
+  "type": "string",
+  "additionalProperties": false,
+  "enum": [
+    "CREATED",
+    "PUBLISHED",
+    "RECEIVED",
+    "DELIVERED"
+  ]
+}
