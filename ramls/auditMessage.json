@@ -9,11 +9,15 @@
       "$ref": "uuid.json"
     },
     "eventId": {
-      "description": "Unique Event type id, UUID",
+      "description": "Unique Event id, UUID",
       "$ref": "uuid.json"
     },
     "eventType": {
       "description": "Unique Event type, human-readable String, not UUID",
+      "type": "string"
+    },
+    "correlationId": {
+      "description": "Id to track related events, can be a meaningful string or a UUID",
       "type": "string"
     },
     "tenantId": {

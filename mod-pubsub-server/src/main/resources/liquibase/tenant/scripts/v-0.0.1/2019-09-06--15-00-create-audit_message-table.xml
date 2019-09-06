@@ -1,0 +1,42 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2019-09-06--15-00-create-message_state-type" author="KaterynaSenchenko">
+    <sql>
+      CREATE TYPE ${database.defaultSchemaName}.message_state AS ENUM ('CREATED','PUBLISHED','RECEIVED','DELIVERED');
+    </sql>
+  </changeSet>
+
+  <changeSet id="2019-09-06--15-00-create-audit_message-table" author="KaterynaSenchenko">
+    <createTable tableName="audit_message">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="event_id" type="uuid">
+        <constraints nullable="false" foreignKeyName="fk_event_id" references="audit_message_payload(event_id)"/>
+      </column>
+      <column name="event_type" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="correlation_id" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="tenant_id" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="audit_date" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="state" type="${database.defaultSchemaName}.message_state">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>

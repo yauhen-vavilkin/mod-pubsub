@@ -11,3 +11,4 @@
 * Defined MessagingDescriptor, PublisherDescriptor and SubscriberDescriptor schemas.
 * Added PubSubClientUtil to read MessagingDescriptor file.
 * Added schemas for audit trail
+* Added DAO component for tenant schema
