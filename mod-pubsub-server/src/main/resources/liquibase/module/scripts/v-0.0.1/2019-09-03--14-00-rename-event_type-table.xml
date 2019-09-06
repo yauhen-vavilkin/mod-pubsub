@@ -1,0 +1,15 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2019-09-03--12-00-rename-event_type-table" author="RuslanLavrov">
+    <renameTable newTableName="event_descriptor" oldTableName="event_type"/>
+
+    <dropForeignKeyConstraint baseTableName="messaging_module" constraintName="fk_event_type_id"/>
+    <addForeignKeyConstraint baseTableName="messaging_module" baseColumnNames="event_type_id" constraintName="fk_event_type_id"
+                             referencedTableName="event_descriptor" referencedColumnNames="id"/>
+  </changeSet>
+
+</databaseChangeLog>

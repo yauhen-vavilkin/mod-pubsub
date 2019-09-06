@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Module data model",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "UUID",
+      "$ref": "uuid.json"
+    },
+    "eventType" : {
+      "description": "Unique Event type, human-readable String, not UUID",
+      "type": "string"
+    },
+    "moduleId" : {
+      "description": "UUID",
+      "$ref": "uuid.json"
+    },
+    "tenantId" : {
+      "description": "Tenant id",
+      "type": "string"
+    },
+    "moduleRole" : {
+      "description": "Module role",
+      "type": "string",
+      "enum": ["PUBLISHER", "SUBSCRIBER"]
+    },
+    "applied" : {
+      "description": "Whether applied  module as PUBLISHER/SUBSCRIBER for certain tenant",
+      "type": "boolean"
+    },
+    "subscriberCallback" : {
+      "description": "Endpoint to deliver events of certain type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
