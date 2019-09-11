@@ -7,13 +7,13 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.UpdateResult;
-import javassist.NotFoundException;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

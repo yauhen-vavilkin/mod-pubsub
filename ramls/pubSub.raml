@@ -12,6 +12,7 @@ documentation:
 types:
   errors: !include raml-util/schemas/errors.schema
   eventDescriptor: !include eventDescriptor.json
+  eventDescriptorCollection: !include eventDescriptorCollection.json
   event: !include event.json
   messagingDescriptor: !include messagingDescriptor.json
   publisherDescriptor: !include publisherDescriptor.json
@@ -32,7 +33,37 @@ resourceTypes:
   collection-item: !include raml-util/rtypes/item-collection.raml
 
 /pubsub:
-  get:
-    description: Stub endpoint
-    responses:
-      200:
+  /event-types:
+    displayName: Event Types
+    description: API for managing Event Types
+    type:
+      collection:
+        schemaCollection: eventDescriptorCollection
+        schemaItem: eventDescriptor
+        exampleCollection: !include examples/eventDescriptorCollection.sample
+        exampleItem: !include examples/eventDescriptor.sample
+    post:
+      description: Create new event type
+      is: [validate]
+    get:
+      description: Get a list of evet types descriptors
+    /{eventTypeName}:
+      displayName: Event Type
+      description: Get, Delete or Update a specific Event Type descriptor
+      type:
+        collection-item:
+          schema: eventDescriptor
+          exampleItem: !include examples/eventDescriptor.sample
+      put:
+        is: [validate]
+        responses:
+          200:
+            body:
+              application/json:
+                type: eventDescriptor
+      delete:
+        responses:
+          204:
+            body:
+              text/plain: !!null
+

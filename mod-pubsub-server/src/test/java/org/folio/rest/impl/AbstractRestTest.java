@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -17,8 +18,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
+import static java.lang.String.format;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
@@ -26,6 +26,9 @@ public abstract class AbstractRestTest {
   private static final String TENANT_ID = "diku";
   private static final String TOKEN = "token";
   private static final String HTTP_PORT = "http.port";
+  private static final String DELETE_ALL_SQL = "DELETE FROM pubsub_config.%s";
+  private static final String EVENT_DESCRIPTOR_TABLE = "event_descriptor";
+
   static RequestSpecification spec;
   private static int port;
   private static String useExternalDatabase;
@@ -99,12 +102,24 @@ public abstract class AbstractRestTest {
   }
 
   @Before
-  public void setUp(TestContext context) throws IOException {
+  public void setUp(TestContext context) {
+    clearModuleSchemaTables(context);
     spec = new RequestSpecBuilder()
       .setContentType(ContentType.JSON)
       .addHeader(OKAPI_HEADER_TENANT, TENANT_ID)
       .setBaseUri("http://localhost:" + port)
       .addHeader("Accept", "text/plain, application/json")
       .build();
+  }
+
+  private void clearModuleSchemaTables(TestContext context) {
+    Async async = context.async();
+    PostgresClient pgClient = PostgresClient.getInstance(vertx);
+    pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event -> {
+      if (event.failed()) {
+        context.fail(event.cause());
+      }
+      async.complete();
+    });
   }
 }

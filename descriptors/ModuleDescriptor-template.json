@@ -4,12 +4,33 @@
   "requires": [],
   "provides": [
     {
-      "id": "pub-sub",
+      "id": "pubsub-event-types",
       "version": "0.1",
       "handlers": [
         {
           "methods": ["GET"],
-          "pathPattern": "/pubsub"
+          "pathPattern": "/pubsub/event-types",
+          "permissionsRequired" : [ "pubsub.event-types.get" ]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/pubsub/event-types",
+          "permissionsRequired" : [ "pubsub.event-types.post" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}",
+          "permissionsRequired" : [ "pubsub.event-types.get" ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}",
+          "permissionsRequired" : [ "pubsub.event-types.put" ]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}",
+          "permissionsRequired" : [ "pubsub.event-types.delete" ]
         }
       ]
     },
@@ -33,6 +54,29 @@
       ]
     }
   ],
+  "permissionSets": [
+    {
+      "permissionName": "pubsub.event-types.get",
+      "displayName": "PubSub - get Event Descriptor",
+      "description": "Get Event Descriptor"
+    },
+    {
+      "permissionName": "pubsub.event-types.post",
+      "displayName": "PubSub - create new Event Type",
+      "description": "Post Event Descriptor"
+    },
+    {
+      "permissionName": "pubsub.event-types.put",
+      "displayName": "PubSub - update Event Descriptor for Event Type",
+      "description": "Put Event Descriptor"
+    },
+    {
+      "permissionName": "pubsub.event-types.delete",
+      "displayName": "PubSub - delete Event Type",
+      "description": "Delete Event Descriptor"
+    }
+  ],
+
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerArgs": {

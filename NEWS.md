@@ -13,3 +13,12 @@
 * Added schemas for audit trail
 * Added Dao components for module schema.
 * Added DAO component for tenant schema
+* Added API for Event Types managing
+
+ | METHOD |             URL                                | DESCRIPTION                                      |
+ |--------|------------------------------------------------|--------------------------------------------------|
+ | GET    | /pubsub/event-types                            | Get collection of Event Descriptors              |
+ | POST   | /pubsub/event-types                            | Create new Event Type                            |
+ | GET    | /pubsub/event-types/{eventTypeName}            | Get Event Descriptor of particular event type    |
+ | PUT    | /pubsub/event-types/{eventTypeName}            | Update Event Descriptor of particular event type |
+ | DELETE | /pubsub/event-types/{eventTypeName}            | Delete event type                                |
