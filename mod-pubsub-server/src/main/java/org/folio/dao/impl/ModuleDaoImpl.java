@@ -1,16 +1,20 @@
 package org.folio.dao.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 import javassist.NotFoundException;
 import org.folio.dao.ModuleDao;
 import org.folio.dao.PostgresClientFactory;
+import org.folio.dao.util.DbUtil;
 import org.folio.rest.jaxrs.model.Module;
+import org.folio.rest.persist.PostgresClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -34,6 +38,7 @@ public class ModuleDaoImpl implements ModuleDao {
   private static final String MODULE_SCHEMA = "pubsub_config";
   private static final String GET_ALL_SQL = "SELECT * FROM %s.%s";
   private static final String GET_BY_ID_SQL = "SELECT * FROM %s.%s WHERE id = ?";
+  private static final String GET_BY_NAME_SQL = "SELECT * FROM %s.%s WHERE name = ?";
   private static final String INSERT_SQL = "INSERT INTO %s.%s (id, name) VALUES (?, ?)";
   private static final String UPDATE_BY_ID_SQL = "UPDATE %s.%s SET name = ? WHERE id = ?";
   private static final String DELETE_BY_ID_SQL = "DELETE FROM %s.%s WHERE id = ?";
@@ -59,17 +64,32 @@ public class ModuleDaoImpl implements ModuleDao {
       ? Optional.empty() : Optional.of(mapRowJsonToModule(resultSet.getRows().get(0))));
   }
 
+  public Future<Optional<Module>> getByName(String name, AsyncResult<SQLConnection> sqlConnection) {
+    Future<ResultSet> future = Future.future();
+    String preparedQuery = format(GET_BY_NAME_SQL, MODULE_SCHEMA, TABLE_NAME);
+    JsonArray params = new JsonArray().add(name);
+    pgClientFactory.getInstance().select(sqlConnection, preparedQuery, params, future.completer());
+    return future.map(resultSet -> resultSet.getResults().isEmpty()
+      ? Optional.empty() : Optional.of(mapRowJsonToModule(resultSet.getRows().get(0))));
+  }
+
   @Override
   public Future<String> save(Module module) {
+    PostgresClient pgClient = pgClientFactory.getInstance();
+    return DbUtil.executeInTransaction(pgClient, connection -> save(module, connection));
+  }
+
+  @Override
+  public Future<String> save(Module module, AsyncResult<SQLConnection> sqlConnection) {
     Future<UpdateResult> future = Future.future();
     try {
       String query = format(INSERT_SQL, MODULE_SCHEMA, TABLE_NAME);
       JsonArray params = new JsonArray()
         .add(module.getId())
         .add(module.getName());
-      pgClientFactory.getInstance().execute(query, params, future.completer());
+      pgClientFactory.getInstance().execute(sqlConnection, query, params, future.completer());
     } catch (Exception e) {
-      LOGGER.error("Error saving Module", e);
+      LOGGER.error("Error saving Module with name '{}'", module.getId(), e);
       future.fail(e);
     }
     return future.map(updateResult -> module.getId());

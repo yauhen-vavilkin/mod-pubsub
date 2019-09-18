@@ -29,12 +29,13 @@ public interface MessagingModuleDao {
   Future<Optional<MessagingModule>> getById(String id);
 
   /**
-   * Saves new {@link MessagingModule} to data base
+   * Saves in transaction list of {@link MessagingModule} to data base with specified moduleName
    *
-   * @param messagingModule messagingModule entity to save
-   * @return messagingModule id
+   * @param moduleName  module name
+   * @param messagingModules list of Messaging Module entities
+   * @return future with list of created Messaging Module entities
    */
-  Future<String> save(MessagingModule messagingModule);
+  Future<List<MessagingModule>> save(String moduleName, List<MessagingModule> messagingModules);
 
   /**
    * Updates {@link MessagingModule} in data base
@@ -52,4 +53,13 @@ public interface MessagingModuleDao {
    * @return future with boolean
    */
   Future<Boolean> delete(String id);
+
+  /**
+   * Deletes {@link MessagingModule} by module name and filter
+   *
+   * @param moduleName module name
+   * @param filter messagingModule filter
+   * @return future with boolean
+   */
+  Future<Boolean> deleteByModuleNameAndFilter(String moduleName, MessagingModuleFilter filter);
 }

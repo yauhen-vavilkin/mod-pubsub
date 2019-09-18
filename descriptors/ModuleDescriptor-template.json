@@ -35,6 +35,27 @@
       ]
     },
     {
+      "id": "pubsub-publishers",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/pubsub/event-types/declare/publisher",
+          "permissionsRequired" : [ "pubsub.publishers.post" ]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/pubsub/event-types/declare/publisher",
+          "permissionsRequired" : [ "pubsub.publishers.delete" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}/publishers",
+          "permissionsRequired" : [ "pubsub.publishers.get" ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "1.2",
       "interfaceType": "system",
@@ -74,6 +95,21 @@
       "permissionName": "pubsub.event-types.delete",
       "displayName": "PubSub - delete Event Type",
       "description": "Delete Event Descriptor"
+    },
+    {
+      "permissionName": "pubsub.publishers.post",
+      "displayName": "PubSub - declare publisher",
+      "description": "Post Publisher Descriptor"
+    },
+    {
+      "permissionName": "pubsub.publishers.delete",
+      "displayName": "PubSub - delete publisher declaration",
+      "description": "Delete Publisher"
+    },
+    {
+      "permissionName": "pubsub.publishers.get",
+      "displayName": "PubSub - get publishers",
+      "description": "Get Publishers"
     }
   ],
 

@@ -14,9 +14,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
-public class PubSubAPITest extends AbstractRestTest {
-  
-  private static final String EVENT_TYPES_PATH = "/pubsub/event-types";
+public class EventTypeAPITest extends AbstractRestTest {
 
   private EventDescriptor eventDescriptor = new EventDescriptor()
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA")

@@ -27,6 +27,14 @@ public interface EventDescriptorDao {
   Future<Optional<EventDescriptor>> getById(String id);
 
   /**
+   * Searches {@link EventDescriptor} entities by event types
+   *
+   * @param eventTypes event types list
+   * @return future with EventDescriptor list
+   */
+  Future<List<EventDescriptor>> getByEventTypes(List<String> eventTypes);
+
+  /**
    * Saves new {@link EventDescriptor} to data base
    *
    * @param eventDescriptor eventDescriptor entity to save

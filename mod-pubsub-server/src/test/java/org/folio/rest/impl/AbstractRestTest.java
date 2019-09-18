@@ -28,6 +28,12 @@ public abstract class AbstractRestTest {
   private static final String HTTP_PORT = "http.port";
   private static final String DELETE_ALL_SQL = "DELETE FROM pubsub_config.%s";
   private static final String EVENT_DESCRIPTOR_TABLE = "event_descriptor";
+  private static final String MODULE_TABLE = "module";
+  private static final String MESSAGING_MODULE_TABLE = "messaging_module";
+
+  protected static final String EVENT_TYPES_PATH = "/pubsub/event-types";
+  protected static final String DECLARE_PUBLISHER_PATH = "/declare/publisher";
+  protected static final String PUBLISHERS_PATH = "/publishers";
 
   static RequestSpecification spec;
   private static int port;
@@ -115,11 +121,13 @@ public abstract class AbstractRestTest {
   private void clearModuleSchemaTables(TestContext context) {
     Async async = context.async();
     PostgresClient pgClient = PostgresClient.getInstance(vertx);
-    pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event -> {
-      if (event.failed()) {
-        context.fail(event.cause());
-      }
-      async.complete();
-    });
+    pgClient.execute(format(DELETE_ALL_SQL, MESSAGING_MODULE_TABLE), new JsonArray(), event ->
+      pgClient.execute(format(DELETE_ALL_SQL, MODULE_TABLE), new JsonArray(), event2 ->
+        pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event3 -> {
+          if (event.failed()) {
+            context.fail(event.cause());
+          }
+          async.complete();
+        })));
   }
 }

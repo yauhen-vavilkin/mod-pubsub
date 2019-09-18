@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.rest.persist.PostgresClient.pojo2json;
 
 /**
@@ -63,6 +64,27 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     }
     return future.map(resultSet -> resultSet.getResults().isEmpty() ? Optional.empty()
       : Optional.of(mapRowJsonToEventDescriptor(resultSet.getRows().get(0))));
+  }
+
+  @Override
+  public Future<List<EventDescriptor>> getByEventTypes(List<String> eventTypes) {
+    Future<ResultSet> future = Future.future();
+    String query = getQueryByEventTypes(eventTypes);
+    String preparedQuery = format(query, MODULE_SCHEMA, TABLE_NAME);
+    pgClientFactory.getInstance().select(preparedQuery, future.completer());
+    return future.map(this::mapResultSetToEventDescriptorList);
+  }
+
+  private String getQueryByEventTypes(List<String> eventTypes) {
+    StringBuilder query = new StringBuilder(GET_ALL_SQL);
+    if (!isEmpty(eventTypes)) {
+      String conditionByEventTypes = eventTypes.stream()
+        .map(eventType -> new StringBuilder("'").append(eventType).append("'"))
+        .collect(Collectors.joining(", ", "id IN (", ")"));
+
+      query.append( " WHERE ").append(conditionByEventTypes);
+    }
+    return query.toString();
   }
 
   @Override

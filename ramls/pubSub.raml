@@ -19,6 +19,7 @@ types:
   subscriberDescriptor: !include subscriberDescriptor.json
   module: !include module.json
   messagingModule: !include messagingModule.json
+  messagingModuleCollection: !include messagingModuleCollection.json
   auditMessage: !include auditMessage.json
   auditMessagePayload: !include auditMessagePayload.json
   
@@ -66,4 +67,44 @@ resourceTypes:
           204:
             body:
               text/plain: !!null
-
+      /publishers:
+        displayName: Publishers
+        description: API to retrieve registered Publishers
+        get:
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: messagingModuleCollection
+      /declare/publisher:
+          delete:
+            description: Remove publisher declaration for certain event type
+            queryParameters:
+              moduleName:
+                description: Publisher module name
+                required: true
+                type: string
+            responses:
+              204:
+                body:
+                  text/plain: !!null
+    /declare:
+      /publisher:
+        displayName: Publishers
+        description: API for managing Publishers
+        post:
+          description: Declare a publisher for a set of event types
+          body:
+            application/json:
+              schema: publisherDescriptor
+          responses:
+            201:
+            400:
+              body:
+                application/json:
+                  schema: errors
+            500:
+              description: "Internal server error"
+              body:
+                text/plain:
+                  example: "Internal server error"
