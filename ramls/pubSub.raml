@@ -69,25 +69,47 @@ resourceTypes:
               text/plain: !!null
       /publishers:
         displayName: Publishers
-        description: API to retrieve registered Publishers
+        description: API for managing Publishers
         get:
+          description: API to retrieve registered Publishers
           responses:
             200:
               body:
                 application/json:
                   schema: messagingModuleCollection
-      /declare/publisher:
-          delete:
-            description: Remove publisher declaration for certain event type
-            queryParameters:
-              moduleName:
-                description: Publisher module name
-                required: true
-                type: string
-            responses:
-              204:
-                body:
-                  text/plain: !!null
+        delete:
+          description: Remove publisher declaration for certain event type
+          queryParameters:
+            moduleName:
+              description: Publisher module name
+              required: true
+              type: string
+          responses:
+            204:
+              body:
+                text/plain: !!null
+
+      /subscribers:
+        displayName: Subscribers
+        description: API for managing Subscribers
+        get:
+          description: API to retrieve registered Subscribers
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: messagingModuleCollection
+        delete:
+          description:  API to remove Subscriber declaration for certain event type
+          queryParameters:
+            moduleName:
+              description: Subscriber module name
+              required: true
+              type: string
+          responses:
+            204:
+              body:
+                text/plain: !!null
     /declare:
       /publisher:
         displayName: Publishers
@@ -97,6 +119,24 @@ resourceTypes:
           body:
             application/json:
               schema: publisherDescriptor
+          responses:
+            201:
+            400:
+              body:
+                application/json:
+                  schema: errors
+            500:
+              description: "Internal server error"
+              body:
+                text/plain:
+                  example: "Internal server error"
+      /subscriber:
+        displayName: Subscribers
+        description: Declare a subscriber for a set of event types
+        post:
+          body:
+            application/json:
+              schema: subscriberDescriptor
           responses:
             201:
             400:

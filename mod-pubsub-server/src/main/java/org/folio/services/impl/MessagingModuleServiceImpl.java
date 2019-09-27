@@ -12,6 +12,8 @@ import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.jaxrs.model.MessagingModule.ModuleRole;
 import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
+import org.folio.rest.jaxrs.model.SubscriberDescriptor;
+import org.folio.rest.jaxrs.model.SubscriptionDefinition;
 import org.folio.services.MessagingModuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
+import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
 /**
  * Implementation for Messaging Module service
@@ -75,38 +78,74 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId) {
-    List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getEventDescriptors(), PUBLISHER, tenantId);
-    return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules)
-      .map(savedModules -> true);
+  public Future<Errors> validateSubscriberDescriptor(SubscriberDescriptor subscriberDescriptor) {
+    Errors errors = new Errors();
+    List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
+      .map(SubscriptionDefinition::getEventType)
+      .collect(Collectors.toList());
+
+    return eventDescriptorDao.getByEventTypes(eventTypes).map(existingDescriptorList -> {
+      Map<String, EventDescriptor> descriptorsMap = existingDescriptorList.stream()
+        .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
+      for (String eventType : eventTypes) {
+        if (descriptorsMap.get(eventType) == null) {
+          errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' is not exists", eventType)));
+        }
+      }
+      return errors.withTotalRecords(errors.getErrors().size());
+    });
   }
 
+  @Override
+  public Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId) {
+    List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
+      .map(EventDescriptor::getEventType).collect(Collectors.toList());
+    List<MessagingModule> messagingModules = createMessagingModules(eventTypes, PUBLISHER, tenantId);
+    return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules).map(true);
+  }
+
+  @Override
+  public Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, String tenantId) {
+    List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
+      .map(SubscriptionDefinition::getEventType)
+      .collect(Collectors.toList());
+    List<MessagingModule> messagingModules = createMessagingModules(eventTypes, SUBSCRIBER, tenantId);
+
+    Map<String, String> subscriberCallbacksMap = subscriberDescriptor.getSubscriptionDefinitions().stream()
+      .collect(Collectors.toMap(SubscriptionDefinition::getEventType, SubscriptionDefinition::getCallbackAddress));
+    messagingModules.forEach(module -> module.setSubscriberCallback(subscriberCallbacksMap.get(module.getEventType())));
+
+    return messagingModuleDao.save(subscriberDescriptor.getModuleName(), messagingModules).map(true);
+  }
+
+
   /**
-   * Creates Messaging Modules by event descriptors
-   * @param eventDescriptorList Event Descriptor list
+   * Creates Messaging Modules by event type and role
+   *
+   * @param eventTypes event types list
    * @param moduleRole MessagingModule role
    * @param tenantId tenant id
    * @return Messaging Modules list
    */
-  private List<MessagingModule> createMessagingModules(List<EventDescriptor> eventDescriptorList, ModuleRole moduleRole, String tenantId) {
-    return eventDescriptorList.stream()
-      .map(eventDescriptor -> createMessagingModule(eventDescriptor, moduleRole, tenantId))
+  private List<MessagingModule> createMessagingModules(List<String> eventTypes, ModuleRole moduleRole, String tenantId) {
+    return eventTypes.stream()
+      .map(eventType -> createMessagingModule(eventType, moduleRole, tenantId))
       .collect(Collectors.toList());
   }
 
   /**
-   * Creates Messaging Module by eventDescriptor
+   * Creates Messaging Module by event type and role
    *
-   * @param eventDescriptor event descriptor
+   * @param eventType event type name
    * @param moduleRole module role
    * @param tenantId tenant id
    * @return MessagingModule
    */
-  private MessagingModule createMessagingModule(EventDescriptor eventDescriptor, ModuleRole moduleRole, String tenantId) {
+  private MessagingModule createMessagingModule(String eventType, ModuleRole moduleRole, String tenantId) {
     return new MessagingModule()
       .withId(UUID.randomUUID().toString())
       .withTenantId(tenantId)
-      .withEventType(eventDescriptor.getEventType())
+      .withEventType(eventType)
       .withModuleRole(moduleRole)
       .withApplied(true);
   }
@@ -127,4 +166,5 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
         .withMessagingModules(messagingModules)
         .withTotalRecords(messagingModules.size()));
   }
+
 }

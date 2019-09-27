@@ -6,6 +6,7 @@ import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.MessagingModule.ModuleRole;
 import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
+import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 
 /**
  * Messaging Module service
@@ -14,7 +15,8 @@ public interface MessagingModuleService {
 
   /**
    * Validates PublisherDescriptor
-   * @param publisherDescriptor Publisher Descriptor
+   *
+   * @param publisherDescriptor publisher descriptor
    * @return future with validation result
    */
   Future<Errors> validatePublisherDescriptor(PublisherDescriptor publisherDescriptor);
@@ -24,8 +26,26 @@ public interface MessagingModuleService {
    *
    * @param publisherDescriptor publisher descriptor
    * @param tenantId tenant id
+   * @return future with boolean
    */
   Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId);
+
+  /**
+   * Validates SubscriberDescriptor
+   *
+   * @param subscriberDescriptor subscriber descriptor
+   * @return future with validation result
+   */
+  Future<Errors> validateSubscriberDescriptor(SubscriberDescriptor subscriberDescriptor);
+
+  /**
+   * Creates subscriber of event types specified in subscriberDescriptor
+   *
+   * @param subscriberDescriptor subscriber descriptor
+   * @param tenantId tenant id
+   * @return future with boolean
+   */
+  Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, String tenantId);
 
   /**
    * Deletes by module name and filter

@@ -34,6 +34,8 @@ public abstract class AbstractRestTest {
   protected static final String EVENT_TYPES_PATH = "/pubsub/event-types";
   protected static final String DECLARE_PUBLISHER_PATH = "/declare/publisher";
   protected static final String PUBLISHERS_PATH = "/publishers";
+  protected static final String DECLARE_SUBSCRIBER_PATH = "/declare/subscriber";
+  protected static final String SUBSCRIBERS_PATH = "/subscribers";
 
   static RequestSpecification spec;
   private static int port;

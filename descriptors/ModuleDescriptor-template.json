@@ -45,7 +45,7 @@
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/pubsub/event-types/declare/publisher",
+          "pathPattern": "/pubsub/event-types/{eventTypeName}/publishers",
           "permissionsRequired" : [ "pubsub.publishers.delete" ]
         },
         {
@@ -55,6 +55,28 @@
         }
       ]
     },
+    {
+      "id": "pubsub-subscribers",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/pubsub/event-types/declare/subscriber",
+          "permissionsRequired" : [ "pubsub.subscribers.post" ]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}/subscribers",
+          "permissionsRequired" : [ "pubsub.subscribers.delete" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/pubsub/event-types/{eventTypeName}/subscribers",
+          "permissionsRequired" : [ "pubsub.subscribers.get" ]
+        }
+      ]
+    },
+
     {
       "id": "_tenant",
       "version": "1.2",
@@ -110,6 +132,21 @@
       "permissionName": "pubsub.publishers.get",
       "displayName": "PubSub - get publishers",
       "description": "Get Publishers"
+    },
+    {
+      "permissionName": "pubsub.subscribers.post",
+      "displayName": "PubSub - declare subscriber",
+      "description": "Post Subscriber Descriptor"
+    },
+    {
+      "permissionName": "pubsub.subscribers.delete",
+      "displayName": "PubSub - delete subscriber declaration",
+      "description": "Delete Subscriber"
+    },
+    {
+      "permissionName": "pubsub.subscribers.get",
+      "displayName": "PubSub - get subscribers",
+      "description": "Get Subscribers"
     }
   ],
 
