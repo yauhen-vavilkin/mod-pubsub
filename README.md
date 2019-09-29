@@ -135,6 +135,45 @@ Provides RMB generated Client to call the module's endpoints. The Client is pack
 ```
 Where x.y.z - version of mod-pubsub.
 
+## Database schemas
+The pub-sub module uses the relational approach to define database schemas. Relational approach more rich 
+than usual approach that is used in Folio, when every table consists of columns: id UUID, jsonb JSONB 
+and database stores entities as json in JSONB column. Relational tables have more columns, constraints, indexes.
+Also pub-sub module has non-tenant (module) database schema for storing module config data not related to tenants. 
+This module schema will be created with name `pubsub_config` when module is deployed on `/_/discovery` path.
+
+The pub-sub module uses Liquibase to describe and create relational database schemas. 
+Liquibase helps create and support complex relational tables in vendor-independent manner. 
+Also, this tool allows you track the history of database schema changes.
+
+Databases schemas are described in Liquibase scripts using XML syntax.
+Every script file should contains only one "changelog" that consists of "changesets". Changeset it's a set of operations on tables. 
+Every "changeset" are uniquely identified by the `"author"` and `"id"` attribute. 
+Github user name should be in value of the `"author"` attribute. 
+The `"id"` attribute value has the same format as the script file name.  
+During writing script, you may need to get the name of the database schema, it can be obtained using Liquibase context property 
+in this way: `${database.defaultSchemaName}`.
+
+The base directory for storage Liquibase scripts is `/resources/liquibase/`. 
+Scripts files for tenants and module schemas are stored separately in `/resources/liquibase/module/scripts` and `/resources/liquibase/tenant/scripts`. 
+\
+To simplify the tracking of schemas changes, the module versioning is displayed in the directories structure:
+```
+/resources/liquibase
+    /module/scripts
+              /v-1.0.0
+                  /2019-08-14--14-00-create-module-table.xml
+              /v-2.0.0
+                  /2019-09-03--11-00-change-id-column-type.xml                        
+    /module/scripts
+              /v-1.0.0
+                  /2019-09-06--15-00-create-audit_message-table.xml
+```
+
+Scripts naming has follow format: `yyyy-mm-dd--hh-mm-schema_changes_description`.  \
+`yyyy-mm-dd--hh-mm` - date of script creation;  \
+`schema_changes_description` - short description of changes.
+
 ## Issue tracker
 
 See project [MODPUBSUB](https://issues.folio.org/browse/MODPUBSUB)
