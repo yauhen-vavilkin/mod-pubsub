@@ -7,7 +7,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.folio.dao.impl.MessagingModuleFilter;
+import org.folio.dao.util.AuditMessageFilter;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -17,14 +20,17 @@ import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.resource.Pubsub;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.util.ExceptionHelper;
+import org.folio.services.AuditMessageService;
 import org.folio.services.EventDescriptorService;
 import org.folio.services.MessagingModuleService;
 import org.folio.spring.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -33,13 +39,15 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
 public class PubSubImpl implements Pubsub {
 
-  private static final Logger LOGGER =  LoggerFactory.getLogger(PubSubImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PubSubImpl.class);
   private final String tenantId;
 
   @Autowired
   private EventDescriptorService eventDescriptorService;
   @Autowired
   private MessagingModuleService messagingModuleService;
+  @Autowired
+  private AuditMessageService auditMessageService;
 
   public PubSubImpl(Vertx vertx, String tenantId) {  //NOSONAR
     SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
@@ -53,7 +61,7 @@ public class PubSubImpl implements Pubsub {
         .compose(errors -> errors.getTotalRecords() > 0
           ? Future.succeededFuture(PostPubsubEventTypesResponse.respond422WithApplicationJson(errors))
           : eventDescriptorService.save(entity)
-            .map(PostPubsubEventTypesResponse.respond201WithApplicationJson(entity, PostPubsubEventTypesResponse.headersFor201())))
+          .map(PostPubsubEventTypesResponse.respond201WithApplicationJson(entity, PostPubsubEventTypesResponse.headersFor201())))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -144,12 +152,44 @@ public class PubSubImpl implements Pubsub {
         .compose(errors -> errors.getTotalRecords() > 0
           ? Future.succeededFuture(PostPubsubEventTypesDeclarePublisherResponse.respond400WithApplicationJson(errors))
           : messagingModuleService.savePublisher(entity, tenantId)
-            .map(v -> PostPubsubEventTypesDeclarePublisherResponse.respond201()))
+          .map(v -> PostPubsubEventTypesDeclarePublisherResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to create publisher", e);
+      asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
+    }
+  }
+
+  @Override
+  public void getPubsubHistory(String startDate, String endDate, String eventId, String eventType, String correlationId, Map<String, String> okapiHeaders,
+                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try {
+      auditMessageService.getAuditMessages(constructAuditMessageFilter(startDate, endDate, eventId, eventType, correlationId), tenantId)
+        .map(GetPubsubHistoryResponse::respond200WithApplicationJson)
+        .map(Response.class::cast)
+        .otherwise(ExceptionHelper::mapExceptionToResponse)
+        .setHandler(asyncResultHandler);
+    } catch (Exception e) {
+      LOGGER.error("Failed to retrieve audit messages", e);
+      asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
+    }
+  }
+
+  @Override
+  public void getPubsubAuditMessagesPayloadByEventId(String eventId, Map<String, String> okapiHeaders,
+                                                     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try {
+      auditMessageService.getAuditMessagePayloadByEventId(eventId, tenantId)
+        .map(auditMessagePayloadOptional -> auditMessagePayloadOptional
+          .orElseThrow(() -> new NotFoundException(format("Couldn't find audit message payload for event %s", eventId))))
+        .map(GetPubsubAuditMessagesPayloadByEventIdResponse::respond200WithApplicationJson)
+        .map(Response.class::cast)
+        .otherwise(ExceptionHelper::mapExceptionToResponse)
+        .setHandler(asyncResultHandler);
+    } catch (Exception e) {
+      LOGGER.error("Failed to retrieve audit message payload for event {}", e, eventId);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -191,7 +231,7 @@ public class PubSubImpl implements Pubsub {
         .compose(errors -> errors.getTotalRecords() > 0
           ? Future.succeededFuture(PostPubsubEventTypesDeclareSubscriberResponse.respond400WithApplicationJson(errors))
           : messagingModuleService.saveSubscriber(entity, tenantId)
-            .map(v -> PostPubsubEventTypesDeclareSubscriberResponse.respond201()))
+          .map(v -> PostPubsubEventTypesDeclareSubscriberResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -237,5 +277,27 @@ public class PubSubImpl implements Pubsub {
     filter.byModuleRole(role);
     filter.byTenantId(tenantId);
     return filter;
+  }
+
+  private AuditMessageFilter constructAuditMessageFilter(String startDate, String endDate, String eventId, String eventType, String correlationId) {
+    if (startDate == null || endDate == null) {
+      throw new BadRequestException("Start date and End date are required query parameters");
+    }
+    String[] dateFormats = {
+      DateFormatUtils.ISO_DATE_FORMAT.getPattern(),
+      DateFormatUtils.ISO_DATETIME_FORMAT.getPattern(),
+      DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.getPattern()
+    };
+    try {
+      Date start = DateUtils.parseDate(startDate, dateFormats);
+      Date end = DateUtils.parseDate(endDate, dateFormats);
+      return new AuditMessageFilter(start, end)
+        .withEventId(eventId)
+        .withEventType(eventType)
+        .withCorrelationId(correlationId);
+    } catch (Exception e) {
+      LOGGER.error("Error parsing date", e);
+      throw new BadRequestException(format("Supported date formats %s, %s, %s", dateFormats[0], dateFormats[1], dateFormats[2]));
+    }
   }
 }

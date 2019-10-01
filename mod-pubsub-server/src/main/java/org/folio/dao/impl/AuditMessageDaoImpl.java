@@ -15,6 +15,9 @@ import org.folio.rest.jaxrs.model.AuditMessagePayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -62,9 +65,10 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
         .add(auditMessage.getId())
         .add(auditMessage.getEventId())
         .add(auditMessage.getEventType())
+        .add(auditMessage.getCorrelationId())
         .add(auditMessage.getTenantId())
         .add(auditMessage.getCreatedBy())
-        .add(auditMessage.getAuditDate().getTime())
+        .add(Timestamp.from(auditMessage.getAuditDate().toInstant()).toString())
         .add(auditMessage.getState());
       pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, future.completer());
     } catch (Exception e) {
@@ -118,7 +122,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
       .withCorrelationId(result.getString("correlation_id"))
       .withTenantId(result.getString("tenant_id"))
       .withCreatedBy(result.getString("created_by"))
-      .withAuditDate(new Date(result.getLong("audit_date")))
+      .withAuditDate(Date.from(LocalDateTime.parse(result.getString("audit_date")).toInstant(ZoneOffset.UTC)))
       .withState(AuditMessage.State.fromValue(result.getString("state")));
   }
 
@@ -130,15 +134,17 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
 
   private String constructWhereClauseForGetAuditMessagesQuery(AuditMessageFilter filter) {
     StringBuilder whereClause = new StringBuilder(" WHERE ");
-    whereClause.append("audit_date BETWEEN ").append(filter.getFromDate()).append(" AND ").append(filter.getTillDate());
+    whereClause.append("audit_date BETWEEN ")
+      .append("'").append(Timestamp.from(filter.getStartDate().toInstant())).append("' AND ")
+      .append("'").append(Timestamp.from(filter.getEndDate().toInstant())).append("'");
     if (filter.getEventId() != null) {
-      whereClause.append(" AND event_id = ").append(filter.getEventId());
+      whereClause.append(" AND event_id = '").append(filter.getEventId()).append("'");
     }
     if (filter.getEventType() != null) {
-      whereClause.append(" AND event_type = ").append(filter.getEventType());
+      whereClause.append(" AND event_type = '").append(filter.getEventType()).append("'");
     }
     if (filter.getCorrelationId() != null) {
-      whereClause.append(" AND correlation_id = ").append(filter.getCorrelationId());
+      whereClause.append(" AND correlation_id = '").append(filter.getCorrelationId()).append("'");
     }
     return whereClause.append(";").toString();
   }

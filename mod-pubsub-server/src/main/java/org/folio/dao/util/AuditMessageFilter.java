@@ -4,23 +4,23 @@ import java.util.Date;
 
 public class AuditMessageFilter {
 
-  private final Date fromDate;
-  private final Date tillDate;
+  private final Date startDate;
+  private final Date endDate;
   private String eventId;
   private String eventType;
   private String correlationId;
 
-  public AuditMessageFilter(Date fromDate, Date tillDate) {
-    this.fromDate = fromDate;
-    this.tillDate = tillDate;
+  public AuditMessageFilter(Date startDate, Date endDate) {
+    this.startDate = startDate;
+    this.endDate = endDate;
   }
 
-  public Date getFromDate() {
-    return fromDate;
+  public Date getStartDate() {
+    return startDate;
   }
 
-  public Date getTillDate() {
-    return tillDate;
+  public Date getEndDate() {
+    return endDate;
   }
 
   public String getEventId() {

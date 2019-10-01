@@ -16,6 +16,7 @@
 * Added API for Event Types managing
 * Added API for Publishers managing
 * Added API for Subscribers managing
+* Created API for retrieving audit messages
 
  | METHOD |             URL                                                                         | DESCRIPTION                                      |
  |--------|-----------------------------------------------------------------------------------------|--------------------------------------------------|
@@ -30,3 +31,5 @@
  | POST   | /pubsub/event-types/declare/subscriber                                                  | Create subscriber                                |
  | DELETE | /pubsub/event-types/{eventTypeName}/subscribers?moduleName={moduleName}                 | Delete subscriber declaration                    |
  | GET    | /pubsub/event-types/{eventTypeName}/subscribers                                         | Get collection of Subscribers                    |
+ | GET    | /pubsub/history?startDate={startDate}&endDate={endDate}                                 | Retrieve activity history for a period of time   |
+ | GET    | /pubsub/audit-messages/{eventId}/payload                                                | Get audit message payload by eventId             |

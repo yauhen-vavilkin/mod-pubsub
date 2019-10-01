@@ -22,7 +22,8 @@ types:
   messagingModuleCollection: !include messagingModuleCollection.json
   auditMessage: !include auditMessage.json
   auditMessagePayload: !include auditMessagePayload.json
-  
+  auditMessageCollection: !include auditMessageCollection.json
+
 traits:
   validate: !include raml-util/traits/validation.raml
   language: !include raml-util/traits/language.raml
@@ -148,3 +149,68 @@ resourceTypes:
               body:
                 text/plain:
                   example: "Internal server error"
+  /history:
+    displayName: Activity history
+    description: API to retrieve the activity history performed by the event manager
+    get:
+      description: Get activity history
+      queryParameters:
+        startDate:
+          description: start date of the period of time for which audit messages are required
+          required: true
+          type: string
+          pattern: \d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d+)?Z?
+          example: 2019-09-20T12:00:00
+        endDate:
+          description: end date of the period of time for which audit messages are required
+          required: true
+          type: string
+          pattern: \d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d+)?Z?
+          example: 2019-09-27T12:00:00
+        eventId:
+          description: eventId by which audit messages should be filtered
+          required: false
+          type: string
+        eventType:
+          description: eventType by which audit messages should be filtered
+          required: false
+          type: string
+        correlationId:
+          description: correlationId by which audit messages should be filtered
+          required: false
+          type: string
+      responses:
+        200:
+          body:
+            application/json:
+              schema: auditMessageCollection
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+              example: "Bad request"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+  /audit-messages/{eventId}/payload:
+    displayName: Audit Message Payload
+    description: API to retrieve audit message payload
+    get:
+      description: Get audit message payload by event id
+      responses:
+        200:
+          body:
+            application/json:
+              schema: auditMessagePayload
+        404:
+          description: "Not found"
+          body:
+            text/plain:
+              example: "Not found"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"

@@ -12,6 +12,7 @@ import io.vertx.ext.unit.TestContext;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
@@ -23,19 +24,23 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
 
-  private static final String TENANT_ID = "diku";
+  protected static final String TENANT_ID = "diku";
   private static final String TOKEN = "token";
   private static final String HTTP_PORT = "http.port";
   private static final String DELETE_ALL_SQL = "DELETE FROM pubsub_config.%s";
   private static final String EVENT_DESCRIPTOR_TABLE = "event_descriptor";
   private static final String MODULE_TABLE = "module";
   private static final String MESSAGING_MODULE_TABLE = "messaging_module";
+  private static final String AUDIT_MESSAGE_PAYLOAD_TABLE = "audit_message_payload";
+  private static final String AUDIT_MESSAGE_TABLE = "audit_message";
 
   protected static final String EVENT_TYPES_PATH = "/pubsub/event-types";
   protected static final String DECLARE_PUBLISHER_PATH = "/declare/publisher";
   protected static final String PUBLISHERS_PATH = "/publishers";
   protected static final String DECLARE_SUBSCRIBER_PATH = "/declare/subscriber";
   protected static final String SUBSCRIBERS_PATH = "/subscribers";
+  protected static final String HISTORY_PATH = "pubsub/history";
+  protected static final String AUDIT_MESSAGES_PAYLOAD_PATH = "/pubsub/audit-messages/%s/payload";
 
   static RequestSpecification spec;
   private static int port;
@@ -112,6 +117,7 @@ public abstract class AbstractRestTest {
   @Before
   public void setUp(TestContext context) {
     clearModuleSchemaTables(context);
+    clearTenantTables(context);
     spec = new RequestSpecBuilder()
       .setContentType(ContentType.JSON)
       .addHeader(OKAPI_HEADER_TENANT, TENANT_ID)
@@ -131,5 +137,18 @@ public abstract class AbstractRestTest {
           }
           async.complete();
         })));
+  }
+
+  private void clearTenantTables(TestContext context) {
+    Async async = context.async();
+    PostgresClient pgClient = PostgresClient.getInstance(vertx, TENANT_ID);
+    pgClient.delete(AUDIT_MESSAGE_TABLE, new Criterion(), event -> {
+      pgClient.delete(AUDIT_MESSAGE_PAYLOAD_TABLE, new Criterion(), event1 -> {
+        if (event1.failed()) {
+          context.fail(event1.cause());
+        }
+        async.complete();
+      });
+    });
   }
 }

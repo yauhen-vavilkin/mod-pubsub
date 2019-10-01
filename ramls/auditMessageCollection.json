@@ -1,25 +1,25 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Collection of Event Descriptors",
+  "description": "Collection of Audit Messages",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "eventDescriptors": {
-      "description": "List of Event Descriptors",
+    "auditMessages": {
+      "description": "List of Audit Messages",
       "type": "array",
-      "id": "eventDescriptorsList",
+      "id": "auditMessagesList",
       "items": {
         "type": "object",
-        "$ref": "./eventDescriptor.json"
+        "$ref": "./auditMessage.json"
       }
     },
     "totalRecords": {
-      "description": "Total number of Event Descriptors",
+      "description": "Total number of Audit Messages",
       "type": "integer"
     }
   },
   "required": [
-    "eventDescriptors",
+    "auditMessages",
     "totalRecords"
   ]
 }

@@ -76,7 +76,22 @@
         }
       ]
     },
-
+    {
+      "id": "pubsub-audit",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/pubsub/history",
+          "permissionsRequired": [ "pubsub.audit.history.get" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/pubsub/audit-messages/{eventId}/payload",
+          "permissionsRequired": [ "pubsub.audit.message.payload.get" ]
+        }
+      ]
+    },
     {
       "id": "_tenant",
       "version": "1.2",
@@ -147,6 +162,16 @@
       "permissionName": "pubsub.subscribers.get",
       "displayName": "PubSub - get subscribers",
       "description": "Get Subscribers"
+    },
+    {
+      "permissionName": "pubsub.audit.history.get",
+      "displayName": "PubSub - get history",
+      "description": "Get history"
+    },
+    {
+      "permissionName": "pubsub.audit.message.payload.get",
+      "displayName": "PubSub - get audit message payload",
+      "description": "Get audit message payload"
     }
   ],
 
