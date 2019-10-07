@@ -21,14 +21,6 @@ public interface ModuleDao {
   Future<List<Module>> getAll();
 
   /**
-   * Searches {@link Module} by id
-   *
-   * @param id Module id
-   * @return future with optional of Module
-   */
-  Future<Optional<Module>> getById(String id);
-
-  /**
    * Searches {@link Module} by name using specified connection
    *
    * @param name Module name
@@ -38,14 +30,6 @@ public interface ModuleDao {
   Future<Optional<Module>> getByName(String name, AsyncResult<SQLConnection> sqlConnection);
 
   /**
-   * Saves new {@link Module} to data base
-   *
-   * @param module Module entity to save
-   * @return module id
-   */
-  Future<String> save(Module module);
-
-  /**
    * Saves new {@link Module} to data base using specified connection
    *
    * @param module Module entity to save
@@ -53,15 +37,6 @@ public interface ModuleDao {
    * @return module id
    */
   Future<String> save(Module module, AsyncResult<SQLConnection> sqlConnection);
-
-  /**
-   * Updates {@link Module} in data base
-   *
-   * @param id module id
-   * @param module entity to update
-   * @return future with updated Module
-   */
-  Future<Module> update(String id, Module module);
 
   /**
    * Deletes {@link Module} by id

@@ -108,6 +108,54 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
+  public void shouldClearPreviousPublisherInfoOnPostWithSameModuleNameAndTenantId() {
+    EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
+    EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
+    String moduleName = "test-module";
+
+    PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
+      .withEventDescriptors(Collections.singletonList(createdEventDescriptor1))
+      .withModuleName(moduleName);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(publisherDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    // post publisher with same module name and tenant id
+    PublisherDescriptor publisherDescriptor2 = new PublisherDescriptor()
+      .withEventDescriptors(Collections.singletonList(createdEventDescriptor2))
+      .withModuleName(moduleName);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(publisherDescriptor2)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor1.getEventType() + PUBLISHERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(0));
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor2.getEventType() + PUBLISHERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(1));
+  }
+
+  @Test
   public void shouldReturnBadRequestOnPostWhenEventTypeIsNotExists() {
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(eventDescriptor))

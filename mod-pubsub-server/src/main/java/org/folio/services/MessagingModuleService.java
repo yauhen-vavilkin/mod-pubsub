@@ -23,6 +23,8 @@ public interface MessagingModuleService {
 
   /**
    * Creates publisher of event types specified in publisherDescriptor
+   * Deletes previous info for publisher with specified module name in descriptor and by tenant id,
+   * before creating a new publisher
    *
    * @param publisherDescriptor publisher descriptor
    * @param tenantId tenant id
@@ -40,6 +42,8 @@ public interface MessagingModuleService {
 
   /**
    * Creates subscriber of event types specified in subscriberDescriptor
+   * Deletes previous info for subscriber with specified module name in descriptor and by tenant id,
+   * before creating a new subscriber
    *
    * @param subscriberDescriptor subscriber descriptor
    * @param tenantId tenant id

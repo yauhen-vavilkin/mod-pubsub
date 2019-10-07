@@ -66,8 +66,8 @@ public class SubscribersApiTest extends AbstractRestTest {
     SubscriberDescriptor subscriberDescriptor2 = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.singletonList(new SubscriptionDefinition()
           .withEventType(createdEventDescriptor2.getEventType())
-          .withCallbackAddress("")))
-      .withModuleName("test-module");
+          .withCallbackAddress("/callback-path2")))
+      .withModuleName("test-module2");
 
     RestAssured.given()
       .spec(spec)
@@ -110,6 +110,60 @@ public class SubscribersApiTest extends AbstractRestTest {
       .spec(spec)
       .when()
       .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor1.getEventType() + SUBSCRIBERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(1));
+  }
+
+  @Test
+  public void shouldClearPreviousSubscriberInfoOnPostWithSameModuleNameAndTenantId() {
+    EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
+    EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
+    String moduleName = "test-module";
+
+    SubscriptionDefinition subscriptionDefinition1 = new SubscriptionDefinition()
+      .withEventType(createdEventDescriptor1.getEventType())
+      .withCallbackAddress("/callback-path");
+    SubscriberDescriptor subscriberDescriptor1 = new SubscriberDescriptor()
+      .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition1))
+      .withModuleName(moduleName);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(subscriberDescriptor1)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    // post subscriber with same module name and tenant id
+    SubscriptionDefinition subscriptionDefinition2 = new SubscriptionDefinition()
+      .withEventType(createdEventDescriptor2.getEventType())
+      .withCallbackAddress("/callback-path2");
+    SubscriberDescriptor subscriberDescriptor2 = new SubscriberDescriptor()
+      .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition2))
+      .withModuleName(moduleName);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(subscriberDescriptor2)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor1.getEventType() + SUBSCRIBERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(0));
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor2.getEventType() + SUBSCRIBERS_PATH)
       .then().log().all()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(1));

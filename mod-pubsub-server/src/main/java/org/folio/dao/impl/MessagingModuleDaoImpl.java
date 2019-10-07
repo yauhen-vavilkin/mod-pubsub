@@ -9,7 +9,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
-import javassist.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.dao.ModuleDao;
@@ -23,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,12 +41,10 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   private static final String TABLE_NAME = "messaging_module";
   private static final String MODULE_SCHEMA = "pubsub_config";
   private static final String GET_BY_SQL = "SELECT * FROM %s.%s %s";
-  private static final String GET_BY_ID_SQL = "SELECT * FROM %s.%s WHERE id = ?";
   private static final String INSERT_BATCH_SQL = "INSERT INTO %s.%s (id, event_type_id, module_id, tenant_id, role, is_applied, subscriber_callback) VALUES ";
-  private static final String UPDATE_BY_ID_SQL = "UPDATE %s.%s SET event_type_id = ?, module_id = ?, tenant_id = ?, role = ?, is_applied = ?, subscriber_callback = ? WHERE id = ?";
   private static final String DELETE_BY_ID_SQL = "DELETE FROM %s.%s WHERE id = ?";
   private static final String DELETE_BY_SQL = "DELETE FROM %s.%s %s";
-  public static final String TABLE_COLUMNS_PLACEHOLDER = " (?, ?, ?, ?, ?, ?, ?),";
+  private static final String TABLE_COLUMNS_PLACEHOLDER = " (?, ?, ?, ?, ?, ?, ?),";
 
   @Autowired
   private PostgresClientFactory pgClientFactory;
@@ -64,27 +60,39 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   }
 
   @Override
-  public Future<Optional<MessagingModule>> getById(String id) {
-    Future<ResultSet> future = Future.future();
-    String preparedQuery = format(GET_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-    JsonArray params = new JsonArray().add(id);
-    pgClientFactory.getInstance().select(preparedQuery, params, future.completer());
-    return future.map(resultSet -> resultSet.getResults().isEmpty()
-      ? Optional.empty() : Optional.of(mapRowJsonToMessagingModule(resultSet.getRows().get(0))));
-  }
-
-  @Override
   public Future<List<MessagingModule>> save(String moduleName, List<MessagingModule> messagingModules) {
     PostgresClient pgClient = pgClientFactory.getInstance();
 
     return DbUtil.executeInTransaction(pgClient, connection -> moduleDao.getByName(moduleName, connection)
       .compose(moduleOptional -> moduleOptional
-        .map(module -> Future.succeededFuture(module.getId()))
+        .map(module -> {
+          ModuleRole moduleRole = messagingModules.get(0).getModuleRole();
+          String tenantId = messagingModules.get(0).getTenantId();
+          return clearPreviousMessagingModulesInfo(module.getId(), moduleRole, tenantId, connection)
+            .map(module.getId());
+        })
         .orElseGet(() -> moduleDao.save(new Module().withName(moduleName).withId(UUID.randomUUID().toString()), connection)))
       .map(moduleId -> setModuleId(moduleId, messagingModules))
       .compose(messagingModulesList -> saveMessagingModuleList(messagingModulesList, connection)));
+  }
 
 
+  /**
+   * Deletes previously created messaging modules with specified moduleId and role by tenant id
+   * in specified connection
+   *
+   * @param moduleId      module id
+   * @param role          module role
+   * @param tenantId      tenant id
+   * @param sqlConnection DB connection
+   * @return future with true if succeeded
+   */
+  private Future<Boolean> clearPreviousMessagingModulesInfo(String moduleId, ModuleRole role,
+                                                            String tenantId, AsyncResult<SQLConnection> sqlConnection) {
+    MessagingModuleFilter messagingModuleFilter = new MessagingModuleFilter();
+    messagingModuleFilter.byModuleRole(role);
+    messagingModuleFilter.byTenantId(tenantId);
+    return deleteByModuleIdAndFilter(moduleId, messagingModuleFilter, sqlConnection);
   }
 
   /**
@@ -134,30 +142,6 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
       .add(messagingModule.getApplied());
     String subscriberCallback = messagingModule.getSubscriberCallback();
     queryParams.add(subscriberCallback != null ? subscriberCallback : EMPTY);
-  }
-
-  @Override
-  public Future<MessagingModule> update(String id, MessagingModule messagingModule) {
-    Future<UpdateResult> future = Future.future();
-    try {
-      String query = format(UPDATE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-      String subscriberCallback = messagingModule.getSubscriberCallback();
-      JsonArray params = new JsonArray()
-        .add(messagingModule.getEventType())
-        .add(messagingModule.getModuleId())
-        .add(messagingModule.getTenantId())
-        .add(messagingModule.getModuleRole())
-        .add(messagingModule.getApplied())
-        .add(subscriberCallback != null ? subscriberCallback : EMPTY)
-        .add(id);
-      pgClientFactory.getInstance().execute(query, params, future.completer());
-    } catch (Exception e) {
-      LOGGER.error("Error updating MessagingModule by id '{}'", e, id);
-      future.fail(e);
-    }
-    return future.compose(updateResult -> updateResult.getUpdated() == 1
-      ? Future.succeededFuture(messagingModule)
-      : Future.failedFuture(new NotFoundException(format("MessagingModule by id '%s' was not found", id))));
   }
 
   @Override
@@ -218,28 +202,22 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   private String buildWhereClause(MessagingModuleFilter filter) {
     StringBuilder conditionBuilder = new StringBuilder("WHERE TRUE");
     if (filter.getEventType() != null) {
-      conditionBuilder.append(" AND ")
-        .append("event_type_id = '").append(filter.getEventType()).append("'");
+      conditionBuilder.append(" AND event_type_id = '").append(filter.getEventType()).append("'");
     }
     if (filter.getModuleId() != null) {
-      conditionBuilder.append(" AND ")
-        .append("module_id = '").append(filter.getModuleId()).append("'");
+      conditionBuilder.append(" AND module_id = '").append(filter.getModuleId()).append("'");
     }
     if (filter.getTenantId() != null) {
-      conditionBuilder.append(" AND ")
-        .append("tenant_id = '").append(filter.getTenantId()).append("'");
+      conditionBuilder.append(" AND tenant_id = '").append(filter.getTenantId()).append("'");
     }
     if (filter.getModuleRole() != null) {
-      conditionBuilder.append(" AND ")
-        .append("role = '").append(filter.getModuleRole()).append("'");
+      conditionBuilder.append(" AND role = '").append(filter.getModuleRole()).append("'");
     }
     if (filter.getApplied() != null) {
-      conditionBuilder.append(" AND ")
-        .append("is_applied = '").append(filter.getApplied()).append("'");
+      conditionBuilder.append(" AND is_applied = '").append(filter.getApplied()).append("'");
     }
     if (filter.getSubscriberCallback() != null) {
-      conditionBuilder.append(" AND ")
-        .append("subscriber_callback = '").append(filter.getSubscriberCallback()).append("'");
+      conditionBuilder.append(" AND subscriber_uscallback = '").append(filter.getSubscriberCallback()).append("'");
     }
     return conditionBuilder.toString();
   }

@@ -101,6 +101,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(eventTypes, PUBLISHER, tenantId);
+
     return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules).map(true);
   }
 
@@ -117,7 +118,6 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
     return messagingModuleDao.save(subscriberDescriptor.getModuleName(), messagingModules).map(true);
   }
-
 
   /**
    * Creates Messaging Modules by event type and role
