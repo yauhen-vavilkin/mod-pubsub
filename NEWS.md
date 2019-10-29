@@ -18,6 +18,7 @@
 * Added API for Subscribers managing
 * Created API for retrieving audit messages
 * Added preliminary cleaning of publisher/subscriber information before declaration publisher/subscriber with same module name and tenant id   
+* Configured kafka client
 
  | METHOD |             URL                                                                         | DESCRIPTION                                      |
  |--------|-----------------------------------------------------------------------------------------|--------------------------------------------------|

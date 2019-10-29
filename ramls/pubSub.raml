@@ -214,3 +214,21 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /publish:
+    displayName: Publish event
+    description: API used by publishers to send events
+    post:
+      body:
+        application/json:
+          schema: event
+      responses:
+        204:
+        400:
+          body:
+            application/json:
+              schema: errors
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"

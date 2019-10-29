@@ -5,14 +5,19 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.folio.dao.impl.MessagingModuleFilter;
 import org.folio.dao.util.AuditMessageFilter;
+import org.folio.kafka.PubSubConsumerConfig;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.MessagingModule.ModuleRole;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
@@ -48,6 +53,8 @@ public class PubSubImpl implements Pubsub {
   private MessagingModuleService messagingModuleService;
   @Autowired
   private AuditMessageService auditMessageService;
+  @Autowired
+  private KafkaProducer<String, String> producer;
 
   public PubSubImpl(Vertx vertx, String tenantId) {  //NOSONAR
     SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
@@ -190,6 +197,24 @@ public class PubSubImpl implements Pubsub {
         .setHandler(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to retrieve audit message payload for event {}", e, eventId);
+      asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
+    }
+  }
+
+  @Override
+  public void postPubsubPublish(Event entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try {
+      PubSubConsumerConfig config = new PubSubConsumerConfig(tenantId, entity.getEventType());
+      producer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), JsonObject.mapFrom(entity).encode()), done -> {
+        if (done.succeeded()) {
+          LOGGER.info("Sent event to topic {}", config.getTopicName());
+        } else {
+          LOGGER.error("Event was not sent", done.cause());
+        }
+      });
+      asyncResultHandler.handle(Future.succeededFuture(PostPubsubPublishResponse.respond204()));
+    } catch (Exception e) {
+      LOGGER.error("Error publishing event", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }

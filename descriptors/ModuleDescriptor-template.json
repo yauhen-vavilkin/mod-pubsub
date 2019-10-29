@@ -8,29 +8,49 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/event-types",
-          "permissionsRequired" : [ "pubsub.event-types.get" ]
+          "permissionsRequired": [
+            "pubsub.event-types.get"
+          ]
         },
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/pubsub/event-types",
-          "permissionsRequired" : [ "pubsub.event-types.post" ]
+          "permissionsRequired": [
+            "pubsub.event-types.post"
+          ]
         },
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}",
-          "permissionsRequired" : [ "pubsub.event-types.get" ]
+          "permissionsRequired": [
+            "pubsub.event-types.get"
+          ]
         },
         {
-          "methods": ["PUT"],
+          "methods": [
+            "PUT"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}",
-          "permissionsRequired" : [ "pubsub.event-types.put" ]
+          "permissionsRequired": [
+            "pubsub.event-types.put"
+          ]
         },
         {
-          "methods": ["DELETE"],
+          "methods": [
+            "DELETE"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}",
-          "permissionsRequired" : [ "pubsub.event-types.delete" ]
+          "permissionsRequired": [
+            "pubsub.event-types.delete"
+          ]
         }
       ]
     },
@@ -39,19 +59,31 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/pubsub/event-types/declare/publisher",
-          "permissionsRequired" : [ "pubsub.publishers.post" ]
+          "permissionsRequired": [
+            "pubsub.publishers.post"
+          ]
         },
         {
-          "methods": ["DELETE"],
+          "methods": [
+            "DELETE"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}/publishers",
-          "permissionsRequired" : [ "pubsub.publishers.delete" ]
+          "permissionsRequired": [
+            "pubsub.publishers.delete"
+          ]
         },
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}/publishers",
-          "permissionsRequired" : [ "pubsub.publishers.get" ]
+          "permissionsRequired": [
+            "pubsub.publishers.get"
+          ]
         }
       ]
     },
@@ -60,19 +92,31 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["POST"],
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/pubsub/event-types/declare/subscriber",
-          "permissionsRequired" : [ "pubsub.subscribers.post" ]
+          "permissionsRequired": [
+            "pubsub.subscribers.post"
+          ]
         },
         {
-          "methods": ["DELETE"],
+          "methods": [
+            "DELETE"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}/subscribers",
-          "permissionsRequired" : [ "pubsub.subscribers.delete" ]
+          "permissionsRequired": [
+            "pubsub.subscribers.delete"
+          ]
         },
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/event-types/{eventTypeName}/subscribers",
-          "permissionsRequired" : [ "pubsub.subscribers.get" ]
+          "permissionsRequired": [
+            "pubsub.subscribers.get"
+          ]
         }
       ]
     },
@@ -81,14 +125,37 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/history",
-          "permissionsRequired": [ "pubsub.audit.history.get" ]
+          "permissionsRequired": [
+            "pubsub.audit.history.get"
+          ]
         },
         {
-          "methods": ["GET"],
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/pubsub/audit-messages/{eventId}/payload",
-          "permissionsRequired": [ "pubsub.audit.message.payload.get" ]
+          "permissionsRequired": [
+            "pubsub.audit.message.payload.get"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pubsub-publish",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/pubsub/publish",
+          "permissionsRequired": [
+            "pubsub.publish.post"
+          ]
         }
       ]
     },
@@ -172,14 +239,36 @@
       "permissionName": "pubsub.audit.message.payload.get",
       "displayName": "PubSub - get audit message payload",
       "description": "Get audit message payload"
+    },
+    {
+      "permissionName":  "pubsub.publish.post",
+      "displayName": "PubSub - publish event",
+      "description": "Publish event"
     }
   ],
-
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerArgs": {
-      "HostConfig": { "PortBindings": { "8081/tcp":  [{ "HostPort": "%p" }] } }
+      "HostConfig": {
+        "PortBindings": {
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
+      }
     },
-    "dockerPull" : false
+    "dockerPull": false,
+    "env": [
+      {
+        "name": "KAFKA_HOST",
+        "value": "10.0.2.15"
+      },
+      {
+        "name": "KAFKA_PORT",
+        "value": "9092"
+      }
+    ]
   }
 }

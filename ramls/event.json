@@ -12,7 +12,7 @@
       "description": "Unique Event type, human-readable String, not UUID",
       "type": "string"
     },
-    "metadata": {
+    "eventMetadata": {
       "description": "Event metadata",
       "type": "object",
       "additionalProperties": false,
@@ -79,6 +79,6 @@
   "required": [
     "id",
     "eventType",
-    "metadata"
+    "eventMetadata"
   ]
 }

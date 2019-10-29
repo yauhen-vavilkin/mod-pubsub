@@ -9,6 +9,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
+import net.mguenther.kafka.junit.TopicConfig;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -18,9 +20,13 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 
 import static java.lang.String.format;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+
+import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.useDefaults;
 
 public abstract class AbstractRestTest {
 
@@ -42,15 +48,25 @@ public abstract class AbstractRestTest {
   protected static final String HISTORY_PATH = "pubsub/history";
   protected static final String AUDIT_MESSAGES_PAYLOAD_PATH = "/pubsub/audit-messages/%s/payload";
 
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+
   static RequestSpecification spec;
   private static int port;
   private static String useExternalDatabase;
   private static Vertx vertx;
 
+  @ClassRule
+  public static EmbeddedKafkaCluster cluster = provisionWith(useDefaults());
+
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
     vertx = Vertx.vertx();
     runDatabase();
+    cluster.createTopic(TopicConfig.forTopic("pub-sub.diku.record_created").build());
+    String[] hostAndPort = cluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
     deployVerticle(context);
   }
 
@@ -90,7 +106,10 @@ public abstract class AbstractRestTest {
 
     TenantClient tenantClient = new TenantClient(okapiUrl, TENANT_ID, TOKEN);
 
-    final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
+    final DeploymentOptions options = new DeploymentOptions()
+      .setConfig(new JsonObject()
+        .put(HTTP_PORT, port)
+        .put("spring.configuration", "org.folio.config.TestConfig"));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
         TenantAttributes tenantAttributes = null;
@@ -110,6 +129,8 @@ public abstract class AbstractRestTest {
       if (useExternalDatabase.equals("embedded")) {
         PostgresClient.stopEmbeddedPostgres();
       }
+      System.clearProperty(KAFKA_HOST);
+      System.clearProperty(KAFKA_PORT);
       async.complete();
     }));
   }
