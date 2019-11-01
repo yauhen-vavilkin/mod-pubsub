@@ -33,7 +33,7 @@ public class LiquibaseUtil {
   /**
    * Performs initialization for module configuration schema:
    * - creates schema for module configuration
-   * - runs scripts to fill module schema 
+   * - runs scripts to fill module schema
    *
    * @param vertx vertx instance
    */
@@ -44,8 +44,7 @@ public class LiquibaseUtil {
       runScripts(MODULE_CONFIGURATION_SCHEMA, connection, CHANGELOG_MODULE_PATH);
       LOGGER.info("Schema is initialized for the module");
     } catch (Exception e) {
-      String errorMessage = "Error while initializing schema for the module. Cause: " + e.getMessage();
-      LOGGER.error(errorMessage);
+      LOGGER.error("Error while initializing schema for the module", e);
     }
   }
 
@@ -63,7 +62,7 @@ public class LiquibaseUtil {
       runScripts(schemaName, connection, CHANGELOG_TENANT_PATH);
       LOGGER.info("Schema is initialized for tenant " + tenant);
     } catch (Exception e) {
-      LOGGER.error(format("Error while initializing schema %s for tenant %s. Cause: %s", schemaName, tenant, e.getMessage()));
+      LOGGER.error(format("Error while initializing schema %s for tenant %s", schemaName, tenant), e);
     }
   }
 

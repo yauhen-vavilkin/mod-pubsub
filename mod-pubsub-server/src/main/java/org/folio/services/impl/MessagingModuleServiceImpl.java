@@ -14,6 +14,7 @@ import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
+import org.folio.services.KafkaTopicService;
 import org.folio.services.MessagingModuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,13 +35,18 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 @Component
 public class MessagingModuleServiceImpl implements MessagingModuleService {
 
+  private static final int NUMBER_OF_PARTITIONS = 1;
+  private static final short REPLICATION_FACTOR = 1;
   private MessagingModuleDao messagingModuleDao;
   private EventDescriptorDao eventDescriptorDao;
+  private KafkaTopicService kafkaTopicService;
 
   public MessagingModuleServiceImpl(@Autowired MessagingModuleDao messagingModuleDao,
-                                    @Autowired EventDescriptorDao eventDescriptorDao) {
+                                    @Autowired EventDescriptorDao eventDescriptorDao,
+                                    @Autowired KafkaTopicService kafkaTopicService) {
     this.messagingModuleDao = messagingModuleDao;
     this.eventDescriptorDao = eventDescriptorDao;
+    this.kafkaTopicService = kafkaTopicService;
   }
 
   @Override
@@ -63,7 +69,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
   private void compareEventDescriptors(EventDescriptor eventDescriptor, EventDescriptor existingDescriptor, Errors errors) {
     if (existingDescriptor == null) {
-      errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' is not exists", eventDescriptor.getEventType())));
+      errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventDescriptor.getEventType())));
     } else {
       JsonObject descriptorJson = JsonObject.mapFrom(eventDescriptor);
       JsonObject existingDescriptorJson = JsonObject.mapFrom(existingDescriptor);
@@ -89,7 +95,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
         .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
       for (String eventType : eventTypes) {
         if (descriptorsMap.get(eventType) == null) {
-          errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' is not exists", eventType)));
+          errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventType)));
         }
       }
       return errors.withTotalRecords(errors.getErrors().size());
@@ -102,7 +108,8 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(eventTypes, PUBLISHER, tenantId);
 
-    return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules).map(true);
+    return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules)
+      .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
   }
 
   @Override
@@ -116,7 +123,8 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .collect(Collectors.toMap(SubscriptionDefinition::getEventType, SubscriptionDefinition::getCallbackAddress));
     messagingModules.forEach(module -> module.setSubscriberCallback(subscriberCallbacksMap.get(module.getEventType())));
 
-    return messagingModuleDao.save(subscriberDescriptor.getModuleName(), messagingModules).map(true);
+    return messagingModuleDao.save(subscriberDescriptor.getModuleName(), messagingModules)
+      .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
   }
 
   /**

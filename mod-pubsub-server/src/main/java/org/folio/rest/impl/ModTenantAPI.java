@@ -7,8 +7,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.folio.dao.util.LiquibaseUtil;
 import org.folio.kafka.KafkaConfig;
@@ -20,22 +18,17 @@ import org.folio.spring.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ModTenantAPI extends TenantAPI {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModTenantAPI.class);
-  // stub event type needed to create topic and consumer for initial testing of kafka config,
-  // will be removed in scope of {@link https://issues.folio.org/browse/MODPUBSUB-42}
+  // stub event type needed to create a consumer for initial testing of kafka config,
+  // will be removed in scope of {@link https://issues.folio.org/browse/MODPUBSUB-46}
   private static final String STUB_EVENT_TYPE = "record_created";
 
   @Autowired
   private KafkaConfig kafkaConfig;
-  @Autowired
-  private AdminClient kafkaAdminClient;
 
   public ModTenantAPI() {
     SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
@@ -53,8 +46,7 @@ public class ModTenantAPI extends TenantAPI {
         vertx.executeBlocking(
           blockingFuture -> {
             LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
-            // Create stub topic and stub consumer
-            createTopics(tenantId);
+            // Create stub consumer
             createKafkaConsumer(tenantId, vertx);
             blockingFuture.complete();
           },
@@ -62,17 +54,6 @@ public class ModTenantAPI extends TenantAPI {
         );
       }
     }, context);
-  }
-
-  private void createTopics(String tenantId) {
-    int numPartitions = 1;
-    short replicationFactor = 1;
-    List<String> eventTypes = new ArrayList<>();
-    eventTypes.add(STUB_EVENT_TYPE);
-    List<NewTopic> topics = eventTypes.stream()
-      .map(eventType -> new NewTopic(new PubSubConsumerConfig(tenantId, eventType).getTopicName(), numPartitions, replicationFactor))
-      .collect(Collectors.toList());
-    kafkaAdminClient.createTopics(topics);
   }
 
   private KafkaConsumer<String, String> createKafkaConsumer(String tenantId, Vertx vertx) {
