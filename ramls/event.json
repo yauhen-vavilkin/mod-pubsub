@@ -62,13 +62,14 @@
           "type": "string"
         },
         "publishedBy": {
-          "description": "Name of the module that published an event",
+          "description": "Name and version of the module that published an event",
           "type": "string"
         }
       },
       "required": [
         "tenantId",
-        "eventTTL"
+        "eventTTL",
+        "publishedBy"
       ]
     },
     "eventPayload": {

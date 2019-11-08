@@ -2,9 +2,10 @@ package org.folio.services.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.MessagingModuleDao;
-import org.folio.dao.impl.MessagingModuleFilter;
+import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -67,22 +68,6 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       });
   }
 
-  private void compareEventDescriptors(EventDescriptor eventDescriptor, EventDescriptor existingDescriptor, Errors errors) {
-    if (existingDescriptor == null) {
-      errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventDescriptor.getEventType())));
-    } else {
-      JsonObject descriptorJson = JsonObject.mapFrom(eventDescriptor);
-      JsonObject existingDescriptorJson = JsonObject.mapFrom(existingDescriptor);
-      if (!descriptorJson.equals(existingDescriptorJson)) {
-        String descriptorContent = JsonObject.mapFrom(existingDescriptor).encodePrettily();
-        String message = String.format("Descriptor of event type '%s' does not match to existing descriptor. To declare publisher should use follow descriptor: %s",
-          eventDescriptor.getEventType(), descriptorContent);
-        errors.getErrors().add(new Error().withMessage(message));
-      }
-    }
-    errors.setTotalRecords(errors.getErrors().size());
-  }
-
   @Override
   public Future<Errors> validateSubscriberDescriptor(SubscriberDescriptor subscriberDescriptor) {
     Errors errors = new Errors();
@@ -106,9 +91,9 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   public Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId) {
     List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
-    List<MessagingModule> messagingModules = createMessagingModules(eventTypes, PUBLISHER, tenantId);
+    List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getModuleId(), eventTypes, PUBLISHER, tenantId);
 
-    return messagingModuleDao.save(publisherDescriptor.getModuleName(), messagingModules)
+    return messagingModuleDao.save(messagingModules)
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
   }
 
@@ -117,62 +102,76 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
-    List<MessagingModule> messagingModules = createMessagingModules(eventTypes, SUBSCRIBER, tenantId);
+    List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, tenantId);
 
     Map<String, String> subscriberCallbacksMap = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .collect(Collectors.toMap(SubscriptionDefinition::getEventType, SubscriptionDefinition::getCallbackAddress));
     messagingModules.forEach(module -> module.setSubscriberCallback(subscriberCallbacksMap.get(module.getEventType())));
 
-    return messagingModuleDao.save(subscriberDescriptor.getModuleName(), messagingModules)
+    return messagingModuleDao.save(messagingModules)
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
+  }
+
+  @Override
+  public Future<Boolean> delete(MessagingModuleFilter filter) {
+    return messagingModuleDao.delete(filter);
+  }
+
+  @Override
+  public Future<MessagingModuleCollection> get(MessagingModuleFilter filter) {
+    return messagingModuleDao.get(filter)
+      .map(messagingModules -> new MessagingModuleCollection()
+        .withMessagingModules(messagingModules)
+        .withTotalRecords(messagingModules.size()));
+  }
+
+  private void compareEventDescriptors(EventDescriptor eventDescriptor, EventDescriptor existingDescriptor, Errors errors) {
+    if (existingDescriptor == null) {
+      errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventDescriptor.getEventType())));
+    } else {
+      if (!EqualsBuilder.reflectionEquals(eventDescriptor, existingDescriptor)) {
+        String descriptorContent = JsonObject.mapFrom(existingDescriptor).encodePrettily();
+        String message = String.format(
+          "Publisher descriptor does not match existing descriptor for event type '%s'. To declare a publisher one should use the following descriptor: %s",
+          eventDescriptor.getEventType(), descriptorContent);
+        errors.getErrors().add(new Error().withMessage(message));
+      }
+    }
+    errors.setTotalRecords(errors.getErrors().size());
   }
 
   /**
    * Creates Messaging Modules by event type and role
    *
+   * @param moduleId module id
    * @param eventTypes event types list
    * @param moduleRole MessagingModule role
    * @param tenantId tenant id
    * @return Messaging Modules list
    */
-  private List<MessagingModule> createMessagingModules(List<String> eventTypes, ModuleRole moduleRole, String tenantId) {
+  private List<MessagingModule> createMessagingModules(String moduleId, List<String> eventTypes, ModuleRole moduleRole, String tenantId) {
     return eventTypes.stream()
-      .map(eventType -> createMessagingModule(eventType, moduleRole, tenantId))
+      .map(eventType -> createMessagingModule(moduleId, eventType, moduleRole, tenantId))
       .collect(Collectors.toList());
   }
 
   /**
    * Creates Messaging Module by event type and role
    *
+   * @param moduleId module id
    * @param eventType event type name
    * @param moduleRole module role
    * @param tenantId tenant id
    * @return MessagingModule
    */
-  private MessagingModule createMessagingModule(String eventType, ModuleRole moduleRole, String tenantId) {
+  private MessagingModule createMessagingModule(String moduleId, String eventType, ModuleRole moduleRole, String tenantId) {
     return new MessagingModule()
       .withId(UUID.randomUUID().toString())
+      .withModuleId(moduleId)
       .withTenantId(tenantId)
       .withEventType(eventType)
       .withModuleRole(moduleRole)
-      .withApplied(true);
-  }
-
-  @Override
-  public Future<Boolean> deleteByModuleNameAndFilter(String moduleName, MessagingModuleFilter filter) {
-    return messagingModuleDao.deleteByModuleNameAndFilter(moduleName, filter);
-  }
-
-  @Override
-  public Future<MessagingModuleCollection> getByEventTypeAndRole(String eventType, ModuleRole role, String tenantId) {
-    MessagingModuleFilter messagingModuleFilter = new MessagingModuleFilter();
-    messagingModuleFilter.byEventType(eventType);
-    messagingModuleFilter.byModuleRole(role);
-    messagingModuleFilter.byTenantId(tenantId);
-    return messagingModuleDao.get(messagingModuleFilter)
-      .map(messagingModules -> new MessagingModuleCollection()
-        .withMessagingModules(messagingModules)
-        .withTotalRecords(messagingModules.size()));
+      .withActivated(true);
   }
 
 }

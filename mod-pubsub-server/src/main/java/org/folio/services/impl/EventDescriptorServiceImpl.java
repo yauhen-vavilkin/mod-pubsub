@@ -1,6 +1,8 @@
 package org.folio.services.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.EventDescriptorCollection;
@@ -8,8 +10,11 @@ import org.folio.services.EventDescriptorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.util.Optional;
+
+import static java.lang.String.format;
 
 /**
  * Implementation for Event Descriptor service
@@ -34,13 +39,27 @@ public class EventDescriptorServiceImpl implements EventDescriptorService {
   }
 
   @Override
-  public Future<Optional<EventDescriptor>> getById(String id) {
-    return eventDescriptorDao.getById(id);
+  public Future<Optional<EventDescriptor>> getByEventType(String eventType) {
+    return eventDescriptorDao.getByEventType(eventType);
   }
 
   @Override
   public Future<String> save(EventDescriptor eventDescriptor) {
-    return eventDescriptorDao.save(eventDescriptor);
+    return eventDescriptorDao.getByEventType(eventDescriptor.getEventType())
+      .compose(eventDescriptorOptional -> {
+        if (eventDescriptorOptional.isPresent()) {
+          if (EqualsBuilder.reflectionEquals(eventDescriptor, eventDescriptorOptional.get())) {
+            return Future.succeededFuture(format("Event descriptor for event type '%s' is registered", eventDescriptor.getEventType()));
+          } else {
+            String descriptorContent = JsonObject.mapFrom(eventDescriptorOptional.get()).encodePrettily();
+            return Future.failedFuture(new BadRequestException(
+              format("Event descriptor for event type '%s' already exists, but the content is different. Existing event descriptor: %s",
+                eventDescriptor.getEventType(), descriptorContent)));
+          }
+        } else {
+          return eventDescriptorDao.save(eventDescriptor);
+        }
+      });
   }
 
   @Override
@@ -49,10 +68,11 @@ public class EventDescriptorServiceImpl implements EventDescriptorService {
   }
 
   @Override
-  public Future<Boolean> delete(String id) {
-    return eventDescriptorDao.getById(id)
+  public Future<Boolean> delete(String eventType) {
+    return eventDescriptorDao.getByEventType(eventType)
       .compose(eventDescriptorOptional -> eventDescriptorOptional
-        .map(eventDescriptor -> eventDescriptorDao.delete(id))
-        .orElse(Future.failedFuture(new NotFoundException(String.format("EventDescriptor with event type name '%s' was not found", id)))));
+        .map(eventDescriptor -> eventDescriptorDao.delete(eventType))
+        .orElse(Future.failedFuture(new NotFoundException(String.format("EventDescriptor with event type name '%s' was not found", eventType)))));
   }
+
 }

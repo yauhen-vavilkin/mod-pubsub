@@ -35,7 +35,6 @@ public abstract class AbstractRestTest {
   private static final String HTTP_PORT = "http.port";
   private static final String DELETE_ALL_SQL = "DELETE FROM pubsub_config.%s";
   private static final String EVENT_DESCRIPTOR_TABLE = "event_descriptor";
-  private static final String MODULE_TABLE = "module";
   private static final String MESSAGING_MODULE_TABLE = "messaging_module";
   private static final String AUDIT_MESSAGE_PAYLOAD_TABLE = "audit_message_payload";
   private static final String AUDIT_MESSAGE_TABLE = "audit_message";
@@ -151,13 +150,12 @@ public abstract class AbstractRestTest {
     Async async = context.async();
     PostgresClient pgClient = PostgresClient.getInstance(vertx);
     pgClient.execute(format(DELETE_ALL_SQL, MESSAGING_MODULE_TABLE), new JsonArray(), event ->
-      pgClient.execute(format(DELETE_ALL_SQL, MODULE_TABLE), new JsonArray(), event2 ->
-        pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event3 -> {
+        pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event1 -> {
           if (event.failed()) {
             context.fail(event.cause());
           }
           async.complete();
-        })));
+        }));
   }
 
   private void clearTenantTables(TestContext context) {

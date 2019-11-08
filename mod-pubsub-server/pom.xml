@@ -73,7 +73,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-kafka-client</artifactId>
-      <version>${vertx.version}</version>
+      <version>3.7.0</version>
       <exclusions>
         <exclusion>
           <groupId>net.sf.jopt-simple</groupId>

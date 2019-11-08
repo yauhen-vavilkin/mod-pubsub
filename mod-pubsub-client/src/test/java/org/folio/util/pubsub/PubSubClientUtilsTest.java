@@ -36,9 +36,9 @@ public class PubSubClientUtilsTest {
 
     Assert.assertNotNull(descriptorHolder.getPublisherDescriptor());
     Assert.assertNotNull(descriptorHolder.getSubscriberDescriptor());
-    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getPublisherDescriptor().getEventDescriptors().size(), is(1));
-    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getSubscriptionDefinitions().size(), is(1));
   }
 
@@ -50,9 +50,9 @@ public class PubSubClientUtilsTest {
 
     Assert.assertNotNull(descriptorHolder.getPublisherDescriptor());
     Assert.assertNotNull(descriptorHolder.getSubscriberDescriptor());
-    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getPublisherDescriptor().getEventDescriptors().size(), is(1));
-    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getSubscriptionDefinitions().size(), is(2));
   }
 
@@ -65,9 +65,9 @@ public class PubSubClientUtilsTest {
 
     Assert.assertNotNull(descriptorHolder.getPublisherDescriptor());
     Assert.assertNotNull(descriptorHolder.getSubscriberDescriptor());
-    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getPublisherDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getPublisherDescriptor().getEventDescriptors().size(), is(1));
-    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleName(), not(isEmptyOrNullString()));
+    Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getModuleId(), not(isEmptyOrNullString()));
     Assert.assertThat(descriptorHolder.getSubscriberDescriptor().getSubscriptionDefinitions().size(), is(1));
   }
 

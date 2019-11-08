@@ -16,7 +16,10 @@ public class PublishTest extends AbstractRestTest {
   private static final String EVENT = new JsonObject()
     .put("id", UUID.randomUUID().toString())
     .put("eventType", "record_created")
-    .put("eventMetadata", new JsonObject().put("tenantId", TENANT_ID).put("eventTTL", 30)).encode();
+    .put("eventMetadata", new JsonObject()
+      .put("tenantId", TENANT_ID)
+      .put("eventTTL", 30)
+      .put("publishedBy", "mod-very-important-1.0.0")).encode();
 
   @Test
   public void shouldPublishEvent() {

@@ -2,7 +2,7 @@ package org.folio.services.impl;
 
 import io.vertx.core.Future;
 import org.folio.dao.AuditMessageDao;
-import org.folio.dao.util.AuditMessageFilter;
+import org.folio.rest.util.AuditMessageFilter;
 import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.AuditMessageCollection;
 import org.folio.rest.jaxrs.model.AuditMessagePayload;

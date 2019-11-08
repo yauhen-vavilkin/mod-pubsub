@@ -4,12 +4,12 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "moduleName": {
-      "description": "Publisher module name",
+    "moduleId": {
+      "description": "Publisher module name and version",
       "type": "string"
     },
     "eventDescriptors": {
-      "description": "List event descriptors which module publishes",
+      "description": "List of event descriptors published by the module",
       "type": "array",
       "items": {
         "type": "object",
@@ -18,7 +18,7 @@
     }
   },
   "required": [
-    "moduleName",
+    "moduleId",
     "eventDescriptors"
   ]
 }

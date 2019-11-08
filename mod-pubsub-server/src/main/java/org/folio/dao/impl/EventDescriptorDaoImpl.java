@@ -52,14 +52,14 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
   }
 
   @Override
-  public Future<Optional<EventDescriptor>> getById(String id) {
+  public Future<Optional<EventDescriptor>> getByEventType(String eventType) {
     Future<ResultSet> future = Future.future();
     try {
       String preparedQuery = format(GET_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-      JsonArray params = new JsonArray().add(id);
+      JsonArray params = new JsonArray().add(eventType);
       pgClientFactory.getInstance().select(preparedQuery, params, future.completer());
     } catch (Exception e) {
-      LOGGER.error("Error getting EventDescriptor by event descriptor id '{}'", e, id);
+      LOGGER.error("Error getting EventDescriptor by event type '{}'", e, eventType);
       future.fail(e);
     }
     return future.map(resultSet -> resultSet.getResults().isEmpty() ? Optional.empty()
@@ -97,7 +97,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
         .add(pojo2json(eventDescriptor));
       pgClientFactory.getInstance().execute(query, params, future.completer());
     } catch (Exception e) {
-      LOGGER.error("Error saving EventDescriptor with id '{}'", e, eventDescriptor.getEventType());
+      LOGGER.error("Error saving EventDescriptor with event type '{}'", e, eventDescriptor.getEventType());
       future.fail(e);
     }
     return future.map(updateResult -> eventDescriptor.getEventType());
@@ -113,23 +113,23 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
         .add(eventDescriptor.getEventType());
       pgClientFactory.getInstance().execute(query, params, future.completer());
     } catch (Exception e) {
-      LOGGER.error("Error updating EventDescriptor by id '{}'", e, eventDescriptor.getEventType());
+      LOGGER.error("Error updating EventDescriptor by event type '{}'", e, eventDescriptor.getEventType());
       future.fail(e);
     }
     return future.compose(updateResult -> updateResult.getUpdated() == 1
       ? Future.succeededFuture(eventDescriptor)
-      : Future.failedFuture(new NotFoundException(format("EventDescriptor by id '%s' was not updated", eventDescriptor.getEventType()))));
+      : Future.failedFuture(new NotFoundException(format("EventDescriptor with event type '%s' was not updated", eventDescriptor.getEventType()))));
   }
 
   @Override
-  public Future<Boolean> delete(String id) {
+  public Future<Boolean> delete(String eventType) {
     Future<UpdateResult> future = Future.future();
     try {
       String query = format(DELETE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-      JsonArray params = new JsonArray().add(id);
+      JsonArray params = new JsonArray().add(eventType);
       pgClientFactory.getInstance().execute(query, params, future.completer());
     } catch (Exception e) {
-      LOGGER.error("Error deleting EventDescriptor with id '{}'", e, id);
+      LOGGER.error("Error deleting EventDescriptor with event type '{}'", e, eventType);
       future.fail(e);
     }
     return future.map(updateResult -> updateResult.getUpdated() == 1);

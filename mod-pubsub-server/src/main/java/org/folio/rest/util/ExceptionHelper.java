@@ -19,6 +19,7 @@ public final class ExceptionHelper {
   }
 
   public static Response mapExceptionToResponse(Throwable throwable) {
+    LOGGER.error(throwable.getMessage());
     if (throwable instanceof BadRequestException) {
       return Response.status(HttpStatus.SC_BAD_REQUEST)
         .type(MediaType.TEXT_PLAIN)

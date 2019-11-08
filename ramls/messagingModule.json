@@ -13,8 +13,8 @@
       "type": "string"
     },
     "moduleId" : {
-      "description": "UUID",
-      "$ref": "uuid.json"
+      "description": "Module name and version",
+      "type": "string"
     },
     "tenantId" : {
       "description": "Tenant id",
@@ -25,9 +25,10 @@
       "type": "string",
       "enum": ["PUBLISHER", "SUBSCRIBER"]
     },
-    "applied" : {
-      "description": "Whether applied  module as PUBLISHER/SUBSCRIBER for certain tenant",
-      "type": "boolean"
+    "activated" : {
+      "description": "Indicates whether event type is activated for a tenant, true by default",
+      "type": "boolean",
+      "default": true
     },
     "subscriberCallback" : {
       "description": "Endpoint to deliver events of certain type",
@@ -35,6 +36,9 @@
     }
   },
   "required": [
-    "name"
+    "eventType",
+    "moduleId",
+    "tenantId",
+    "moduleRole"
   ]
 }

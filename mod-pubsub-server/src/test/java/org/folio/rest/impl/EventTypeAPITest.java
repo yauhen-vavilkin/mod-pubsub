@@ -96,7 +96,20 @@ public class EventTypeAPITest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWithExistingEventType() {
+  public void shouldReturnOkOnPostIfEventTypeWithTheSameDescriptorExists() {
+    postEventDescriptor(this.eventDescriptor);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(eventDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPostIfEventTypeWithDifferentDescriptorExists() {
     EventDescriptor createdEventDescriptor = postEventDescriptor(this.eventDescriptor);
 
     RestAssured.given()
@@ -109,7 +122,7 @@ public class EventTypeAPITest extends AbstractRestTest {
       .when()
       .post(EVENT_TYPES_PATH)
       .then()
-      .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test

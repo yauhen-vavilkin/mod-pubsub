@@ -1,4 +1,4 @@
-package org.folio.dao.util;
+package org.folio.rest.util;
 
 import java.util.Date;
 

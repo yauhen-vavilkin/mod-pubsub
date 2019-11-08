@@ -2,7 +2,7 @@ package org.folio.config;
 
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import org.apache.kafka.clients.admin.AdminClient;
+import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.folio.kafka.KafkaConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +27,10 @@ public class ApplicationConfig {
   }
 
   @Bean
-  public AdminClient adminClient(@Autowired KafkaConfig config) {
-    Map<String, Object> configs = new HashMap<>();
+  public KafkaAdminClient kafkaAdminClient(@Autowired Vertx vertx, @Autowired KafkaConfig config) {
+    Map<String, String> configs = new HashMap<>();
     configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, config.getUrl());
-    return AdminClient.create(configs);
+    return KafkaAdminClient.create(vertx, configs);
   }
 
 }

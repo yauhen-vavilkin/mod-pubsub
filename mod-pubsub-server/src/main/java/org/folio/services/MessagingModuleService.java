@@ -1,9 +1,8 @@
 package org.folio.services;
 
 import io.vertx.core.Future;
-import org.folio.dao.impl.MessagingModuleFilter;
+import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.MessagingModule.ModuleRole;
 import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
@@ -52,21 +51,18 @@ public interface MessagingModuleService {
   Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, String tenantId);
 
   /**
-   * Deletes by module name and filter
+   * Deletes module matching filter criteria
    *
-   * @param moduleName module name
    * @param filter MessagingModule filter
-   * @return future with boolean
+   * @return future with true if succeeded
    */
-  Future<Boolean> deleteByModuleNameAndFilter(String moduleName, MessagingModuleFilter filter);
+  Future<Boolean> delete(MessagingModuleFilter filter);
 
   /**
-   * Searches MessagingModule entities by event type and module role
+   * Searches for MessagingModules matching filter criteria
    *
-   * @param eventType event type
-   * @param role role
-   * @param tenantId tenant id
+   * @param filter MessagingModule filter
    * @return future with MessagingModule collection
    */
-  Future<MessagingModuleCollection> getByEventTypeAndRole(String eventType, ModuleRole role, String tenantId);
+  Future<MessagingModuleCollection> get(MessagingModuleFilter filter);
 }

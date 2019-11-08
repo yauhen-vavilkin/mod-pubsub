@@ -1,18 +1,16 @@
 package org.folio.services.impl;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.common.KafkaFuture;
-import org.folio.kafka.PubSubConsumerConfig;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.admin.NewTopic;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.kafka.PubSubConfig;
 import org.folio.services.KafkaTopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,28 +20,23 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopicServiceImpl.class);
 
   @Autowired
-  private AdminClient kafkaAdminClient;
+  private KafkaAdminClient kafkaAdminClient;
 
   @Override
   public Future<Boolean> createTopics(List<String> eventTypes, String tenantId, int numPartitions, short replicationFactor) {
+    Future<Boolean> future = Future.future();
     List<NewTopic> topics = eventTypes.stream()
-      .map(eventType -> new NewTopic(new PubSubConsumerConfig(tenantId, eventType).getTopicName(), numPartitions, replicationFactor))
+      .map(eventType -> new NewTopic(new PubSubConfig(tenantId, eventType).getTopicName(), numPartitions, replicationFactor))
       .collect(Collectors.toList());
-    List<Future> results = new ArrayList<>();
-    kafkaAdminClient.createTopics(topics).values()
-      .forEach((String topic, KafkaFuture<Void> future) -> {
-        try {
-          future.get();
-          results.add(Future.succeededFuture());
-          LOGGER.info("Created topic {}", topic);
-        } catch (Exception e) {
-          results.add(Future.failedFuture(e));
-          LOGGER.error("Error creating topic {}. Cause: {}", topic, e.getMessage());
-        }
-      });
-    Future<Boolean> result = Future.future();
-    CompositeFuture.join(results)
-      .setHandler(ar -> result.complete(ar.succeeded()));
-    return result;
+    kafkaAdminClient.createTopics(topics, ar -> {
+      if (ar.succeeded()) {
+        LOGGER.info("Created topics: [{}]", StringUtils.join(eventTypes, ","));
+        future.complete(true);
+      } else {
+        LOGGER.error("Some of the topics [{}] were not created. Cause: {}", StringUtils.join(eventTypes, ","), ar.cause().getMessage());
+        future.complete(false);
+      }
+    });
+    return future;
   }
 }

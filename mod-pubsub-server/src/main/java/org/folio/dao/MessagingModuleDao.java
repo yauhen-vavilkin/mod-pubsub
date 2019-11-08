@@ -1,7 +1,7 @@
 package org.folio.dao;
 
 import io.vertx.core.Future;
-import org.folio.dao.impl.MessagingModuleFilter;
+import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.jaxrs.model.MessagingModule;
 
 import java.util.List;
@@ -23,26 +23,24 @@ public interface MessagingModuleDao {
    * Saves in transaction list of {@link MessagingModule} to data base with specified moduleName
    * Deletes previous messaging modules with same module name, event type and tenant id as in specified messagingModules
    *
-   * @param moduleName  module name
    * @param messagingModules list of Messaging Module entities
    * @return future with list of created Messaging Module entities
    */
-  Future<List<MessagingModule>> save(String moduleName, List<MessagingModule> messagingModules);
+  Future<List<MessagingModule>> save(List<MessagingModule> messagingModules);
 
   /**
    * Deletes {@link MessagingModule} by id
    *
    * @param id messagingModule id
-   * @return future with boolean
+   * @return future with true if succeeded
    */
   Future<Boolean> delete(String id);
 
   /**
-   * Deletes {@link MessagingModule} by module name and filter
+   * Deletes {@link MessagingModule} matching filter criteria
    *
-   * @param moduleName module name
    * @param filter messagingModule filter
-   * @return future with boolean
+   * @return future with true if succeeded
    */
-  Future<Boolean> deleteByModuleNameAndFilter(String moduleName, MessagingModuleFilter filter);
+  Future<Boolean> delete(MessagingModuleFilter filter);
 }

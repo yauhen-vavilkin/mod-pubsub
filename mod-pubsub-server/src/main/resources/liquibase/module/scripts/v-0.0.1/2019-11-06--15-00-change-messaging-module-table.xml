@@ -1,0 +1,26 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2019-11-06--15-00-change-messaging-module-table" author="KaterynaSenchenko">
+
+    <dropTable tableName="module" cascadeConstraints="true"/>
+
+    <dropColumn columnName="module_id" tableName="messaging_module"/>
+    <dropColumn columnName="is_applied" tableName="messaging_module"/>
+
+    <addColumn tableName="messaging_module">
+      <column name="module_id" type="text">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+    <addColumn tableName="messaging_module">
+      <column name="activated" type="boolean" defaultValue="true">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
+</databaseChangeLog>

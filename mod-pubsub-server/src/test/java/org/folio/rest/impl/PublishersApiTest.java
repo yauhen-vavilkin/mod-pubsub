@@ -49,7 +49,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor1 = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor1))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -61,7 +61,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor2 = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor2))
-      .withModuleName("test-module2");
+      .withModuleId("test-module2-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -88,7 +88,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Arrays.asList(createdEventDescriptor1, createdEventDescriptor2))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -111,11 +111,11 @@ public class PublishersApiTest extends AbstractRestTest {
   public void shouldClearPreviousPublisherInfoOnPostWithSameModuleNameAndTenantId() {
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
     EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
-    String moduleName = "test-module";
+    String moduleName = "test-module-1.0.0";
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor1))
-      .withModuleName(moduleName);
+      .withModuleId(moduleName);
 
     RestAssured.given()
       .spec(spec)
@@ -128,7 +128,7 @@ public class PublishersApiTest extends AbstractRestTest {
     // post publisher with same module name and tenant id
     PublisherDescriptor publisherDescriptor2 = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor2))
-      .withModuleName(moduleName);
+      .withModuleId(moduleName);
 
     RestAssured.given()
       .spec(spec)
@@ -159,7 +159,7 @@ public class PublishersApiTest extends AbstractRestTest {
   public void shouldReturnBadRequestOnPostWhenEventTypeIsNotExists() {
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(eventDescriptor))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -178,7 +178,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Arrays.asList(createdEventDescriptor1, eventDescriptor2))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -199,7 +199,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -220,7 +220,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Arrays.asList(createdEventDescriptor, eventDescriptor2))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -240,7 +240,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
-      .withModuleName("test-module");
+      .withModuleId("test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -252,7 +252,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .queryParam("moduleName", publisherDescriptor.getModuleName())
+      .queryParam("moduleId", publisherDescriptor.getModuleId())
       .when()
       .delete(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType() + PUBLISHERS_PATH)
       .then().log().all()

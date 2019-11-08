@@ -42,15 +42,6 @@
           "permissionsRequired": [
             "pubsub.event-types.put"
           ]
-        },
-        {
-          "methods": [
-            "DELETE"
-          ],
-          "pathPattern": "/pubsub/event-types/{eventTypeName}",
-          "permissionsRequired": [
-            "pubsub.event-types.delete"
-          ]
         }
       ]
     },
@@ -194,11 +185,6 @@
       "permissionName": "pubsub.event-types.put",
       "displayName": "PubSub - update Event Descriptor for Event Type",
       "description": "Put Event Descriptor"
-    },
-    {
-      "permissionName": "pubsub.event-types.delete",
-      "displayName": "PubSub - delete Event Type",
-      "description": "Delete Event Descriptor"
     },
     {
       "permissionName": "pubsub.publishers.post",

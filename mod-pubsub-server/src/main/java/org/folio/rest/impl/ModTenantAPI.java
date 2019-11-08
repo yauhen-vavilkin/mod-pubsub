@@ -10,7 +10,7 @@ import io.vertx.kafka.client.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.folio.dao.util.LiquibaseUtil;
 import org.folio.kafka.KafkaConfig;
-import org.folio.kafka.PubSubConsumerConfig;
+import org.folio.kafka.PubSubConfig;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -57,7 +57,7 @@ public class ModTenantAPI extends TenantAPI {
   }
 
   private KafkaConsumer<String, String> createKafkaConsumer(String tenantId, Vertx vertx) {
-    PubSubConsumerConfig pubSubConfig = new PubSubConsumerConfig(tenantId, STUB_EVENT_TYPE);
+    PubSubConfig pubSubConfig = new PubSubConfig(tenantId, STUB_EVENT_TYPE);
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
     consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, pubSubConfig.getGroupId());
     return KafkaConsumer.<String, String>create(vertx, consumerProps)

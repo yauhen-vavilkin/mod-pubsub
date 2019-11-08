@@ -17,7 +17,6 @@ types:
   messagingDescriptor: !include messagingDescriptor.json
   publisherDescriptor: !include publisherDescriptor.json
   subscriberDescriptor: !include subscriberDescriptor.json
-  module: !include module.json
   messagingModule: !include messagingModule.json
   messagingModuleCollection: !include messagingModuleCollection.json
   auditMessage: !include auditMessage.json
@@ -48,7 +47,7 @@ resourceTypes:
       description: Create new event type
       is: [validate]
     get:
-      description: Get a list of evet types descriptors
+      description: Get a list of evet type descriptors
     /{eventTypeName}:
       displayName: Event Type
       description: Get, Delete or Update a specific Event Type descriptor
@@ -66,8 +65,6 @@ resourceTypes:
       delete:
         responses:
           204:
-            body:
-              text/plain: !!null
       /publishers:
         displayName: Publishers
         description: API for managing Publishers
@@ -81,15 +78,13 @@ resourceTypes:
         delete:
           description: Remove publisher declaration for certain event type
           queryParameters:
-            moduleName:
-              description: Publisher module name
+            moduleId:
+              description: Publisher module name and version
               required: true
               type: string
+              example: mod-pubsub-1.0.0
           responses:
             204:
-              body:
-                text/plain: !!null
-
       /subscribers:
         displayName: Subscribers
         description: API for managing Subscribers
@@ -103,14 +98,13 @@ resourceTypes:
         delete:
           description:  API to remove Subscriber declaration for certain event type
           queryParameters:
-            moduleName:
-              description: Subscriber module name
+            moduleId:
+              description: Subscriber module name and version
               required: true
               type: string
+              example: mod-pubsub-1.0.0
           responses:
             204:
-              body:
-                text/plain: !!null
     /declare:
       /publisher:
         displayName: Publishers

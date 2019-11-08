@@ -4,8 +4,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "moduleName": {
-      "description": "Subscriber module name",
+    "moduleId": {
+      "description": "Subscriber module name and version",
       "type": "string"
     },
     "subscriptionDefinitions": {
@@ -18,7 +18,7 @@
     }
   },
   "required": [
-    "moduleName",
+    "moduleId",
     "subscriptionDefinitions"
   ]
 }

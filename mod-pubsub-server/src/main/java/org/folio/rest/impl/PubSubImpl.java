@@ -12,19 +12,16 @@ import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
-import org.folio.dao.impl.MessagingModuleFilter;
-import org.folio.dao.util.AuditMessageFilter;
-import org.folio.kafka.PubSubConsumerConfig;
-import org.folio.rest.jaxrs.model.Error;
-import org.folio.rest.jaxrs.model.Errors;
+import org.folio.kafka.PubSubConfig;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
-import org.folio.rest.jaxrs.model.MessagingModule.ModuleRole;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.resource.Pubsub;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.util.AuditMessageFilter;
 import org.folio.rest.util.ExceptionHelper;
+import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.services.AuditMessageService;
 import org.folio.services.EventDescriptorService;
 import org.folio.services.MessagingModuleService;
@@ -34,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
@@ -64,11 +60,8 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void postPubsubEventTypes(String lang, EventDescriptor entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      validateEventDescriptor(entity)
-        .compose(errors -> errors.getTotalRecords() > 0
-          ? Future.succeededFuture(PostPubsubEventTypesResponse.respond422WithApplicationJson(errors))
-          : eventDescriptorService.save(entity)
-          .map(PostPubsubEventTypesResponse.respond201WithApplicationJson(entity, PostPubsubEventTypesResponse.headersFor201())))
+      eventDescriptorService.save(entity)
+        .map(PostPubsubEventTypesResponse.respond201WithApplicationJson(entity, PostPubsubEventTypesResponse.headersFor201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -76,20 +69,6 @@ public class PubSubImpl implements Pubsub {
       LOGGER.error("Failed to save Event Descriptor for event type '{}'", e, entity.getEventType());
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
-  }
-
-  private Future<Errors> validateEventDescriptor(EventDescriptor eventDescriptor) {
-    Errors errors = new Errors()
-      .withTotalRecords(0);
-    return eventDescriptorService.getById(eventDescriptor.getEventType())
-      .map(eventDescriptorOptional -> eventDescriptorOptional
-        .map(existingDescriptor -> {
-          LOGGER.error("Validation error, Event Descriptor with event type '{}' already exists", existingDescriptor.getEventType());
-          return errors.withErrors(Collections.singletonList(new Error()
-            .withMessage(format("Event descriptor with event type '%s' already exists", existingDescriptor.getEventType()))))
-            .withTotalRecords(1);
-        })
-        .orElse(errors));
   }
 
   @Override
@@ -124,8 +103,7 @@ public class PubSubImpl implements Pubsub {
   public void deletePubsubEventTypesByEventTypeName(String eventTypeName, String lang, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
       eventDescriptorService.delete(eventTypeName)
-        .map(DeletePubsubEventTypesByEventTypeNameResponse.respond204WithTextPlain(
-          format("Event descriptor with event type name '%s' was successfully deleted", eventTypeName)))
+        .map(DeletePubsubEventTypesByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -138,9 +116,9 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void getPubsubEventTypesByEventTypeName(String eventTypeName, String lang, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      eventDescriptorService.getById(eventTypeName)
+      eventDescriptorService.getByEventType(eventTypeName)
         .map(eventDescriptorOptional -> eventDescriptorOptional
-          .orElseThrow(() -> new NotFoundException(format("Event Descriptor with id '%s' not found", eventTypeName))))
+          .orElseThrow(() -> new NotFoundException(format("Event Descriptor with event type '%s' was not found", eventTypeName))))
         .map(GetPubsubEventTypesByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
@@ -204,7 +182,7 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void postPubsubPublish(Event entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      PubSubConsumerConfig config = new PubSubConsumerConfig(tenantId, entity.getEventType());
+      PubSubConfig config = new PubSubConfig(tenantId, entity.getEventType());
       producer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), JsonObject.mapFrom(entity).encode()), done -> {
         if (done.succeeded()) {
           LOGGER.info("Sent event to topic {}", config.getTopicName());
@@ -222,10 +200,13 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void deletePubsubEventTypesPublishersByEventTypeName(String eventTypeName, String moduleName, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      MessagingModuleFilter filter = getMessagingModuleFilter(eventTypeName, PUBLISHER, tenantId);
-      messagingModuleService.deleteByModuleNameAndFilter(moduleName, filter)
-        .map(DeletePubsubEventTypesPublishersByEventTypeNameResponse.respond204WithTextPlain(
-          format("Publisher for event type '%s' was successfully deleted", eventTypeName)))
+      MessagingModuleFilter filter = new MessagingModuleFilter()
+        .withEventType(eventTypeName)
+        .withModuleId(moduleName)
+        .withTenantId(tenantId)
+        .withModuleRole(PUBLISHER);
+      messagingModuleService.delete(filter)
+        .map(DeletePubsubEventTypesPublishersByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -238,7 +219,7 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void getPubsubEventTypesPublishersByEventTypeName(String eventTypeName, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      messagingModuleService.getByEventTypeAndRole(eventTypeName, PUBLISHER, tenantId)
+      messagingModuleService.get(new MessagingModuleFilter().withEventType(eventTypeName).withTenantId(tenantId).withModuleRole(PUBLISHER))
         .map(GetPubsubEventTypesPublishersByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
@@ -269,7 +250,7 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void getPubsubEventTypesSubscribersByEventTypeName(String eventTypeName, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      messagingModuleService.getByEventTypeAndRole(eventTypeName, SUBSCRIBER, tenantId)
+      messagingModuleService.get(new MessagingModuleFilter().withEventType(eventTypeName).withTenantId(tenantId).withModuleRole(SUBSCRIBER))
         .map(GetPubsubEventTypesSubscribersByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
@@ -283,10 +264,13 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void deletePubsubEventTypesSubscribersByEventTypeName(String eventTypeName, String moduleName, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      MessagingModuleFilter filter = getMessagingModuleFilter(eventTypeName, SUBSCRIBER, tenantId);
-      messagingModuleService.deleteByModuleNameAndFilter(moduleName, filter)
-        .map(DeletePubsubEventTypesSubscribersByEventTypeNameResponse.respond204WithTextPlain(
-          format("Subscriber for event type '%s' was successfully deleted", eventTypeName)))
+      MessagingModuleFilter filter = new MessagingModuleFilter()
+        .withEventType(eventTypeName)
+        .withModuleId(moduleName)
+        .withTenantId(tenantId)
+        .withModuleRole(SUBSCRIBER);
+      messagingModuleService.delete(filter)
+        .map(DeletePubsubEventTypesSubscribersByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .setHandler(asyncResultHandler);
@@ -294,14 +278,6 @@ public class PubSubImpl implements Pubsub {
       LOGGER.error("Failed to delete subscriber", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
-  }
-
-  private MessagingModuleFilter getMessagingModuleFilter(String eventType, ModuleRole role, String tenantId) {
-    MessagingModuleFilter filter = new MessagingModuleFilter();
-    filter.byEventType(eventType);
-    filter.byModuleRole(role);
-    filter.byTenantId(tenantId);
-    return filter;
   }
 
   private AuditMessageFilter constructAuditMessageFilter(String startDate, String endDate, String eventId, String eventType, String correlationId) {

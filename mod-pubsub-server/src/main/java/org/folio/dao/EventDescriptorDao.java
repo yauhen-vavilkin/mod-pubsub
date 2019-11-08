@@ -19,12 +19,12 @@ public interface EventDescriptorDao {
   Future<List<EventDescriptor>> getAll();
 
   /**
-   * Searches {@link EventDescriptor} by id
+   * Searches {@link EventDescriptor} by eventType
    *
-   * @param id eventDescriptor id
+   * @param eventType eventDescriptor eventType
    * @return future with optional of EventDescriptor
    */
-  Future<Optional<EventDescriptor>> getById(String id);
+  Future<Optional<EventDescriptor>> getByEventType(String eventType);
 
   /**
    * Searches {@link EventDescriptor} entities by event types
@@ -38,7 +38,7 @@ public interface EventDescriptorDao {
    * Saves new {@link EventDescriptor} to data base
    *
    * @param eventDescriptor eventDescriptor entity to save
-   * @return eventDescriptor id
+   * @return eventDescriptor event type
    */
   Future<String> save(EventDescriptor eventDescriptor);
 
@@ -52,10 +52,10 @@ public interface EventDescriptorDao {
   Future<EventDescriptor> update(EventDescriptor eventDescriptor);
 
   /**
-   * Deletes {@link EventDescriptor} by id
+   * Deletes {@link EventDescriptor} by event type
    *
-   * @param id eventDescriptor id
-   * @return future with boolean
+   * @param eventType eventDescriptor event type
+   * @return future with true of succeeded
    */
-  Future<Boolean> delete(String id);
+  Future<Boolean> delete(String eventType);
 }
