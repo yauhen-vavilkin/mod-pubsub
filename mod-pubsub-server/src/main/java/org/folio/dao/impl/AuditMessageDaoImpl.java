@@ -34,7 +34,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
 
   private static final String AUDIT_MESSAGE_TABLE = "audit_message";
   private static final String AUDIT_MESSAGE_PAYLOAD_TABLE = "audit_message_payload";
-  private static final String INSERT_AUDIT_MESSAGE_QUERY = "INSERT INTO %s.%s (id, event_id, event_type, correlation_id, tenant_id, created_by, audit_date, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+  private static final String INSERT_AUDIT_MESSAGE_QUERY = "INSERT INTO %s.%s (id, event_id, event_type, tenant_id, audit_date, state, published_by, correlation_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
   private static final String INSERT_AUDIT_MESSAGE_PAYLOAD_QUERY = "INSERT INTO %s.%s (event_id, content) VALUES (?, ?);";
   private static final String SELECT_QUERY = "SELECT * FROM %s.%s";
   private static final String GET_BY_EVENT_ID_QUERY = "SELECT * FROM %s.%s WHERE event_id = ?;";
@@ -65,11 +65,12 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
         .add(auditMessage.getId())
         .add(auditMessage.getEventId())
         .add(auditMessage.getEventType())
-        .add(auditMessage.getCorrelationId())
         .add(auditMessage.getTenantId())
-        .add(auditMessage.getCreatedBy())
         .add(Timestamp.from(auditMessage.getAuditDate().toInstant()).toString())
-        .add(auditMessage.getState());
+        .add(auditMessage.getState())
+        .add(auditMessage.getPublishedBy())
+        .add(auditMessage.getCorrelationId() != null ? auditMessage.getCorrelationId() : "")
+        .add(auditMessage.getCreatedBy() != null ? auditMessage.getCreatedBy() : "");
       pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, future.completer());
     } catch (Exception e) {
       LOGGER.error("Error saving audit message with id {}", e, auditMessage.getId());
@@ -122,6 +123,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
       .withCorrelationId(result.getString("correlation_id"))
       .withTenantId(result.getString("tenant_id"))
       .withCreatedBy(result.getString("created_by"))
+      .withPublishedBy(result.getString("published_by"))
       .withAuditDate(Date.from(LocalDateTime.parse(result.getString("audit_date")).toInstant(ZoneOffset.UTC)))
       .withState(AuditMessage.State.fromValue(result.getString("state")));
   }

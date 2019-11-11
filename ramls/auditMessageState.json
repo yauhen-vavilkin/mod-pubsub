@@ -7,6 +7,7 @@
     "CREATED",
     "PUBLISHED",
     "RECEIVED",
-    "DELIVERED"
+    "DELIVERED",
+    "REJECTED"
   ]
 }

@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
-import net.mguenther.kafka.junit.TopicConfig;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -23,10 +22,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
 import static java.lang.String.format;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
 import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.useDefaults;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
 
@@ -62,7 +60,6 @@ public abstract class AbstractRestTest {
   public static void setUpClass(final TestContext context) throws Exception {
     vertx = Vertx.vertx();
     runDatabase();
-    cluster.createTopic(TopicConfig.forTopic("pub-sub.diku.record_created").build());
     String[] hostAndPort = cluster.getBrokerList().split(":");
     System.setProperty(KAFKA_HOST, hostAndPort[0]);
     System.setProperty(KAFKA_PORT, hostAndPort[1]);

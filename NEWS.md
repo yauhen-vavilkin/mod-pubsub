@@ -20,6 +20,7 @@
 * Added preliminary cleaning of publisher/subscriber information before declaration publisher/subscriber with same module name and tenant id   
 * Configured kafka client
 * Removed module table, modified messagingModule table, updated schemas
+* Created Publishing service
 
  | METHOD |             URL                                                                         | DESCRIPTION                                      |
  |--------|-----------------------------------------------------------------------------------------|--------------------------------------------------|

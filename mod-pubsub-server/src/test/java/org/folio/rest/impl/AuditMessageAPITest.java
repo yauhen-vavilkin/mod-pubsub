@@ -209,6 +209,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withCorrelationId(correlationId_1)
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-amazing-1.0.0")
         .withAuditDate(DateUtils.parseDate("2019-09-15", dateFormats))
         .withState(AuditMessage.State.CREATED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_1));
@@ -220,6 +221,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withCorrelationId(correlationId_1)
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-fantastic-1.0.0")
         .withAuditDate(DateUtils.parseDate("2019-09-21", dateFormats))
         .withState(AuditMessage.State.PUBLISHED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_2));
@@ -231,6 +233,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withCorrelationId(correlationId_2)
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-fabulous-1.0.0")
         .withAuditDate(DateUtils.parseDate("2019-09-22", dateFormats))
         .withState(AuditMessage.State.CREATED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_3));
@@ -242,6 +245,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withCorrelationId(correlationId_2)
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-perfect-2.0.0")
         .withAuditDate(DateUtils.parseDate("2019-09-25", dateFormats))
         .withState(AuditMessage.State.RECEIVED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_4));

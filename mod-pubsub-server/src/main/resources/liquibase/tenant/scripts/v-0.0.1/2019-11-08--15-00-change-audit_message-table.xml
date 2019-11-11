@@ -1,0 +1,31 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2019-11-08--15-00-add-rejected-message_state" author="KaterynaSenchenko">
+    <sql>
+      DROP TYPE ${database.defaultSchemaName}.message_state CASCADE;
+      CREATE TYPE ${database.defaultSchemaName}.message_state AS ENUM ('CREATED','PUBLISHED','RECEIVED','DELIVERED','REJECTED');
+    </sql>
+  </changeSet>
+
+  <changeSet id="2019-11-08--15-00-update-audit_message-table" author="KaterynaSenchenko">
+
+    <addColumn tableName="audit_message">
+      <column name="state" type="${database.defaultSchemaName}.message_state">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+    <addColumn tableName="audit_message">
+      <column name="published_by" type="text">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+
+    <dropNotNullConstraint columnName="correlation_id" tableName="audit_message"/>
+    <dropNotNullConstraint columnName="created_by" tableName="audit_message"/>
+  </changeSet>
+
+</databaseChangeLog>

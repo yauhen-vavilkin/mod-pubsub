@@ -28,6 +28,10 @@
       "description": "Username of the user whose action caused an event",
       "type": "string"
     },
+    "publishedBy": {
+      "description": "Name and version of the module that published the event",
+      "type": "string"
+    },
     "auditDate": {
       "description": "Date of event's state in timestamp",
       "type": "string",
