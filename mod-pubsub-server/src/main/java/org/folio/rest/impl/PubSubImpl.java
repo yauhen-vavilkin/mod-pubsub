@@ -18,10 +18,11 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.util.AuditMessageFilter;
 import org.folio.rest.util.ExceptionHelper;
 import org.folio.rest.util.MessagingModuleFilter;
+import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.AuditMessageService;
 import org.folio.services.EventDescriptorService;
 import org.folio.services.MessagingModuleService;
-import org.folio.services.PublishingService;
+import org.folio.services.PublisherService;
 import org.folio.spring.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -47,7 +48,7 @@ public class PubSubImpl implements Pubsub {
   @Autowired
   private AuditMessageService auditMessageService;
   @Autowired
-  private PublishingService publishingService;
+  private PublisherService publishingService;
 
   public PubSubImpl(Vertx vertx, String tenantId) {  //NOSONAR
     SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
@@ -226,10 +227,11 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void postPubsubEventTypesDeclareSubscriber(SubscriberDescriptor entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
+      OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders);
       messagingModuleService.validateSubscriberDescriptor(entity)
         .compose(errors -> errors.getTotalRecords() > 0
           ? Future.succeededFuture(PostPubsubEventTypesDeclareSubscriberResponse.respond400WithApplicationJson(errors))
-          : messagingModuleService.saveSubscriber(entity, tenantId)
+          : messagingModuleService.saveSubscriber(entity, params)
           .map(v -> PostPubsubEventTypesDeclareSubscriberResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)

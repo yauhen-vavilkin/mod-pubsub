@@ -6,7 +6,7 @@ import org.folio.rest.jaxrs.model.Event;
 /**
  * Publishing Service
  */
-public interface PublishingService {
+public interface PublisherService {
 
   /**
    * Publishes event to the appropriate topic in kafka

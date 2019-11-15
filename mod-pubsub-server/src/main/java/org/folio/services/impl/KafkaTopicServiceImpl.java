@@ -19,8 +19,11 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopicServiceImpl.class);
 
-  @Autowired
   private KafkaAdminClient kafkaAdminClient;
+
+  public KafkaTopicServiceImpl(@Autowired KafkaAdminClient kafkaAdminClient) {
+    this.kafkaAdminClient = kafkaAdminClient;
+  }
 
   @Override
   public Future<Boolean> createTopics(List<String> eventTypes, String tenantId, int numPartitions, short replicationFactor) {

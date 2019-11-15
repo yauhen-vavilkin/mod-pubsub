@@ -16,6 +16,6 @@
   },
   "required": [
     "eventType",
-    "callbackEndpoint"
+    "callbackAddress"
   ]
 }

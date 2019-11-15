@@ -15,8 +15,10 @@ import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
-import org.folio.services.KafkaTopicService;
+import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.MessagingModuleService;
+import org.folio.services.ConsumerService;
+import org.folio.services.KafkaTopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,23 +33,27 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 /**
  * Implementation for Messaging Module service
  *
- * @see org.folio.services.MessagingModuleService
+ * @see MessagingModuleService
  */
 @Component
 public class MessagingModuleServiceImpl implements MessagingModuleService {
 
   private static final int NUMBER_OF_PARTITIONS = 1;
   private static final short REPLICATION_FACTOR = 1;
+
   private MessagingModuleDao messagingModuleDao;
   private EventDescriptorDao eventDescriptorDao;
   private KafkaTopicService kafkaTopicService;
+  private ConsumerService consumerService;
 
   public MessagingModuleServiceImpl(@Autowired MessagingModuleDao messagingModuleDao,
                                     @Autowired EventDescriptorDao eventDescriptorDao,
-                                    @Autowired KafkaTopicService kafkaTopicService) {
+                                    @Autowired KafkaTopicService kafkaTopicService,
+                                    @Autowired ConsumerService consumerService) {
     this.messagingModuleDao = messagingModuleDao;
     this.eventDescriptorDao = eventDescriptorDao;
     this.kafkaTopicService = kafkaTopicService;
+    this.consumerService = consumerService;
   }
 
   @Override
@@ -98,18 +104,19 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, String tenantId) {
+  public Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, OkapiConnectionParams params) {
     List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
-    List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, tenantId);
+    List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, params.getTenantId());
 
     Map<String, String> subscriberCallbacksMap = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .collect(Collectors.toMap(SubscriptionDefinition::getEventType, SubscriptionDefinition::getCallbackAddress));
     messagingModules.forEach(module -> module.setSubscriberCallback(subscriberCallbacksMap.get(module.getEventType())));
 
     return messagingModuleDao.save(messagingModules)
-      .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
+      .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR))
+      .compose(ar -> consumerService.subscribe(subscriberDescriptor.getModuleId(), eventTypes, params));
   }
 
   @Override
