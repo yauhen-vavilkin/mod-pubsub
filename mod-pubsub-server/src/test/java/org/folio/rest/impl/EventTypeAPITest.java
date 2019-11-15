@@ -6,9 +6,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.EventDescriptor;
+import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
@@ -188,6 +191,30 @@ public class EventTypeAPITest extends AbstractRestTest {
       .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType())
       .then()
       .statusCode(HttpStatus.SC_NOT_FOUND);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnDeleteIfModulesAreRegistered() {
+    EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
+
+    PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
+      .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
+      .withModuleId("mod-very-important-1.0.0");
+
+    RestAssured.given()
+      .spec(spec)
+      .body(publisherDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .delete(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType())
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
