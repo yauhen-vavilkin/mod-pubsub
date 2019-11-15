@@ -1,6 +1,7 @@
 package org.folio.services.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -12,14 +13,13 @@ import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.AuditMessagePayload;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.util.MessagingModuleFilter;
-import org.folio.services.AuditMessageService;
 import org.folio.services.MessagingModuleService;
 import org.folio.services.PublisherService;
+import org.folio.services.audit.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.BadRequestException;
-
 import java.util.Date;
 import java.util.UUID;
 
@@ -34,24 +34,23 @@ public class KafkaPublisherServiceImpl implements PublisherService {
 
   private KafkaProducer<String, String> producer;
   private MessagingModuleService messagingModuleService;
-  private AuditMessageService auditMessageService;
+  private AuditService auditService;
 
-  public KafkaPublisherServiceImpl(@Autowired KafkaProducer<String, String> producer,
-                                   @Autowired MessagingModuleService messagingModuleService,
-                                   @Autowired AuditMessageService auditMessageService) {
+  public KafkaPublisherServiceImpl(@Autowired Vertx vertx,
+                                   @Autowired KafkaProducer<String, String> producer,
+                                   @Autowired MessagingModuleService messagingModuleService) {
     this.producer = producer;
     this.messagingModuleService = messagingModuleService;
-    this.auditMessageService = auditMessageService;
+    this.auditService = AuditService.createProxy(vertx);
   }
 
   @Override
   public Future<Boolean> publishEvent(Event event, String tenantId) {
-    return saveAuditMessagePayload(event, tenantId)
-      .compose(ar -> saveAuditMessage(event, tenantId, AuditMessage.State.CREATED))
-      .compose(ar -> verifyPublisher(event, tenantId))
+    saveAuditMessagePayload(event, tenantId);
+    saveAuditMessage(event, tenantId, AuditMessage.State.CREATED);
+    return verifyPublisher(event, tenantId)
       .compose(ar -> checkForRegisteredSubscribers(event, tenantId))
-      .compose(ar -> sendEvent(event, tenantId))
-      .compose(ar -> saveAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
+      .compose(ar -> sendEvent(event, tenantId));
   }
 
   /**
@@ -120,29 +119,28 @@ public class KafkaPublisherServiceImpl implements PublisherService {
     producer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), JsonObject.mapFrom(event).encode()), done -> {
       if (done.succeeded()) {
         LOGGER.info("Sent event to topic {}", config.getTopicName());
+        saveAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED);
         future.complete(true);
       } else {
         LOGGER.error("Event was not sent", done.cause());
+        saveAuditMessage(event, tenantId, AuditMessage.State.REJECTED);
         future.fail(done.cause());
       }
     });
     return future;
   }
 
-  private Future<Boolean> saveAuditMessagePayload(Event event, String tenantId) {
+  private void saveAuditMessagePayload(Event event, String tenantId) {
     if (StringUtils.isNotEmpty(event.getEventPayload())) {
-      return auditMessageService
-        .saveAuditMessagePayload(new AuditMessagePayload()
+      auditService
+        .saveAuditMessagePayload(JsonObject.mapFrom(new AuditMessagePayload()
           .withEventId(event.getId())
-          .withContent(event.getEventPayload()), tenantId)
-        .map(true);
-    } else {
-      return Future.succeededFuture(false);
+          .withContent(event.getEventPayload())), tenantId);
     }
   }
 
-  private Future<Boolean> saveAuditMessage(Event event, String tenantId, AuditMessage.State state) {
-    return auditMessageService.saveAuditMessage(new AuditMessage()
+  private void saveAuditMessage(Event event, String tenantId, AuditMessage.State state) {
+    auditService.saveAuditMessage(JsonObject.mapFrom(new AuditMessage()
       .withId(UUID.randomUUID().toString())
       .withEventId(event.getId())
       .withEventType(event.getEventType())
@@ -151,7 +149,7 @@ public class KafkaPublisherServiceImpl implements PublisherService {
       .withCreatedBy(event.getEventMetadata().getCreatedBy())
       .withPublishedBy(event.getEventMetadata().getPublishedBy())
       .withAuditDate(new Date())
-      .withState(state)).map(true);
+      .withState(state)));
   }
 
 }

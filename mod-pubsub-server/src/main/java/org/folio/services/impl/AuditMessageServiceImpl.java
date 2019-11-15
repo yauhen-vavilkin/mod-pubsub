@@ -2,10 +2,9 @@ package org.folio.services.impl;
 
 import io.vertx.core.Future;
 import org.folio.dao.AuditMessageDao;
-import org.folio.rest.util.AuditMessageFilter;
-import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.AuditMessageCollection;
 import org.folio.rest.jaxrs.model.AuditMessagePayload;
+import org.folio.rest.util.AuditMessageFilter;
 import org.folio.services.AuditMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,16 +26,6 @@ public class AuditMessageServiceImpl implements AuditMessageService {
       .map(auditMessages -> new AuditMessageCollection()
         .withAuditMessages(auditMessages)
         .withTotalRecords(auditMessages.size()));
-  }
-
-  @Override
-  public Future<AuditMessage> saveAuditMessage(AuditMessage auditMessage) {
-    return auditMessageDao.saveAuditMessage(auditMessage);
-  }
-
-  @Override
-  public Future<AuditMessagePayload> saveAuditMessagePayload(AuditMessagePayload auditMessagePayload, String tenantId) {
-    return auditMessageDao.saveAuditMessagePayload(auditMessagePayload, tenantId);
   }
 
   @Override

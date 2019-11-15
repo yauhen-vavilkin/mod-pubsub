@@ -19,7 +19,6 @@ import org.folio.rest.jaxrs.model.EventMetadata;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.AuditMessageService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,12 +55,10 @@ public class ConsumerServiceUnitTest {
   @Mock
   private KafkaConfig kafkaConfig;
   @Mock
-  private AuditMessageService auditMessageService;
-  @Mock
   private MessagingModuleDao messagingModuleDao;
   @Spy
   @InjectMocks
-  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(Vertx.vertx(), kafkaConfig, messagingModuleDao, auditMessageService);
+  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(Vertx.vertx(), kafkaConfig, messagingModuleDao);
 
   private Map<String, String> headers = new HashMap<>();
 

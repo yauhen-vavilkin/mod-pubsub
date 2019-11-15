@@ -27,8 +27,8 @@ import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.AuditMessageService;
 import org.folio.services.ConsumerService;
+import org.folio.services.audit.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,16 +52,15 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   private Vertx vertx;
   private KafkaConfig kafkaConfig;
   private MessagingModuleDao messagingModuleDao;
-  private AuditMessageService auditMessageService;
+  private AuditService auditService;
 
   public KafkaConsumerServiceImpl(@Autowired Vertx vertx,
                                   @Autowired KafkaConfig kafkaConfig,
-                                  @Autowired MessagingModuleDao messagingModuleDao,
-                                  @Autowired AuditMessageService auditMessageService) {
+                                  @Autowired MessagingModuleDao messagingModuleDao) {
     this.vertx = vertx;
     this.kafkaConfig = kafkaConfig;
     this.messagingModuleDao = messagingModuleDao;
-    this.auditMessageService = auditMessageService;
+    this.auditService = AuditService.createProxy(vertx);
   }
 
   @Override
@@ -168,7 +167,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   private void saveAuditMessage(Event event, String tenantId, AuditMessage.State state) {
-    auditMessageService.saveAuditMessage(new AuditMessage()
+    auditService.saveAuditMessage(JsonObject.mapFrom(new AuditMessage()
       .withId(UUID.randomUUID().toString())
       .withEventId(event.getId())
       .withEventType(event.getEventType())
@@ -177,7 +176,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       .withCreatedBy(event.getEventMetadata().getCreatedBy())
       .withPublishedBy(event.getEventMetadata().getPublishedBy())
       .withAuditDate(new Date())
-      .withState(state));
+      .withState(state)));
   }
 
 }
