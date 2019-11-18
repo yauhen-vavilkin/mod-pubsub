@@ -13,13 +13,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
 
-import static java.lang.String.format;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -48,21 +44,6 @@ public class PublishTest extends AbstractRestTest {
       .post(PUBLISH_PATH)
       .then()
       .statusCode(HttpStatus.SC_BAD_REQUEST);
-
-    LocalDate startDate = LocalDate.now().minusDays(1);
-    LocalDate endDate = LocalDate.now().plusDays(1);
-
-    String query = "?startDate=" + startDate.toString() + "&endDate=" + endDate.toString();
-
-    RestAssured.given()
-      .spec(spec)
-      .when()
-      .get(HISTORY_PATH + query)
-      .then()
-      .statusCode(HttpStatus.SC_OK)
-      .body("totalRecords", is(2))
-      .body("auditMessages.size()", is(2))
-      .body("auditMessages*.state", containsInAnyOrder("CREATED", "REJECTED"));
   }
 
   @Test
@@ -77,21 +58,6 @@ public class PublishTest extends AbstractRestTest {
       .post(PUBLISH_PATH)
       .then()
       .statusCode(HttpStatus.SC_BAD_REQUEST);
-
-    LocalDate startDate = LocalDate.now().minusDays(1);
-    LocalDate endDate = LocalDate.now().plusDays(1);
-
-    String query = "?startDate=" + startDate.toString() + "&endDate=" + endDate.toString();
-
-    RestAssured.given()
-      .spec(spec)
-      .when()
-      .get(HISTORY_PATH + query)
-      .then()
-      .statusCode(HttpStatus.SC_OK)
-      .body("totalRecords", is(2))
-      .body("auditMessages.size()", is(2))
-      .body("auditMessages*.state", containsInAnyOrder("CREATED", "REJECTED"));
   }
 
   @Test
@@ -107,19 +73,6 @@ public class PublishTest extends AbstractRestTest {
       .post(PUBLISH_PATH)
       .then()
       .statusCode(HttpStatus.SC_NO_CONTENT);
-
-    LocalDate startDate = LocalDate.now().minusDays(1);
-    LocalDate endDate = LocalDate.now().plusDays(1);
-
-    String query = "?startDate=" + startDate.toString() + "&endDate=" + endDate.toString();
-
-    RestAssured.given()
-      .spec(spec)
-      .when()
-      .get(HISTORY_PATH + query)
-      .then()
-      .statusCode(HttpStatus.SC_OK)
-      .body("auditMessages*.state", hasItems("CREATED", "PUBLISHED"));
   }
 
   @Test
@@ -135,28 +88,6 @@ public class PublishTest extends AbstractRestTest {
       .post(PUBLISH_PATH)
       .then()
       .statusCode(HttpStatus.SC_NO_CONTENT);
-
-    LocalDate startDate = LocalDate.now().minusDays(1);
-    LocalDate endDate = LocalDate.now().plusDays(1);
-
-    String query = "?startDate=" + startDate.toString() + "&endDate=" + endDate.toString();
-
-    RestAssured.given()
-      .spec(spec)
-      .when()
-      .get(HISTORY_PATH + query)
-      .then()
-      .statusCode(HttpStatus.SC_OK)
-      .body("auditMessages*.state", hasItems("CREATED", "PUBLISHED"));
-
-    String eventId = EVENT.getString("id");
-    RestAssured.given()
-      .spec(spec)
-      .when()
-      .get(format(AUDIT_MESSAGES_PAYLOAD_PATH, eventId))
-      .then()
-      .statusCode(HttpStatus.SC_OK)
-      .body("eventId", is(eventId));
   }
 
   private void registerPublisher(EventDescriptor eventDescriptor) {
