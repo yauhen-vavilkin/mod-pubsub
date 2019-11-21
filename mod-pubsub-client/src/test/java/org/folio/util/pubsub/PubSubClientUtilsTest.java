@@ -1,5 +1,6 @@
 package org.folio.util.pubsub;
 
+import org.folio.util.pubsub.support.DescriptorHolder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;

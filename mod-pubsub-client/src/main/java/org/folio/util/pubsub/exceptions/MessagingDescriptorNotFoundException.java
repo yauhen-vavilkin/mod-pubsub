@@ -1,4 +1,4 @@
-package org.folio.util.pubsub;
+package org.folio.util.pubsub.exceptions;
 
 import java.io.FileNotFoundException;
 

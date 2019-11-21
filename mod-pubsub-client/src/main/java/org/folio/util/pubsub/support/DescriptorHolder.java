@@ -1,4 +1,4 @@
-package org.folio.util.pubsub;
+package org.folio.util.pubsub.support;
 
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;

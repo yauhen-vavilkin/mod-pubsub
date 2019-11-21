@@ -14,13 +14,14 @@
   </licenses>
 
   <modules>
-    <module>mod-pubsub-client</module>
     <module>mod-pubsub-server</module>
+    <module>mod-pubsub-client</module>
   </modules>
 
   <properties>
     <raml-module-builder.version>26.3.1</raml-module-builder.version>
     <vertx.version>3.5.4</vertx.version>
+    <wiremock.version>2.19.0</wiremock.version>
     <junit.version>4.12</junit.version>
     <rest-assured.version>3.1.1</rest-assured.version>
     <jackson.version>2.9.10</jackson.version>
