@@ -227,7 +227,7 @@ public class PubSubImpl implements Pubsub {
   @Override
   public void postPubsubEventTypesDeclareSubscriber(SubscriberDescriptor entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders);
+      OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
       messagingModuleService.validateSubscriberDescriptor(entity)
         .compose(errors -> errors.getTotalRecords() > 0
           ? Future.succeededFuture(PostPubsubEventTypesDeclareSubscriberResponse.respond400WithApplicationJson(errors))

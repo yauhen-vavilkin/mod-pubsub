@@ -4,12 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.CaseInsensitiveHeaders;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -41,13 +36,12 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
+import static org.folio.rest.util.RestUtil.doRequest;
 
 @Component
 public class KafkaConsumerServiceImpl implements ConsumerService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumerServiceImpl.class);
-
-  private static final int TIMEOUT = 2000;
 
   private Vertx vertx;
   private KafkaConfig kafkaConfig;
@@ -109,14 +103,14 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           LOGGER.error(errorMessage);
         } else {
           messagingModuleList.parallelStream()
-            .forEach(subscriber -> doRequest(event, subscriber.getSubscriberCallback(), params)
+            .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), params)
               .setHandler(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
         }
         return Future.succeededFuture();
       });
   }
 
-  private Handler<AsyncResult<HttpClientResponse>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
+  protected Handler<AsyncResult<HttpClientResponse>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
     return ar -> {
       if (ar.failed()) {
         LOGGER.error("Event {} was not delivered to {}", ar.cause(), event.getId(), subscriber.getSubscriberCallback());
@@ -132,38 +126,6 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         saveAuditMessage(event, tenantId, AuditMessage.State.DELIVERED);
       }
     };
-  }
-
-  protected Future<HttpClientResponse> doRequest(Event event, String callbackPath, OkapiConnectionParams params) {
-    Future<HttpClientResponse> future = Future.future();
-    try {
-      HttpClientRequest request = getHttpClient().requestAbs(HttpMethod.POST, params.getOkapiUrl() + callbackPath);
-
-      CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
-      headers.addAll(params.getHeaders());
-      headers.add("Content-type", "application/json").add("Accept", "application/json, text/plain");
-      headers.entries().forEach(header -> request.putHeader(header.getKey(), header.getValue()));
-
-      request.exceptionHandler(future::fail);
-      request.handler(future::complete);
-
-      if (event.getEventPayload() == null) {
-        request.end();
-      } else {
-        request.end(event.getEventPayload());
-      }
-    } catch (Exception e) {
-      LOGGER.error("Failed to deliver event {} to {}", e, event.getId(), callbackPath);
-      future.fail(e);
-    }
-    return future;
-  }
-
-  private HttpClient getHttpClient() {
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(TIMEOUT);
-    options.setIdleTimeout(TIMEOUT);
-    return vertx.createHttpClient(options);
   }
 
   private void saveAuditMessage(Event event, String tenantId, AuditMessage.State state) {

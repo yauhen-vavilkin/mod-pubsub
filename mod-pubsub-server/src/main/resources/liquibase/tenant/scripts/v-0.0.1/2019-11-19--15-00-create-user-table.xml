@@ -1,0 +1,26 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <!--Temporary solution-->
+  <!--Dedicated pubsub user is created for making http calls on behalf of modules that are registered as event publishers-->
+  <changeSet id="2019-11-19--15-00-create-user-table" author="KaterynaSenchenko">
+    <createTable tableName="user">
+      <column name="username" type="text">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="password" type="text">
+      </column>
+      <column name="token" type="text">
+      </column>
+    </createTable>
+
+    <insert tableName="user">
+      <column name="username" value="pub-sub"/>
+      <column name="password" value="pubsub"/>
+    </insert>
+  </changeSet>
+
+</databaseChangeLog>

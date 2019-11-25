@@ -51,7 +51,7 @@ public abstract class AbstractRestTest {
   static RequestSpecification spec;
   private static int port;
   private static String useExternalDatabase;
-  private static Vertx vertx;
+  protected static Vertx vertx;
 
   @ClassRule
   public static EmbeddedKafkaCluster cluster = provisionWith(useDefaults());

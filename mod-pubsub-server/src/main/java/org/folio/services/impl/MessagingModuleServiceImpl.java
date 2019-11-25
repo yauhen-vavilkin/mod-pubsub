@@ -19,6 +19,7 @@ import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.MessagingModuleService;
 import org.folio.services.ConsumerService;
 import org.folio.services.KafkaTopicService;
+import org.folio.services.SecurityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -45,15 +46,18 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   private EventDescriptorDao eventDescriptorDao;
   private KafkaTopicService kafkaTopicService;
   private ConsumerService consumerService;
+  private SecurityManager securityManager;
 
   public MessagingModuleServiceImpl(@Autowired MessagingModuleDao messagingModuleDao,
                                     @Autowired EventDescriptorDao eventDescriptorDao,
                                     @Autowired KafkaTopicService kafkaTopicService,
-                                    @Autowired ConsumerService consumerService) {
+                                    @Autowired ConsumerService consumerService,
+                                    @Autowired SecurityManager securityManager) {
     this.messagingModuleDao = messagingModuleDao;
     this.eventDescriptorDao = eventDescriptorDao;
     this.kafkaTopicService = kafkaTopicService;
     this.consumerService = consumerService;
+    this.securityManager = securityManager;
   }
 
   @Override
@@ -116,7 +120,11 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
     return messagingModuleDao.save(messagingModules)
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR))
-      .compose(ar -> consumerService.subscribe(subscriberDescriptor.getModuleId(), eventTypes, params));
+      .compose(ar -> securityManager.getJWTToken(params.getTenantId()))
+      .compose(token -> {
+        params.setToken(token);
+        return consumerService.subscribe(subscriberDescriptor.getModuleId(), eventTypes, params);
+      });
   }
 
   @Override

@@ -8,11 +8,22 @@ import org.folio.dao.util.LiquibaseUtil;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.services.SecurityManager;
+import org.folio.spring.SpringContextUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
 public class ModTenantAPI extends TenantAPI {
+
+  @Autowired
+  private SecurityManager securityManager;
+
+  public ModTenantAPI() {
+    SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
+  }
 
   @Validate
   @Override
@@ -26,6 +37,7 @@ public class ModTenantAPI extends TenantAPI {
         vertx.executeBlocking(
           blockingFuture -> {
             LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
+            securityManager.loginPubSubUser(new OkapiConnectionParams(headers, vertx));
             blockingFuture.complete();
           },
           result -> handler.handle(postTenantAr)

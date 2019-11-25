@@ -19,6 +19,7 @@ import org.folio.rest.jaxrs.model.EventMetadata;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.rest.util.RestUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,8 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,9 +51,6 @@ public class ConsumerServiceUnitTest {
 
   private static final String TENANT = "diku";
   private static final String TOKEN = "token";
-  private static final String OKAPI_TENANT_HEADER = "x-okapi-tenant";
-  private static final String OKAPI_TOKEN_HEADER = "x-okapi-token";
-  private static final String OKAPI_URL_HEADER = "x-okapi-url";
   private static final String CALLBACK_ADDRESS = "/source-storage/records";
   private static final String EVENT_TYPE = "record_created";
 
@@ -61,6 +63,7 @@ public class ConsumerServiceUnitTest {
   private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(Vertx.vertx(), kafkaConfig, messagingModuleDao);
 
   private Map<String, String> headers = new HashMap<>();
+  private Vertx vertx = Vertx.vertx();
 
   @Rule
   public WireMockRule mockServer = new WireMockRule(
@@ -91,9 +94,9 @@ public class ConsumerServiceUnitTest {
         .withEventTTL(30)
         .withPublishedBy("mod-very-important-1.0.0"));
 
-    OkapiConnectionParams params = new OkapiConnectionParams(headers);
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<HttpClientResponse> future = consumerService.doRequest(event, CALLBACK_ADDRESS, params);
+    Future<HttpClientResponse> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, params);
 
     future.setHandler(ar -> {
       assertTrue(ar.succeeded());
@@ -121,9 +124,9 @@ public class ConsumerServiceUnitTest {
         .withPublishedBy("mod-very-important-1.0.0"))
       .withEventPayload("Very important");
 
-    OkapiConnectionParams params = new OkapiConnectionParams(headers);
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<HttpClientResponse> future = consumerService.doRequest(event, CALLBACK_ADDRESS, params);
+    Future<HttpClientResponse> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, params);
 
     future.setHandler(ar -> {
       assertTrue(ar.succeeded());
@@ -148,7 +151,7 @@ public class ConsumerServiceUnitTest {
         .withEventTTL(30)
         .withPublishedBy("mod-very-important-1.0.0"));
 
-    OkapiConnectionParams params = new OkapiConnectionParams(headers);
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
     when(messagingModuleDao.get(any(MessagingModuleFilter.class))).thenReturn(Future.succeededFuture(new ArrayList<>()));
 
@@ -177,11 +180,12 @@ public class ConsumerServiceUnitTest {
         .withEventTTL(30)
         .withPublishedBy("mod-very-important-1.0.0"));
 
-    OkapiConnectionParams params = new OkapiConnectionParams();
+    OkapiConnectionParams params = new OkapiConnectionParams(vertx);
     params.setHeaders(headers);
     params.setOkapiUrl(headers.getOrDefault("x-okapi-url", "localhost"));
     params.setTenantId(headers.getOrDefault("x-okapi-tenant", TENANT));
     params.setToken(headers.getOrDefault("x-okapi-token", TOKEN));
+    params.setTimeout(2000);
 
     List<MessagingModule> messagingModuleList = new ArrayList<>();
     messagingModuleList.add(new MessagingModule()
@@ -206,7 +210,7 @@ public class ConsumerServiceUnitTest {
 
     future.setHandler(ar -> {
       assertTrue(ar.succeeded());
-      verify(consumerService, times(messagingModuleList.size())).doRequest(event, CALLBACK_ADDRESS, params);
+      verify(consumerService, times(messagingModuleList.size())).getEventDeliveredHandler(any(Event.class), anyString(), any(MessagingModule.class));
       async.complete();
     });
   }

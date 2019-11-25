@@ -22,6 +22,7 @@
 * Removed module table, modified messagingModule table, updated schemas
 * Created Publishing service
 * Created Consumer service
+* Created Security Manager
 
  | METHOD |             URL                                                                         | DESCRIPTION                                      |
  |--------|-----------------------------------------------------------------------------------------|--------------------------------------------------|
