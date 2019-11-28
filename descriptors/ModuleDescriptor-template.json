@@ -268,6 +268,10 @@
       {
         "name": "KAFKA_PORT",
         "value": "9092"
+      },
+      {
+        "name": "OKAPI_URL",
+        "value": "http://10.0.2.15:9130"
       }
     ]
   }

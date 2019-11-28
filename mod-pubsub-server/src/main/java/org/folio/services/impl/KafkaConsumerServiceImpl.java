@@ -102,7 +102,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           String errorMessage = format("There is no SUBSCRIBERS registered for event type %s. Event %s will not be delivered", event.getEventType(), event.getId());
           LOGGER.error(errorMessage);
         } else {
-          messagingModuleList.parallelStream()
+          messagingModuleList
             .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), params)
               .setHandler(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
         }

@@ -29,7 +29,7 @@ public class ApplicationConfig {
   @Bean
   public KafkaAdminClient kafkaAdminClient(@Autowired Vertx vertx, @Autowired KafkaConfig config) {
     Map<String, String> configs = new HashMap<>();
-    configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, config.getUrl());
+    configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, config.getKafkaUrl());
     return KafkaAdminClient.create(vertx, configs);
   }
 

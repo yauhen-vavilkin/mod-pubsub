@@ -9,17 +9,24 @@ import io.vertx.serviceproxy.ServiceBinder;
 import org.folio.config.ApplicationConfig;
 import org.folio.dao.util.LiquibaseUtil;
 import org.folio.rest.resource.interfaces.InitAPI;
+import org.folio.services.StartupService;
 import org.folio.services.audit.AuditService;
 import org.folio.spring.SpringContextUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class InitAPIImpl implements InitAPI {
+
+  @Autowired
+  private StartupService startupService;
 
   @Override
   public void init(Vertx vertx, Context context, Handler<AsyncResult<Boolean>> handler) {
     vertx.executeBlocking(
       blockingFuture -> {
         SpringContextUtil.init(vertx, context, ApplicationConfig.class);
+        SpringContextUtil.autowireDependencies(this, context);
         LiquibaseUtil.initializeSchemaForModule(vertx);
+        startupService.initSubscribers();
         blockingFuture.complete();
       },
       result -> {

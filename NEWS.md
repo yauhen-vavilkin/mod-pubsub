@@ -23,6 +23,7 @@
 * Created Publishing service
 * Created Consumer service
 * Created Security Manager
+* Created Startup Service
 
  | METHOD |             URL                                                                         | DESCRIPTION                                      |
  |--------|-----------------------------------------------------------------------------------------|--------------------------------------------------|

@@ -47,9 +47,11 @@ public abstract class AbstractRestTest {
 
   private static final String KAFKA_HOST = "KAFKA_HOST";
   private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String OKAPI_URL = "OKAPI_URL";
 
   static RequestSpecification spec;
-  private static int port;
+  private static int port = NetworkUtils.nextFreePort();
+  private static String okapiUrl = "http://localhost:" + port;
   private static String useExternalDatabase;
   protected static Vertx vertx;
 
@@ -63,6 +65,7 @@ public abstract class AbstractRestTest {
     String[] hostAndPort = cluster.getBrokerList().split(":");
     System.setProperty(KAFKA_HOST, hostAndPort[0]);
     System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(OKAPI_URL, okapiUrl);
     deployVerticle(context);
   }
 
@@ -97,8 +100,6 @@ public abstract class AbstractRestTest {
 
   private static void deployVerticle(final TestContext context) {
     Async async = context.async();
-    port = NetworkUtils.nextFreePort();
-    String okapiUrl = "http://localhost:" + port;
 
     TenantClient tenantClient = new TenantClient(okapiUrl, TENANT_ID, TOKEN);
 
