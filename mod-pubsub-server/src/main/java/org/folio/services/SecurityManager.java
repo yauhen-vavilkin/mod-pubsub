@@ -23,4 +23,6 @@ public interface SecurityManager {
    * @return future with token
    */
   Future<String> getJWTToken(String tenantId);
+
+  Future<Boolean> createPubSubUser(OkapiConnectionParams params);
 }

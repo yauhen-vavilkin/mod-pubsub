@@ -37,7 +37,9 @@ public class ModTenantAPI extends TenantAPI {
         vertx.executeBlocking(
           blockingFuture -> {
             LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
-            securityManager.loginPubSubUser(new OkapiConnectionParams(headers, vertx));
+            OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+            securityManager.createPubSubUser(params)
+              .compose(ar -> securityManager.loginPubSubUser(params));
             blockingFuture.complete();
           },
           result -> handler.handle(postTenantAr)

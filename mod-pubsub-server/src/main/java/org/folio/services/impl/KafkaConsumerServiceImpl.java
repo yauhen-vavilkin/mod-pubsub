@@ -5,6 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -103,7 +104,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           LOGGER.error(errorMessage);
         } else {
           messagingModuleList
-            .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), params)
+            .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
               .setHandler(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
         }
         return Future.succeededFuture();

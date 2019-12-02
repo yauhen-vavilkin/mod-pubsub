@@ -168,7 +168,13 @@
           "methods": [
             "POST"
           ],
-          "pathPattern": "/_/tenant"
+          "pathPattern": "/_/tenant",
+          "modulePermissions": [
+            "users.collection.get",
+            "users.item.post",
+            "login.item.post",
+            "perms.users.item.post"
+          ]
         },
         {
           "methods": [
@@ -196,9 +202,9 @@
       "description": "Put Event Descriptor"
     },
     {
-    "permissionName": "pubsub.event-types.delete",
-    "displayName": "PubSub - delete Event Type",
-    "description": "Delete Event Descriptor"
+      "permissionName": "pubsub.event-types.delete",
+      "displayName": "PubSub - delete Event Type",
+      "description": "Delete Event Descriptor"
     },
     {
       "permissionName": "pubsub.publishers.post",

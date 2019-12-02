@@ -21,10 +21,10 @@ public final class RestUtil {
   private RestUtil() {
   }
 
-  public static Future<HttpClientResponse> doRequest(String payload, String path, OkapiConnectionParams params) {
+  public static Future<HttpClientResponse> doRequest(String payload, String path, HttpMethod method, OkapiConnectionParams params) {
     Future<HttpClientResponse> future = Future.future();
     try {
-      HttpClientRequest request = getHttpClient(params).requestAbs(HttpMethod.POST, params.getOkapiUrl() + path);
+      HttpClientRequest request = getHttpClient(params).requestAbs(method, params.getOkapiUrl() + path);
 
       CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
       headers.add(OKAPI_URL_HEADER, params.getOkapiUrl())
