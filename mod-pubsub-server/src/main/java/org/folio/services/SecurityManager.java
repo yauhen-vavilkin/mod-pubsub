@@ -24,5 +24,11 @@ public interface SecurityManager {
    */
   Future<String> getJWTToken(String tenantId);
 
+  /**
+   * Creates new pub-sub user if it doesn't exist and assigns all necessary permissions
+   *
+   * @param params okapi connection params
+   * @return future with true if succeeded
+   */
   Future<Boolean> createPubSubUser(OkapiConnectionParams params);
 }
