@@ -8,6 +8,7 @@ import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -105,8 +106,19 @@ public class SecurityManagerTest extends AbstractRestTest {
   public void shouldNotCreatePubSubUserIfItExists(TestContext context) {
     Async async = context.async();
 
+    String userId = UUID.randomUUID().toString();
+    String userCollection = new JsonObject()
+      .put("users", new JsonArray()
+        .add(new JsonObject()
+          .put("username", "pub-sub")
+          .put("id", userId)))
+      .put("totalRecords", 1).encode();
+    String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
+
     WireMock.stubFor(WireMock.get(USERS_URL_WITH_QUERY)
-      .willReturn(WireMock.ok().withBody(new JsonObject().put("totalRecords", 1).encode())));
+      .willReturn(WireMock.ok().withBody(userCollection)));
+    WireMock.stubFor(WireMock.post(permUrl)
+      .willReturn(WireMock.ok()));
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
@@ -116,9 +128,11 @@ public class SecurityManagerTest extends AbstractRestTest {
       assertTrue(ar.succeeded());
       assertTrue(ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      assertEquals(1, requests.size());
+      assertEquals(2, requests.size());
       assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
       assertEquals("GET", requests.get(0).getMethod().getName());
+      assertEquals(permUrl, requests.get(1).getUrl());
+      assertEquals("POST", requests.get(1).getMethod().getName());
       async.complete();
     });
   }
@@ -127,10 +141,18 @@ public class SecurityManagerTest extends AbstractRestTest {
   public void shouldCreatePubSubUser(TestContext context) {
     Async async = context.async();
 
+    String userId = UUID.randomUUID().toString();
+    String userCollection = new JsonObject()
+      .put("users", new JsonArray()
+        .add(new JsonObject()
+          .put("username", "pub-sub")
+          .put("id", userId)))
+      .put("totalRecords", 1).encode();
+
     WireMock.stubFor(WireMock.get(USERS_URL_WITH_QUERY)
-      .willReturn(WireMock.ok().withBody(new JsonObject().put("totalRecords", 0).encode())));
+      .willReturn(WireMock.ok().withBody(new JsonObject().put("users", new JsonArray()).encode())));
     WireMock.stubFor(WireMock.post(USERS_URL)
-      .willReturn(WireMock.created()));
+      .willReturn(WireMock.created().withBody(userCollection)));
     WireMock.stubFor(WireMock.post(CREDENTIALS_URL)
       .willReturn(WireMock.created()));
     WireMock.stubFor(WireMock.post(PERMISSIONS_URL)

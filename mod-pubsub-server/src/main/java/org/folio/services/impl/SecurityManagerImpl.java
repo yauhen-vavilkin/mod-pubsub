@@ -1,12 +1,14 @@
 package org.folio.services.impl;
 
+import com.google.common.io.Resources;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.HttpStatus;
 import org.folio.dao.PubSubUserDao;
@@ -15,8 +17,10 @@ import org.folio.services.SecurityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +37,7 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String USERS_URL = "/users";
   private static final String CREDENTIALS_URL = "/authn/credentials";
   private static final String PERMISSIONS_URL = "/perms/users";
-  private static final String PERMISSIONS_FILE_PATH = "src/main/resources/permissions/pubsub-user-permissions.csv";
+  private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String PUB_SUB_USERNAME = "pub-sub";
 
   private PubSubUserDao pubSubUserDao;
@@ -64,30 +68,35 @@ public class SecurityManagerImpl implements SecurityManager {
   @Override
   public Future<Boolean> createPubSubUser(OkapiConnectionParams params) {
     return existsPubSubUser(params)
-      .compose(exists -> {
-        if (exists) {
-          return Future.succeededFuture(true);
+      .compose(id -> {
+        if (StringUtils.isNotEmpty(id)) {
+          return  addPermissions(id, params);
         } else {
           return createUser(params)
             .compose(userId -> saveCredentials(userId, params))
-            .compose(userId -> addPermissions(userId, params));
+            .compose(userId -> assignPermissions(userId, params));
         }
       });
   }
 
-  private Future<Boolean> existsPubSubUser(OkapiConnectionParams params) {
+  private Future<String> existsPubSubUser(OkapiConnectionParams params) {
     String query = "?query=username=" + PUB_SUB_USERNAME;
     return doRequest(null, USERS_URL + query, HttpMethod.GET, params)
       .compose(response -> {
-        Future<Boolean> future = Future.future();
+        Future<String> future = Future.future();
         if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
           response.bodyHandler(buf -> {
-            JsonObject users = new JsonObject(buf.toString());
-            future.complete(users.getInteger("totalRecords") > 0);
+            JsonObject usersCollection = new JsonObject(buf.toString());
+            JsonArray users = usersCollection.getJsonArray("users");
+            if (users.size() > 0) {
+              future.complete(users.getJsonObject(0).getString("id"));
+            } else {
+              future.complete();
+            }
           });
         } else {
           LOGGER.error("Failed request on GET users. Received status code {}", response.statusCode());
-          future.complete(false);
+          future.complete();
         }
         return future;
       });
@@ -134,13 +143,11 @@ public class SecurityManagerImpl implements SecurityManager {
       });
   }
 
-  private Future<Boolean> addPermissions(String userId, OkapiConnectionParams params) {
-    List<String> permissions;
-    try {
-      permissions = FileUtils.readLines(new File(PERMISSIONS_FILE_PATH), "utf-8");
-    } catch (IOException e) {
-      LOGGER.error("Error reading permissions from file", e);
-      return Future.failedFuture(e);
+  private Future<Boolean> assignPermissions(String userId, OkapiConnectionParams params) {
+    List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
+    if (CollectionUtils.isEmpty(permissions)) {
+      LOGGER.info("No permissions found to assign to pub-sub user");
+      return Future.succeededFuture(false);
     }
     JsonObject requestBody = new JsonObject()
       .put("id", UUID.randomUUID().toString())
@@ -155,10 +162,49 @@ public class SecurityManagerImpl implements SecurityManager {
         } else {
           String errorMessage = format("Failed to add permissions for pub-sub user. Received status code %s", response.statusCode());
           LOGGER.error(errorMessage);
-          future.fail(errorMessage);
+          future.complete(false);
         }
         return future;
       });
+  }
+
+  private Future<Boolean> addPermissions(String userId, OkapiConnectionParams params) {
+    List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
+    if (CollectionUtils.isEmpty(permissions)) {
+      LOGGER.info("No permissions found to add for pub-sub user");
+      return Future.succeededFuture(false);
+    }
+    List<Future> futures = new ArrayList<>();
+    String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
+    permissions.forEach(permission -> {
+      JsonObject requestBody = new JsonObject()
+        .put("permissionName",permission);
+      futures.add(doRequest(requestBody.encode(), permUrl, HttpMethod.POST, params)
+        .compose(response -> {
+          Future<Boolean> future = Future.future();
+          if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
+            LOGGER.info("Added permission {} for pub-sub user", permission);
+            future.complete(true);
+          } else {
+            String errorMessage = format("Failed to add permission %s for pub-sub user. Received status code %s", permission, response.statusCode());
+            LOGGER.error(errorMessage);
+            future.complete(false);
+          }
+          return future;
+        }));
+    });
+    return CompositeFuture.all(futures).map(true);
+  }
+
+  private List<String> readPermissionsFromResource(String path) {
+    List<String> permissions = new ArrayList<>();
+    URL url = Resources.getResource(path);
+    try {
+      permissions = Resources.readLines(url, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      LOGGER.error("Error reading permissions from {}", e, path);
+    }
+    return permissions;
   }
 
 }
