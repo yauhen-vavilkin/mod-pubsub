@@ -1,3 +1,9 @@
+## 2019-12-13 v1.0.1
+* Removed default permissions for pub-sub user
+* Updated LaunchDescriptor
+* Used new base docker image
+* Updated documentation
+
 ## 2019-12-04 v1.0.0
 * Initial module setup
 * Defined EventDescriptor and Event schemas
