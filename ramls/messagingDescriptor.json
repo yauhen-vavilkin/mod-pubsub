@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "properties": {
     "publications": {
-      "description": "List event descriptors which the module publishes",
+      "description": "List of event descriptors the module publishes",
       "type": "array",
       "items": {
         "type": "object",
@@ -13,7 +13,7 @@
       }
     },
     "subscriptions": {
-      "description": "List of event types the module is subscribed",
+      "description": "List of event types the module is subscribed to",
       "type": "array",
       "items": {
         "type": "object",
