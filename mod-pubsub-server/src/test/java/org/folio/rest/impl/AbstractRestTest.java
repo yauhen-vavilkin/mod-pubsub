@@ -15,6 +15,7 @@ import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.PomReader;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -109,7 +110,8 @@ public abstract class AbstractRestTest {
         .put("spring.configuration", "org.folio.config.TestConfig"));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        TenantAttributes tenantAttributes = null;
+        TenantAttributes tenantAttributes = new TenantAttributes();
+        tenantAttributes.setModuleTo(PomReader.INSTANCE.getModuleName());
         tenantClient.postTenant(tenantAttributes, res2 -> {
           async.complete();
         });

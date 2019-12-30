@@ -82,7 +82,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-kafka-client</artifactId>
-      <version>3.7.0</version>
+      <version>3.8.4</version>
       <exclusions>
         <exclusion>
           <groupId>net.sf.jopt-simple</groupId>
@@ -91,6 +91,10 @@
         <exclusion>
           <groupId>org.apache.zookeeper</groupId>
           <artifactId>zookeeper</artifactId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jackson-module-scala_2.12</artifactId>
+          <groupId>com.fasterxml.jackson.module</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -121,6 +125,12 @@
           <artifactId>jopt-simple</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.12</artifactId>
+      <version>3.1.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -270,12 +280,12 @@
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
-            <version>1.8.9</version>
+            <version>1.9.4</version>
           </dependency>
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjtools</artifactId>
-            <version>1.8.9</version>
+            <version>1.9.4</version>
           </dependency>
         </dependencies>
       </plugin>
