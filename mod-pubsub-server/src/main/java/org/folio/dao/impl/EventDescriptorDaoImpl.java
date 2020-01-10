@@ -1,6 +1,7 @@
 package org.folio.dao.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -45,34 +46,34 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
 
   @Override
   public Future<List<EventDescriptor>> getAll() {
-    Future<ResultSet> future = Future.future();
+    Promise<ResultSet> promise = Promise.promise();
     String preparedQuery = format(GET_ALL_SQL, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().select(preparedQuery, future.completer());
-    return future.map(this::mapResultSetToEventDescriptorList);
+    pgClientFactory.getInstance().select(preparedQuery, promise);
+    return promise.future().map(this::mapResultSetToEventDescriptorList);
   }
 
   @Override
   public Future<Optional<EventDescriptor>> getByEventType(String eventType) {
-    Future<ResultSet> future = Future.future();
+    Promise<ResultSet> promise = Promise.promise();
     try {
       String preparedQuery = format(GET_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
       JsonArray params = new JsonArray().add(eventType);
-      pgClientFactory.getInstance().select(preparedQuery, params, future.completer());
+      pgClientFactory.getInstance().select(preparedQuery, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error getting EventDescriptor by event type '{}'", e, eventType);
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(resultSet -> resultSet.getResults().isEmpty() ? Optional.empty()
+    return promise.future().map(resultSet -> resultSet.getResults().isEmpty() ? Optional.empty()
       : Optional.of(mapRowJsonToEventDescriptor(resultSet.getRows().get(0))));
   }
 
   @Override
   public Future<List<EventDescriptor>> getByEventTypes(List<String> eventTypes) {
-    Future<ResultSet> future = Future.future();
+    Promise<ResultSet> promise = Promise.promise();
     String query = getQueryByEventTypes(eventTypes);
     String preparedQuery = format(query, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().select(preparedQuery, future.completer());
-    return future.map(this::mapResultSetToEventDescriptorList);
+    pgClientFactory.getInstance().select(preparedQuery, promise);
+    return promise.future().map(this::mapResultSetToEventDescriptorList);
   }
 
   private String getQueryByEventTypes(List<String> eventTypes) {
@@ -89,50 +90,50 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
 
   @Override
   public Future<String> save(EventDescriptor eventDescriptor) {
-    Future<UpdateResult> future = Future.future();
+    Promise<UpdateResult> promise = Promise.promise();
     try {
       String query = format(INSERT_SQL, MODULE_SCHEMA, TABLE_NAME);
       JsonArray params = new JsonArray()
         .add(eventDescriptor.getEventType())
         .add(pojo2json(eventDescriptor));
-      pgClientFactory.getInstance().execute(query, params, future.completer());
+      pgClientFactory.getInstance().execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error saving EventDescriptor with event type '{}'", e, eventDescriptor.getEventType());
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(updateResult -> eventDescriptor.getEventType());
+    return promise.future().map(updateResult -> eventDescriptor.getEventType());
   }
 
   @Override
   public Future<EventDescriptor> update(EventDescriptor eventDescriptor) {
-    Future<UpdateResult> future = Future.future();
+    Promise<UpdateResult> promise = Promise.promise();
     try {
       String query = format(UPDATE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
       JsonArray params = new JsonArray()
         .add(pojo2json(eventDescriptor))
         .add(eventDescriptor.getEventType());
-      pgClientFactory.getInstance().execute(query, params, future.completer());
+      pgClientFactory.getInstance().execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error updating EventDescriptor by event type '{}'", e, eventDescriptor.getEventType());
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.compose(updateResult -> updateResult.getUpdated() == 1
+    return promise.future().compose(updateResult -> updateResult.getUpdated() == 1
       ? Future.succeededFuture(eventDescriptor)
       : Future.failedFuture(new NotFoundException(format("EventDescriptor with event type '%s' was not updated", eventDescriptor.getEventType()))));
   }
 
   @Override
   public Future<Boolean> delete(String eventType) {
-    Future<UpdateResult> future = Future.future();
+    Promise<UpdateResult> promise = Promise.promise();
     try {
       String query = format(DELETE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
       JsonArray params = new JsonArray().add(eventType);
-      pgClientFactory.getInstance().execute(query, params, future.completer());
+      pgClientFactory.getInstance().execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error deleting EventDescriptor with event type '{}'", e, eventType);
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(updateResult -> updateResult.getUpdated() == 1);
+    return promise.future().map(updateResult -> updateResult.getUpdated() == 1);
   }
 
   private EventDescriptor mapRowJsonToEventDescriptor(JsonObject rowAsJson) {

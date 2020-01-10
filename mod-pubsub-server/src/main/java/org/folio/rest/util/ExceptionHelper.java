@@ -1,6 +1,6 @@
 package org.folio.rest.util;
 
-import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
@@ -32,10 +32,10 @@ public final class ExceptionHelper {
         .entity(throwable.getMessage())
         .build();
     }
-    Future<Response> validationFuture = Future.future();
-    ValidationHelper.handleError(throwable, validationFuture.completer());
-    if (validationFuture.isComplete()) {
-      Response response = validationFuture.result();
+    Promise<Response> validationPromise = Promise.promise();
+    ValidationHelper.handleError(throwable, validationPromise);
+    if (validationPromise.future().isComplete()) {
+      Response response = validationPromise.future().result();
       if (response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
         LOGGER.error(throwable.getMessage(), throwable);
       }

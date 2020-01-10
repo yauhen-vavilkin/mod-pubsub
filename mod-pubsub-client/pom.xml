@@ -12,6 +12,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <ramlfiles_path>${project.parent.basedir}/ramls</ramlfiles_path>
+    <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
+    <sonar.exclusions>**/PubsubClient.java</sonar.exclusions>
   </properties>
 
   <dependencies>

@@ -1,6 +1,7 @@
 package org.folio.dao.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -9,9 +10,9 @@ import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.UpdateResult;
 import org.folio.dao.AuditMessageDao;
 import org.folio.dao.PostgresClientFactory;
-import org.folio.rest.util.AuditMessageFilter;
 import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.AuditMessagePayload;
+import org.folio.rest.util.AuditMessageFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -44,21 +45,21 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
 
   @Override
   public Future<List<AuditMessage>> getAuditMessages(AuditMessageFilter filter, String tenantId) {
-    Future<ResultSet> future = Future.future();
+    Promise<ResultSet> promise = Promise.promise();
     try {
       String query = format(SELECT_QUERY, convertToPsqlStandard(tenantId), AUDIT_MESSAGE_TABLE)
         .concat(constructWhereClauseForGetAuditMessagesQuery(filter));
-      pgClientFactory.getInstance(tenantId).select(query, future.completer());
+      pgClientFactory.getInstance(tenantId).select(query, promise);
     } catch (Exception e) {
       LOGGER.error("Error retrieving audit messages", e);
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(this::mapAuditMessagesResult);
+    return promise.future().map(this::mapAuditMessagesResult);
   }
 
   @Override
   public Future<AuditMessage> saveAuditMessage(AuditMessage auditMessage) {
-    Future<UpdateResult> future = Future.future();
+    Promise<UpdateResult> promise = Promise.promise();
     try {
       String query = format(INSERT_AUDIT_MESSAGE_QUERY, convertToPsqlStandard(auditMessage.getTenantId()), AUDIT_MESSAGE_TABLE);
       JsonArray params = new JsonArray()
@@ -71,43 +72,43 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
         .add(auditMessage.getPublishedBy())
         .add(auditMessage.getCorrelationId() != null ? auditMessage.getCorrelationId() : "")
         .add(auditMessage.getCreatedBy() != null ? auditMessage.getCreatedBy() : "");
-      pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, future.completer());
+      pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error saving audit message with id {}", e, auditMessage.getId());
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(updateResult -> auditMessage);
+    return promise.future().map(updateResult -> auditMessage);
   }
 
   @Override
   public Future<AuditMessagePayload> saveAuditMessagePayload(AuditMessagePayload auditMessagePayload, String tenantId) {
-    Future<UpdateResult> future = Future.future();
+    Promise<UpdateResult> promise = Promise.promise();
     try {
       String query = format(INSERT_AUDIT_MESSAGE_PAYLOAD_QUERY, convertToPsqlStandard(tenantId), AUDIT_MESSAGE_PAYLOAD_TABLE);
       JsonArray params = new JsonArray()
         .add(auditMessagePayload.getEventId())
         .add(pojo2json(auditMessagePayload));
-      pgClientFactory.getInstance(tenantId).execute(query, params, future.completer());
+      pgClientFactory.getInstance(tenantId).execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error saving audit message payload for event with id {}", e, auditMessagePayload.getEventId());
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(updateResult -> auditMessagePayload);
+    return promise.future().map(updateResult -> auditMessagePayload);
 
   }
 
   @Override
   public Future<Optional<AuditMessagePayload>> getAuditMessagePayloadByEventId(String eventId, String tenantId) {
-    Future<ResultSet> future = Future.future();
+    Promise<ResultSet> promise = Promise.promise();
     try {
       String query = format(GET_BY_EVENT_ID_QUERY, convertToPsqlStandard(tenantId), AUDIT_MESSAGE_PAYLOAD_TABLE);
       JsonArray params = new JsonArray().add(eventId);
-      pgClientFactory.getInstance(tenantId).select(query, params, future.completer());
+      pgClientFactory.getInstance(tenantId).select(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error while searching for audit message payload by event id {}", e, eventId);
-      future.fail(e);
+      promise.fail(e);
     }
-    return future.map(resultSet -> resultSet.getResults().isEmpty()
+    return promise.future().map(resultSet -> resultSet.getResults().isEmpty()
       ? Optional.empty() : Optional.of(mapAuditMessagePayload(resultSet.getRows().get(0))));
   }
 

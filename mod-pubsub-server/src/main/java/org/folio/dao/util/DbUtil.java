@@ -2,6 +2,7 @@ package org.folio.dao.util;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.SQLConnection;
@@ -28,24 +29,24 @@ public final class DbUtil {
    */
   public static <T> Future<T> executeInTransaction(PostgresClient postgresClient,
                                                    Function<AsyncResult<SQLConnection>, Future<T>> action) {
-    Future<T> future = Future.future();
-    Future<SQLConnection> tx = Future.future(); //NOSONAR
+    Promise<T> promise = Promise.promise();
+    Promise<SQLConnection> tx = Promise.promise();
     Future.succeededFuture()
       .compose(v -> {
-        postgresClient.startTx(tx.completer());
-        return tx;
+        postgresClient.startTx(tx);
+        return tx.future();
       })
-      .compose(v -> action.apply(tx))
+      .compose(v -> action.apply(tx.future()))
       .setHandler(result -> {
         if (result.succeeded()) {
-          postgresClient.endTx(tx, endTx -> future.complete(result.result()));
+          postgresClient.endTx(tx.future(), endTx -> promise.complete(result.result()));
         } else {
-          postgresClient.rollbackTx(tx, r -> {
+          postgresClient.rollbackTx(tx.future(), r -> {
             LOG.error("Rollback transaction", result.cause());
-            future.fail(result.cause());
+            promise.fail(result.cause());
           });
         }
       });
-    return future;
+    return promise.future();
   }
 }

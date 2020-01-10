@@ -3,12 +3,14 @@ package org.folio.services.impl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,7 +62,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
 
   @Override
   public Future<Boolean> subscribe(String moduleId, List<String> eventTypes, OkapiConnectionParams params) {
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> promise = Promise.promise();
     Set<String> topics = eventTypes.stream()
       .map(eventType -> new PubSubConfig(params.getTenantId(), eventType).getTopicName())
       .collect(Collectors.toSet());
@@ -70,13 +72,13 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       .subscribe(topics, ar -> {
         if (ar.succeeded()) {
           LOGGER.info("Subscribed to topics [{}]", StringUtils.join(topics, ","));
-          future.complete(true);
+          promise.complete(true);
         } else {
           LOGGER.error("Could not subscribe to some of the topics [{}]", ar.cause(), StringUtils.join(topics, ","));
-          future.fail(ar.cause());
+          promise.fail(ar.cause());
         }
       }).handler(getEventReceivedHandler(params));
-    return future;
+    return promise.future();
   }
 
   private Handler<KafkaConsumerRecord<String, String>> getEventReceivedHandler(OkapiConnectionParams params) {
@@ -111,7 +113,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       });
   }
 
-  protected Handler<AsyncResult<HttpClientResponse>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
+  protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
     return ar -> {
       if (ar.failed()) {
         LOGGER.error("Event {} was not delivered to {}", ar.cause(), event.getId(), subscriber.getSubscriberCallback());

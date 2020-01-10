@@ -1,14 +1,17 @@
 package org.folio.rest.util;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
@@ -21,10 +24,10 @@ public final class RestUtil {
   private RestUtil() {
   }
 
-  public static Future<HttpClientResponse> doRequest(String payload, String path, HttpMethod method, OkapiConnectionParams params) {
-    Future<HttpClientResponse> future = Future.future();
+  public static Future<HttpResponse<Buffer>> doRequest(String payload, String path, HttpMethod method, OkapiConnectionParams params) {
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
     try {
-      HttpClientRequest request = getHttpClient(params).requestAbs(method, params.getOkapiUrl() + path);
+      HttpRequest<Buffer> request = WebClient.wrap(getHttpClient(params)).requestAbs(method, params.getOkapiUrl() + path);
 
       CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
       headers.add(OKAPI_URL_HEADER, params.getOkapiUrl())
@@ -34,19 +37,16 @@ public final class RestUtil {
         .add("Accept", "application/json, text/plain");
       headers.entries().forEach(header -> request.putHeader(header.getKey(), header.getValue()));
 
-      request.exceptionHandler(future::fail);
-      request.handler(future::complete);
-
       if (payload == null) {
-        request.end();
+        request.send(promise);
       } else {
-        request.end(payload);
+        request.sendBuffer(Buffer.buffer(payload), promise);
       }
     } catch (Exception e) {
       LOGGER.error("Request to {} failed", e, path);
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private static HttpClient getHttpClient(OkapiConnectionParams params) {

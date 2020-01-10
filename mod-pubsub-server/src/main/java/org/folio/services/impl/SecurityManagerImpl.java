@@ -3,6 +3,7 @@ package org.folio.services.impl;
 import com.google.common.io.Resources;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -83,22 +84,20 @@ public class SecurityManagerImpl implements SecurityManager {
     String query = "?query=username=" + PUB_SUB_USERNAME;
     return doRequest(null, USERS_URL + query, HttpMethod.GET, params)
       .compose(response -> {
-        Future<String> future = Future.future();
+        Promise<String> promise = Promise.promise();
         if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
-          response.bodyHandler(buf -> {
-            JsonObject usersCollection = new JsonObject(buf.toString());
-            JsonArray users = usersCollection.getJsonArray("users");
-            if (users.size() > 0) {
-              future.complete(users.getJsonObject(0).getString("id"));
-            } else {
-              future.complete();
-            }
-          });
+          JsonObject usersCollection = response.bodyAsJsonObject();
+          JsonArray users = usersCollection.getJsonArray("users");
+          if (users.size() > 0) {
+            promise.complete(users.getJsonObject(0).getString("id"));
+          } else {
+            promise.complete();
+          }
         } else {
           LOGGER.error("Failed request on GET users. Received status code {}", response.statusCode());
-          future.complete();
+          promise.complete();
         }
-        return future;
+        return promise.future();
       });
   }
 
@@ -110,16 +109,16 @@ public class SecurityManagerImpl implements SecurityManager {
       .put("active", true);
     return doRequest(body.encode(), USERS_URL, HttpMethod.POST, params)
       .compose(response -> {
-        Future<String> future = Future.future();
+        Promise<String> promise = Promise.promise();
         if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Created pub-sub user");
-          future.complete(id);
+          promise.complete(id);
         } else {
           String errorMessage = format("Failed to create pub-sub user. Received status code %s", response.statusCode());
           LOGGER.error(errorMessage);
-          future.fail(errorMessage);
+          promise.fail(errorMessage);
         }
-        return future;
+        return promise.future();
       });
   }
 
@@ -129,16 +128,16 @@ public class SecurityManagerImpl implements SecurityManager {
         credentials.put("userId", userId);
         return doRequest(credentials.encode(), CREDENTIALS_URL, HttpMethod.POST, params)
           .compose(response -> {
-            Future<String> future = Future.future();
+            Promise<String> promise = Promise.promise();
             if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
               LOGGER.info("Saved pub-sub user credentials");
-              future.complete(userId);
+              promise.complete(userId);
             } else {
               String errorMessage = format("Failed to save pub-sub user credentials. Received status code %s", response.statusCode());
               LOGGER.error(errorMessage);
-              future.fail(errorMessage);
+              promise.fail(errorMessage);
             }
-            return future;
+            return promise.future();
           });
       });
   }
@@ -155,16 +154,16 @@ public class SecurityManagerImpl implements SecurityManager {
       .put("permissions", new JsonArray(permissions));
     return doRequest(requestBody.encode(), PERMISSIONS_URL, HttpMethod.POST, params)
       .compose(response -> {
-        Future<Boolean> future = Future.future();
+        Promise<Boolean> promise = Promise.promise();
         if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Added permissions [{}] for pub-sub user", StringUtils.join(permissions, ","));
-          future.complete(true);
+          promise.complete(true);
         } else {
           String errorMessage = format("Failed to add permissions for pub-sub user. Received status code %s", response.statusCode());
           LOGGER.error(errorMessage);
-          future.complete(false);
+          promise.complete(false);
         }
-        return future;
+        return promise.future();
       });
   }
 
@@ -181,16 +180,16 @@ public class SecurityManagerImpl implements SecurityManager {
         .put("permissionName",permission);
       futures.add(doRequest(requestBody.encode(), permUrl, HttpMethod.POST, params)
         .compose(response -> {
-          Future<Boolean> future = Future.future();
+          Promise<Boolean> promise = Promise.promise();
           if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
             LOGGER.info("Added permission {} for pub-sub user", permission);
-            future.complete(true);
+            promise.complete(true);
           } else {
             String errorMessage = format("Failed to add permission %s for pub-sub user. Received status code %s", permission, response.statusCode());
             LOGGER.error(errorMessage);
-            future.complete(false);
+            promise.complete(false);
           }
-          return future;
+          return promise.future();
         }));
     });
     return CompositeFuture.all(futures).map(true);
