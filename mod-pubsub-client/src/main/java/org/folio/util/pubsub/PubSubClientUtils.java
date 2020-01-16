@@ -20,8 +20,10 @@ import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
 import org.folio.util.pubsub.support.DescriptorHolder;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +78,7 @@ public class PubSubClientUtils {
    * @return - async result with boolean value. True if module was registered successfully
    */
   public static CompletableFuture<Boolean> registerModule(OkapiConnectionParams params) {
-    CompletableFuture<Boolean> result = CompletableFuture.completedFuture(false);
+    CompletableFuture<Boolean> result = new CompletableFuture<>();
     try {
       PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
       LOGGER.info("Reading MessagingDescriptor.json");
@@ -84,7 +86,7 @@ public class PubSubClientUtils {
       if (descriptorHolder.getPublisherDescriptor() != null) {
         LOGGER.info("Registering events for publishers");
         List<EventDescriptor> eventDescriptors = descriptorHolder.getPublisherDescriptor().getEventDescriptors();
-        result = result.thenCompose(ar -> registerEventTypes(client, eventDescriptors))
+        result = registerEventTypes(client, eventDescriptors)
           .thenCompose(ar -> registerPublishers(client, descriptorHolder.getPublisherDescriptor()));
       }
       if (descriptorHolder.getSubscriberDescriptor() != null) {
@@ -182,8 +184,7 @@ public class PubSubClientUtils {
   static DescriptorHolder readMessagingDescriptor() throws IOException {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
-      File messagingDescriptorFile = getMessagingDescriptorFile();
-      MessagingDescriptor messagingDescriptor = objectMapper.readValue(messagingDescriptorFile, MessagingDescriptor.class);
+      MessagingDescriptor messagingDescriptor = objectMapper.readValue(getMessagingDescriptorInputStream(), MessagingDescriptor.class);
 
       return new DescriptorHolder()
         .withPublisherDescriptor(new PublisherDescriptor()
@@ -199,40 +200,40 @@ public class PubSubClientUtils {
     }
   }
 
-  private static File getMessagingDescriptorFile() throws MessagingDescriptorNotFoundException {
+  private static InputStream getMessagingDescriptorInputStream() throws MessagingDescriptorNotFoundException {
     return Optional.ofNullable(System.getProperty(MESSAGING_CONFIG_PATH_PROPERTY))
-      // returns empty Optional when file was not found or Optional<File> with found file in otherwise
-      .flatMap(PubSubClientUtils::getFileByParentPath)
-      // returns empty Optional when file not found or Optional<Optional<File>> with found file in otherwise
+      .flatMap(PubSubClientUtils::getFileInputStreamByParentPath)
+      // returns empty Optional when file not found or Optional<Optional<InputStream>> with input stream of found file in otherwise
       .map(Optional::of)
       // looking for a file in class path when file was not found by parent path
-      .orElseGet(() -> getFileFromClassPath(MESSAGING_CONFIG_FILE_NAME))
+      .orElseGet(() -> getFileInputStreamFromClassPath(MESSAGING_CONFIG_FILE_NAME))
       .orElseThrow(() -> new MessagingDescriptorNotFoundException("Messaging descriptor file 'MessagingDescriptor.json' not found"));
   }
 
-  private static Optional<File> getFileByParentPath(String parentPath) {
+  private static Optional<InputStream> getFileInputStreamByParentPath(String parentPath) {
     if (Paths.get(parentPath).isAbsolute()) {
-      return getFileByAbsoluteParentPath(parentPath);
+      return getFileInputStreamByAbsoluteParentPath(parentPath);
     }
     String fullRelativeFilePath = new StringBuilder().append(parentPath).append(File.separatorChar).append(MESSAGING_CONFIG_FILE_NAME).toString();
-    return getFileFromClassPath(fullRelativeFilePath);
+    return getFileInputStreamFromClassPath(fullRelativeFilePath);
   }
 
-  private static Optional<File> getFileByAbsoluteParentPath(String absoluteParentPath) {
+  private static Optional<InputStream> getFileInputStreamByAbsoluteParentPath(String absoluteParentPath) {
     File file = new File(absoluteParentPath, MESSAGING_CONFIG_FILE_NAME);
-    if (file.exists()) {
-      return Optional.of(file);
-    }
-    return Optional.empty();
-  }
-
-  private static Optional<File> getFileFromClassPath(String path) {
-    String preparedPath = path.replace('\\', '/');
-    URL fileUrl = PubSubClientUtils.class.getClassLoader().getResource(preparedPath);
-    if (fileUrl == null) {
+    try {
+      return Optional.of(new FileInputStream(file));
+    } catch (FileNotFoundException e) {
       return Optional.empty();
     }
-    return Optional.of(new File(fileUrl.getFile()));
+  }
+
+  private static Optional<InputStream> getFileInputStreamFromClassPath(String path) {
+    String preparedPath = path.replace('\\', '/');
+    InputStream fileStream = PubSubClientUtils.class.getClassLoader().getResourceAsStream(preparedPath);
+    if (fileStream == null) {
+      return Optional.empty();
+    }
+    return Optional.of(fileStream);
   }
 
 }

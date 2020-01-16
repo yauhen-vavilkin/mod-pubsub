@@ -96,6 +96,9 @@ curl -w '\n' -X POST -D -   \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
 
+## Memory allocation level
+The appropriate container memory allocation level is 715827882 bytes, hence 66% of the container memory (472446402 bytes) will be reserved for java heap space.
+
 ## Database schemas
 
 The mod-pub-sub module uses relational approach and Liquibase to define database schemas. 

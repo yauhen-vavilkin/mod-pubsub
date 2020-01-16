@@ -1,5 +1,6 @@
 ## 2019-12-30 V1.1.0-SNAPSHOT
 * Updated RMB version to 29.1.5
+* Fixed reading "MessagingDescriptor" file from JAR file
 
 ## 2019-12-13 v1.0.1
 * Removed default permissions for pub-sub user
