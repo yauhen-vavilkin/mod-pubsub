@@ -1,4 +1,4 @@
-## 2019-12-30 v1.1.0-SNAPSHOT
+## 2019-01-21 v1.0.2
 * Fixed reading "MessagingDescriptor" file from JAR file
 
 ## 2019-12-13 v1.0.1
