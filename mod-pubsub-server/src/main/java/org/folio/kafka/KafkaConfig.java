@@ -11,11 +11,11 @@ import java.util.Map;
 @Component
 public class KafkaConfig {
 
-  @Value("${KAFKA_HOST}")
+  @Value("${KAFKA_HOST:10.0.2.15}")
   private String kafkaHost;
-  @Value("${KAFKA_PORT}")
+  @Value("${KAFKA_PORT:9092}")
   private String kafkaPort;
-  @Value("${OKAPI_URL}")
+  @Value("${OKAPI_URL:http://10.0.2.15:9130}")
   private String okapiUrl;
 
   public String getKafkaHost() {
