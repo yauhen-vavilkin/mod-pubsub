@@ -256,7 +256,7 @@
     "dockerImage": "${artifactId}:${version}",
     "dockerArgs": {
       "HostConfig": {
-        "Memory": 8589934592,
+        "Memory": 1073741824,
         "PortBindings": {
           "8081/tcp": [
             {
