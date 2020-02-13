@@ -1,7 +1,20 @@
 {
   "id": "${artifactId}-${version}",
   "name": "Pubsub",
-  "requires": [],
+  "requires": [
+    {
+      "id": "users",
+      "version": "15.1"
+    },
+    {
+      "id": "login",
+      "version": "6.0"
+    },
+    {
+      "id": "permissions",
+      "version": "5.2"
+    }
+  ],
   "provides": [
     {
       "id": "pubsub-event-types",
@@ -250,6 +263,16 @@
       "permissionName": "pubsub.publish.post",
       "displayName": "PubSub - publish event",
       "description": "Publish event"
+    },
+    {
+      "permissionName": "source-storage.events.post",
+      "displayName": "Source Storage - post event",
+      "description": "Post event"
+    },
+    {
+      "permissionName": "source-records-manager.events.post",
+      "displayName": "Source Record Manager - post event",
+      "description": "Post event"
     }
   ],
   "launchDescriptor": {
