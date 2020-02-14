@@ -267,6 +267,20 @@ public class PublishersApiTest extends AbstractRestTest {
       .body("totalRecords", is(0));
   }
 
+  @Test
+  public void shouldNotFailedWhenRegisterEmptyPublishersList() {
+    PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
+      .withEventDescriptors(Collections.emptyList())
+      .withModuleId("mod-very-important-1.0.0");
+
+    Response postResponse = RestAssured.given()
+      .spec(spec)
+      .body(publisherDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH);
+    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+  }
+
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)

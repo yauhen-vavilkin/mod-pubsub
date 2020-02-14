@@ -125,7 +125,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
         saveAuditMessage(event, tenantId, AuditMessage.State.REJECTED);
       } else {
-        LOGGER.info("Delivered event {} to {}", event.getId(), subscriber.getSubscriberCallback());
+        LOGGER.debug("Delivered event {} to {}", event.getId(), subscriber.getSubscriberCallback());
         saveAuditMessage(event, tenantId, AuditMessage.State.DELIVERED);
       }
     };

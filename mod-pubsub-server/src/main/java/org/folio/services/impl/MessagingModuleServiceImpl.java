@@ -2,6 +2,9 @@ package org.folio.services.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.MessagingModuleDao;
@@ -38,6 +41,8 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
  */
 @Component
 public class MessagingModuleServiceImpl implements MessagingModuleService {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MessagingModuleServiceImpl.class);
 
   private static final int NUMBER_OF_PARTITIONS = 1;
   private static final short REPLICATION_FACTOR = 1;
@@ -102,6 +107,10 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getModuleId(), eventTypes, PUBLISHER, tenantId);
+    if(messagingModules.isEmpty()) {
+      LOGGER.info("Publisher`s list is empty!");
+      return Future.succeededFuture(true);
+    }
 
     return messagingModuleDao.save(messagingModules)
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
@@ -113,6 +122,10 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, params.getTenantId());
+    if(messagingModules.isEmpty()) {
+      LOGGER.info("Subscriber`s list is empty!");
+      return Future.succeededFuture(true);
+    }
 
     Map<String, String> subscriberCallbacksMap = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .collect(Collectors.toMap(SubscriptionDefinition::getEventType, SubscriptionDefinition::getCallbackAddress));
@@ -188,5 +201,4 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .withModuleRole(moduleRole)
       .withActivated(true);
   }
-
 }

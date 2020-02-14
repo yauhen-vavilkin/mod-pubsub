@@ -179,6 +179,7 @@ public class PubSubImpl implements Pubsub {
 
   @Override
   public void postPubsubPublish(Event entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    LOGGER.debug("Event with id: {} received", entity.getId());
     try {
       publishingService.publishEvent(entity, tenantId)
         .map(PostPubsubPublishResponse.respond204())

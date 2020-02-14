@@ -231,6 +231,20 @@ public class SubscribersApiTest extends AbstractRestTest {
       .body("totalRecords", is(0));
   }
 
+  @Test
+  public void shouldNotFailedWhenRegisterEmptySubscribersList() {
+    SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
+      .withSubscriptionDefinitions(Collections.emptyList())
+      .withModuleId("mod-important-1.0.0");
+
+    Response postResponse = RestAssured.given()
+      .spec(spec)
+      .body(subscriberDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
+    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+  }
+
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)
