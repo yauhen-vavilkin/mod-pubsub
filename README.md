@@ -240,6 +240,199 @@ To publish an event `PubSubClientUtils` class provides `sendEventMessage` method
   }
 ```
 
+#### Simple workflow example
+For example, we have 2 modules: publisher and subscriber.
+Publisher publishes an event to the "mod-pubsub", which will be delivered to the subscriber module.
+- First, we should register the first module as "publisher" in "mod-pubsub". To do so, we create a new file "MessagingDescriptor.json"  in the root folder:
+```
+{
+  "publications": [
+    {
+      "eventType": "CREATED_TEST_EVENT",
+      "description": "Created test event",
+      "eventTTL": 1,
+      "signed": false
+    }
+  ],
+  "subscriptions": [
+  ]
+}
+```
+
+This way the module is being declared as publisher for the "CREATED_TEST_EVENT" type.
+
+
+  
+- Second, we should register the module in "mod-pubsub":
+```java
+public class ModTenantAPI extends TenantAPI {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModTenantAPI.class);
+
+  @Override
+  public void postTenant(TenantAttributes tenantAttributes, Map<String, String> headers, Handler<AsyncResult<Response>> handler, Context context) {
+    super.postTenant(tenantAttributes, headers, postTenantAr -> {
+      if (postTenantAr.failed()) {
+        handler.handle(postTenantAr);
+      } else {
+        Vertx vertx = context.owner();
+        vertx.executeBlocking(
+          blockingFuture -> registerModuleToPubsub(headers, context.owner())
+            .setHandler(event -> handler.handle(postTenantAr)),
+          result -> handler.handle(postTenantAr)
+        );
+      }
+    }, context);
+  }
+
+  private Future<Void> registerModuleToPubsub(Map<String, String> headers, Vertx vertx) {
+    Promise<Void> promise = Promise.promise();
+    PubSubClientUtils.registerModule(new org.folio.rest.util.OkapiConnectionParams(headers, vertx))
+      .whenComplete((registrationAr, throwable) -> {
+        if (throwable == null) {
+          LOGGER.info("Module was successfully registered as publisher/subscriber in mod-pubsub");
+          promise.complete();
+        } else {
+          LOGGER.error("Error during module registration in mod-pubsub", throwable);
+          promise.fail(throwable);
+        }
+      });
+    return promise.future();
+  }
+}
+```
+
+- In addition, modules registered as "publishers" and/or "subscribers" should add specific "pub-sub" permission as "modulePermissions" in "ModuleDescriptor-template.json":
+  ```json
+    "provides": [
+      {
+        "id": "_tenant",
+        "version": "1.2",
+        "interfaceType": "system",
+        "handlers": [
+          {
+            "methods": [
+              "POST"
+            ],
+            "pathPattern": "/_/tenant",
+            "modulePermissions": [
+              "pubsub.event-types.post",
+              "pubsub.publishers.post",
+              "pubsub.subscribers.post"
+            ]
+          },
+          {
+            "methods": [
+              "DELETE"
+            ],
+            "pathPattern": "/_/tenant"
+          }
+        ]
+      }
+    ]
+  ```
+
+- Then, implement sending event anywhere in your code:
+```
+  private void publishEvent(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext, Event event) {
+    Event event = new Event().
+      withEventType("CREATED_TEST_EVENT")
+      .withEventPayload("Test payload")
+      .withEventMetadata(new EventMetadata()
+        .withPublishedBy("mod-publisher")
+        .withTenantId(okapiHeaders.get(OKAPI_TENANT_HEADER))
+        .withEventTTL(1));
+    OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
+    PubSubClientUtils.sendEventMessage(event, params)
+      .whenComplete((result, throwable) -> {
+        if (result) {
+          LOGGER.info("Event published successfully: {}", event.getId());
+          asyncResultHandler.handle(Future.succeededFuture());
+        } else {
+          LOGGER.error("Failed to publish event: {}", event.getId());
+          asyncResultHandler.handle(Future.failedFuture("Failed to publish event"));
+        }
+      });
+}
+```
+
+
+- After that, let's create subscriber module. At first, define "MessagingDescriptor.json"-file for subscriber module:
+```json
+{
+  "publications": [
+  ],
+  "subscriptions": [
+    {
+      "eventType": "CREATED_TEST_EVENT",
+      "callbackAddress": "/process/records"
+    }
+  ]
+}
+
+```
+Endpoint, which will receive the event from the publisher module has address: "/process/records".
+
+- Register this subscriber module in the "mod-pubsub" the same way as first module via TenantAPI.
+
+- Create new endpoint which was declared as "callbackAddress" using raml:
+```raml
+/process/records:
+    displayName: Publish event
+    description: API used by subscriber to catch events
+    post:
+      body:
+        application/json:
+          type: string
+      responses:
+        204:
+        400:
+          body:
+            application/json:
+              schema: errors
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"
+```
+Then, let's create logic for logging event in subscriber's new endpoint which was declared as "callbackAddress" in the "MessagingDescriptor.json":
+```java
+public class ProcessRecordsImpl implements ProcessRecords {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProcessRecordsImpl.class);
+
+  @Override
+  public void postProcessRecords(String entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    asyncResultHandler.handle(Future.succeededFuture());
+    LOGGER.info("Event: {}", entity);
+  }
+}
+```
+Keep in mind, that subscriber module should return response to the "mod-pubsub" before all business-logic. Main reasons for it:
+- Extra connection to the module should be closed for best performance;
+- There is no need for waiting response from subscriber's logic because this is not "mod-pubsub" responsibility. It should only deliver event to this module.
+
+As a result, we can send an event from the publisher module to "mod-pubsub" and "mod-pubsub" will deliver it to the subscriber module.
+
+#### Permissions
+##### "mod-pubsub" permissions workflow:
+At first "mod-pubsub" checks whether "pub-sub" user exists in the system. If user exists, then:
+- adds persmissions from the file "pubsub-user-permissions.csv" for the "pub-sub" user.
+
+ ##### Otherwise:
+ If user does not exist in the system, then:
+ - "pub-sub" user is created;
+ - "pub-sub" user credentials are created;
+ - permissions are assigned for "pub-sub" user (new record added with "pub-sub" user and specific permissions for it to the "user_permissions" table). 
+
+
+##### After the "pub-sub" user is logged in, it`s token is used for delivering events to subscriber module.
+
+
+
+- In "mod-pubsub" user permissions are declared in "mod-pubsub-server/src/main/resources/permissions/pubsub-user-permissions.csv"
+
 ## Issue tracker
 
 See project [MODPUBSUB](https://issues.folio.org/browse/MODPUBSUB)
