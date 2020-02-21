@@ -4,6 +4,7 @@ import com.google.common.io.Resources;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.RestUtil.doRequest;
 
@@ -40,21 +42,27 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String PUB_SUB_USERNAME = "pub-sub";
+  private static final String TOKEN_KEY_FORMAT = "%s_JWTToken";
 
   private PubSubUserDao pubSubUserDao;
+  private Vertx vertx;
 
-  public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao) {
+  public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx) {
     this.pubSubUserDao = pubSubUserDao;
+    this.vertx = vertx;
   }
 
   @Override
   public Future<Boolean> loginPubSubUser(OkapiConnectionParams params) {
+    params.setToken(EMPTY);
+
     return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
       .compose(userCredentials -> doRequest(userCredentials.encode(), LOGIN_URL, HttpMethod.POST, params))
       .compose(response -> {
         if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Logged in pub-sub user");
-          return pubSubUserDao.savePubSubJWTToken(response.getHeader(OKAPI_TOKEN_HEADER), params.getTenantId());
+          putTokenToVertxContext(response.getHeader(OKAPI_TOKEN_HEADER), params);
+          return Future.succeededFuture(true);
         }
         LOGGER.error("pub-sub user was not logged in, received status {}", response.statusCode());
         return Future.succeededFuture(false);
@@ -62,8 +70,13 @@ public class SecurityManagerImpl implements SecurityManager {
   }
 
   @Override
-  public Future<String> getJWTToken(String tenantId) {
-    return pubSubUserDao.getPubSubJWTToken(tenantId);
+  public Future<String> getJWTToken(OkapiConnectionParams params) {
+    String token = vertx.getOrCreateContext().get(format(TOKEN_KEY_FORMAT, params.getTenantId()));
+    if (StringUtils.isEmpty(token)) {
+      return loginPubSubUser(params)
+        .map(vertx.getOrCreateContext().<String>get(format(TOKEN_KEY_FORMAT, params.getTenantId())));
+    }
+    return Future.succeededFuture(token);
   }
 
   @Override
@@ -71,7 +84,7 @@ public class SecurityManagerImpl implements SecurityManager {
     return existsPubSubUser(params)
       .compose(id -> {
         if (StringUtils.isNotEmpty(id)) {
-          return  addPermissions(id, params);
+          return addPermissions(id, params);
         } else {
           return createUser(params)
             .compose(userId -> saveCredentials(userId, params))
@@ -204,6 +217,10 @@ public class SecurityManagerImpl implements SecurityManager {
       LOGGER.error("Error reading permissions from {}", e, path);
     }
     return permissions;
+  }
+
+  private void putTokenToVertxContext(String token, OkapiConnectionParams params) {
+    vertx.getOrCreateContext().put(format(TOKEN_KEY_FORMAT, params.getTenantId()), token);
   }
 
 }

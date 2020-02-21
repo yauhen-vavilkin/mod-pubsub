@@ -7,7 +7,6 @@ import org.folio.kafka.KafkaConfig;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.ConsumerService;
-import org.folio.services.SecurityManager;
 import org.folio.services.StartupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,33 +22,27 @@ public class StartupServiceImpl implements StartupService {
   private KafkaConfig kafkaConfig;
   private MessagingModuleDao messagingModuleDao;
   private ConsumerService consumerService;
-  private SecurityManager securityManager;
 
   public StartupServiceImpl(@Autowired Vertx vertx,
                             @Autowired KafkaConfig kafkaConfig,
                             @Autowired MessagingModuleDao messagingModuleDao,
-                            @Autowired ConsumerService consumerService,
-                            @Autowired SecurityManager securityManager) {
+                            @Autowired ConsumerService consumerService) {
     this.vertx = vertx;
     this.kafkaConfig = kafkaConfig;
     this.messagingModuleDao = messagingModuleDao;
     this.consumerService = consumerService;
-    this.securityManager = securityManager;
   }
 
   @Override
   public void initSubscribers() {
     messagingModuleDao.get(new MessagingModuleFilter().withModuleRole(SUBSCRIBER).withActivated(true))
       .compose(messagingModules -> {
-        messagingModules.forEach(messagingModule ->
-          securityManager.getJWTToken(messagingModule.getTenantId())
-            .compose(token -> {
-              OkapiConnectionParams params = new OkapiConnectionParams(vertx);
-              params.setOkapiUrl(kafkaConfig.getOkapiUrl());
-              params.setTenantId(messagingModule.getTenantId());
-              params.setToken(token);
-              return consumerService.subscribe(messagingModule.getModuleId(), Collections.singletonList(messagingModule.getEventType()), params);
-            }));
+        messagingModules.forEach(messagingModule -> {
+          OkapiConnectionParams params = new OkapiConnectionParams(vertx);
+          params.setOkapiUrl(kafkaConfig.getOkapiUrl());
+          params.setTenantId(messagingModule.getTenantId());
+          consumerService.subscribe(messagingModule.getModuleId(), Collections.singletonList(messagingModule.getEventType()), params);
+        });
         return Future.succeededFuture();
       });
   }

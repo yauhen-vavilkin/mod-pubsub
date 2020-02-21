@@ -9,7 +9,7 @@ import org.folio.rest.util.OkapiConnectionParams;
 public interface SecurityManager {
 
   /**
-   * Log in pub-sub user and save obtained token in the db
+   * Log in pub-sub user and save obtained token in the vertx context
    *
    * @param params okapi connection params
    * @return future with true if succeeded
@@ -19,10 +19,10 @@ public interface SecurityManager {
   /**
    * Get JWT token for pub-sub user
    *
-   * @param tenantId tenant id
+   * @param params okapi connection params
    * @return future with token
    */
-  Future<String> getJWTToken(String tenantId);
+  Future<String> getJWTToken(OkapiConnectionParams params);
 
   /**
    * Creates new pub-sub user if it doesn't exist and assigns all necessary permissions

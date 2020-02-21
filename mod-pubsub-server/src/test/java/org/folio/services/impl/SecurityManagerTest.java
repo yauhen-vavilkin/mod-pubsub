@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -37,6 +38,7 @@ import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 @RunWith(VertxUnitRunner.class)
 public class SecurityManagerTest extends AbstractRestTest {
@@ -48,16 +50,20 @@ public class SecurityManagerTest extends AbstractRestTest {
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String TENANT = "diku";
   private static final String TOKEN = "token";
+  private static final String TOKEN_KEY_FORMAT = "%s_JWTToken";
 
   private Map<String, String> headers = new HashMap<>();
-  private Vertx vertx = Vertx.vertx();
 
+  @Spy
+  private Vertx vertx = Vertx.vertx();
   @Spy
   PostgresClientFactory postgresClientFactory = new PostgresClientFactory(vertx);
   @InjectMocks
   private PubSubUserDao pubSubUserDao = new PubSubUserDaoImpl();
   @Spy
-  private SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao);
+  private SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao, vertx);
+
+  private Context vertxContext = vertx.getOrCreateContext();
 
   @Rule
   public WireMockRule mockServer = new WireMockRule(
@@ -68,6 +74,8 @@ public class SecurityManagerTest extends AbstractRestTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+    when(vertx.getOrCreateContext()).thenReturn(vertxContext);
+
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
     headers.put(OKAPI_TENANT_HEADER, TENANT);
     headers.put(OKAPI_TOKEN_HEADER, TOKEN);
@@ -89,7 +97,7 @@ public class SecurityManagerTest extends AbstractRestTest {
     params.setToken(TOKEN);
 
     Future<String> future = securityManager.loginPubSubUser(params)
-      .compose(ar -> securityManager.getJWTToken(params.getTenantId()));
+      .compose(ar -> securityManager.getJWTToken(params));
 
     future.setHandler(ar -> {
       assertTrue(ar.succeeded());
@@ -98,6 +106,8 @@ public class SecurityManagerTest extends AbstractRestTest {
       assertEquals(1, requests.size());
       assertEquals(LOGIN_URL, requests.get(0).getUrl());
       assertEquals("POST", requests.get(0).getMethod().getName());
+      String actualToken = vertxContext.get(String.format(TOKEN_KEY_FORMAT, TENANT));
+      assertEquals(pubSubToken, actualToken);
       async.complete();
     });
   }

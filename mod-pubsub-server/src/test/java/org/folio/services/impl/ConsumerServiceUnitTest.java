@@ -22,6 +22,7 @@ import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.rest.util.RestUtil;
+import org.folio.services.SecurityManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,16 +57,18 @@ public class ConsumerServiceUnitTest {
   private static final String CALLBACK_ADDRESS = "/source-storage/records";
   private static final String EVENT_TYPE = "record_created";
 
+  private Vertx vertx = Vertx.vertx();
   @Mock
   private KafkaConfig kafkaConfig;
   @Mock
   private MessagingModuleDao messagingModuleDao;
+  @Mock
+  private SecurityManager securityManager;
   @Spy
   @InjectMocks
-  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(Vertx.vertx(), kafkaConfig, messagingModuleDao);
+  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(vertx, kafkaConfig, messagingModuleDao, securityManager);
 
   private Map<String, String> headers = new HashMap<>();
-  private Vertx vertx = Vertx.vertx();
 
   @Rule
   public WireMockRule mockServer = new WireMockRule(
@@ -76,6 +79,8 @@ public class ConsumerServiceUnitTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
+    when(securityManager.getJWTToken(any(OkapiConnectionParams.class))).thenReturn(Future.succeededFuture(TOKEN));
+
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
     headers.put(OKAPI_TENANT_HEADER, TENANT);
     headers.put(OKAPI_TOKEN_HEADER, TOKEN);
