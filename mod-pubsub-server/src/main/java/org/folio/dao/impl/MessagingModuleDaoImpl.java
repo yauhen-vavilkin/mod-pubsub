@@ -44,6 +44,7 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   private static final String DELETE_BY_ID_SQL = "DELETE FROM %s.%s WHERE id = ?";
   private static final String DELETE_BY_SQL = "DELETE FROM %s.%s %s";
   private static final String TABLE_COLUMNS_PLACEHOLDER = " (?, ?, ?, ?, ?, ?, ?),";
+  private static final String GET_ALL_SQL = "SELECT * FROM %s.%s";
 
   @Autowired
   private PostgresClientFactory pgClientFactory;
@@ -120,6 +121,14 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
     String query = format(DELETE_BY_SQL, MODULE_SCHEMA, TABLE_NAME, buildWhereClause(filter));
     pgClientFactory.getInstance().execute(query, promise);
     return promise.future().map(updateResult -> updateResult.getUpdated() == 1);
+  }
+
+  @Override
+  public Future<List<MessagingModule>> getAll() {
+    Promise<ResultSet> promise = Promise.promise();
+    String preparedQuery = format(GET_ALL_SQL, MODULE_SCHEMA, TABLE_NAME);
+    pgClientFactory.getInstance().select(preparedQuery, promise);
+    return promise.future().map(this::mapResultSetToMessagingModuleList);
   }
 
   private Future<Boolean> delete(MessagingModuleFilter filter, AsyncResult<SQLConnection> sqlConnection) {

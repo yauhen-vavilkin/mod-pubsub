@@ -43,4 +43,11 @@ public interface MessagingModuleDao {
    * @return future with true if succeeded
    */
   Future<Boolean> delete(MessagingModuleFilter filter);
+
+  /**
+   * Gets all registered {@link MessagingModule}
+   *
+   * @return list of Messaging Modules
+   */
+  Future<List<MessagingModule>> getAll();
 }

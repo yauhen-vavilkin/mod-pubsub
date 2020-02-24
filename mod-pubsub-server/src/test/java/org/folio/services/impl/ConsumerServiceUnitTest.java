@@ -14,14 +14,13 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
-import org.folio.dao.MessagingModuleDao;
 import org.folio.kafka.KafkaConfig;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventMetadata;
 import org.folio.rest.jaxrs.model.MessagingModule;
-import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.rest.util.RestUtil;
+import org.folio.services.cache.Cache;
 import org.folio.services.SecurityManager;
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,12 +60,12 @@ public class ConsumerServiceUnitTest {
   @Mock
   private KafkaConfig kafkaConfig;
   @Mock
-  private MessagingModuleDao messagingModuleDao;
+  private Cache cache;
   @Mock
   private SecurityManager securityManager;
   @Spy
   @InjectMocks
-  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(vertx, kafkaConfig, messagingModuleDao, securityManager);
+  private KafkaConsumerServiceImpl consumerService = new KafkaConsumerServiceImpl(vertx, kafkaConfig, securityManager, cache);
 
   private Map<String, String> headers = new HashMap<>();
 
@@ -160,7 +159,7 @@ public class ConsumerServiceUnitTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    when(messagingModuleDao.get(any(MessagingModuleFilter.class))).thenReturn(Future.succeededFuture(new ArrayList<>()));
+    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(new ArrayList<>()));
 
     Future<Void> future = consumerService.deliverEvent(event, params);
 
@@ -211,7 +210,7 @@ public class ConsumerServiceUnitTest {
       .withModuleRole(MessagingModule.ModuleRole.SUBSCRIBER)
       .withActivated(true)
       .withSubscriberCallback(CALLBACK_ADDRESS));
-    when(messagingModuleDao.get(any(MessagingModuleFilter.class))).thenReturn(Future.succeededFuture(messagingModuleList));
+    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(messagingModuleList));
 
     Future<Void> future = consumerService.deliverEvent(event, params);
 

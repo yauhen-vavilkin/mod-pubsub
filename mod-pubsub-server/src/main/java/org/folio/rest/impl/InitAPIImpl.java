@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -32,6 +33,8 @@ public class InitAPIImpl implements InitAPI {
       result -> {
         if (result.succeeded()) {
           initAuditService(vertx);
+          DeploymentOptions options = new DeploymentOptions().setWorker(true);
+          vertx.deployVerticle(new PublisherWorkerVerticle(), options);
           handler.handle(Future.succeededFuture(true));
         } else {
           handler.handle(Future.failedFuture(result.cause()));
@@ -44,4 +47,5 @@ public class InitAPIImpl implements InitAPI {
       .setAddress(AuditService.AUDIT_SERVICE_ADDRESS)
       .register(AuditService.class, AuditService.create());
   }
+
 }

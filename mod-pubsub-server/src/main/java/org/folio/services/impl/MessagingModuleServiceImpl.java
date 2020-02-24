@@ -4,11 +4,9 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.MessagingModuleDao;
-import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -18,10 +16,12 @@ import org.folio.rest.jaxrs.model.MessagingModuleCollection;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
+import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.MessagingModuleService;
 import org.folio.services.ConsumerService;
 import org.folio.services.KafkaTopicService;
+import org.folio.services.MessagingModuleService;
+import org.folio.services.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,15 +50,18 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   private EventDescriptorDao eventDescriptorDao;
   private KafkaTopicService kafkaTopicService;
   private ConsumerService consumerService;
+  private Cache cache;
 
   public MessagingModuleServiceImpl(@Autowired MessagingModuleDao messagingModuleDao,
                                     @Autowired EventDescriptorDao eventDescriptorDao,
                                     @Autowired KafkaTopicService kafkaTopicService,
-                                    @Autowired ConsumerService consumerService) {
+                                    @Autowired ConsumerService consumerService,
+                                    @Autowired Cache cache) {
     this.messagingModuleDao = messagingModuleDao;
     this.eventDescriptorDao = eventDescriptorDao;
     this.kafkaTopicService = kafkaTopicService;
     this.consumerService = consumerService;
+    this.cache = cache;
   }
 
   @Override
@@ -109,6 +112,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     }
 
     return messagingModuleDao.save(messagingModules)
+      .onSuccess(ar -> cache.invalidate())
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
   }
 
@@ -128,13 +132,15 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     messagingModules.forEach(module -> module.setSubscriberCallback(subscriberCallbacksMap.get(module.getEventType())));
 
     return messagingModuleDao.save(messagingModules)
+      .onSuccess(ar -> cache.invalidate())
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR))
       .compose(ar -> consumerService.subscribe(subscriberDescriptor.getModuleId(), eventTypes, params));
   }
 
   @Override
   public Future<Boolean> delete(MessagingModuleFilter filter) {
-    return messagingModuleDao.delete(filter);
+    return messagingModuleDao.delete(filter)
+      .onSuccess(ar -> cache.invalidate());
   }
 
   @Override

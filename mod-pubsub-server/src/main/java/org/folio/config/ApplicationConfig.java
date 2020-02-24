@@ -1,7 +1,6 @@
 package org.folio.config;
 
 import io.vertx.core.Vertx;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.folio.kafka.KafkaConfig;
@@ -20,11 +19,6 @@ import java.util.Map;
   "org.folio.rest",
   "org.folio.kafka"})
 public class ApplicationConfig {
-
-  @Bean
-  public KafkaProducer kafkaProducer(@Autowired Vertx vertx, @Autowired KafkaConfig config) {
-    return KafkaProducer.createShared(vertx, "pub-sub-producer", config.getProducerProps());
-  }
 
   @Bean
   public KafkaAdminClient kafkaAdminClient(@Autowired Vertx vertx, @Autowired KafkaConfig config) {

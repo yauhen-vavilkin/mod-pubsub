@@ -150,12 +150,12 @@ public abstract class AbstractRestTest {
     Async async = context.async();
     PostgresClient pgClient = PostgresClient.getInstance(vertx);
     pgClient.execute(format(DELETE_ALL_SQL, MESSAGING_MODULE_TABLE), new JsonArray(), event ->
-        pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event1 -> {
-          if (event.failed()) {
-            context.fail(event.cause());
-          }
-          async.complete();
-        }));
+      pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event1 -> {
+        if (event.failed()) {
+          context.fail(event.cause());
+        }
+        async.complete();
+      }));
   }
 
   private void clearTenantTables(TestContext context) {

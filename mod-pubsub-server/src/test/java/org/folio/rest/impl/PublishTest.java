@@ -9,6 +9,7 @@ import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -127,5 +128,23 @@ public class PublishTest extends AbstractRestTest {
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+  }
+
+  @After
+  public void cleanUp() {
+    RestAssured.given()
+      .spec(spec)
+      .queryParam("moduleId","mod-very-important-1.0.0")
+      .when()
+      .delete(EVENT_TYPES_PATH + "/record_created" + PUBLISHERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_NO_CONTENT);
+    RestAssured.given()
+      .spec(spec)
+      .queryParam("moduleId", "mod-important-1.0.0")
+      .when()
+      .delete(EVENT_TYPES_PATH + "/record_created" + SUBSCRIBERS_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_NO_CONTENT);
   }
 }
