@@ -1,7 +1,10 @@
-## 2019-12-30 V1.1.0-SNAPSHOT
+## 2020-03-06 V1.1.0
 * Updated RMB version to 29.1.5
 * Fixed reading "MessagingDescriptor" file from JAR file
 * Health check for docker-container was created
+* Configured local Cache to remove redundant querying of the db for getting messaging modules 
+* Replaced single shared KafkaProducer with multiple KafkaProducer instances running in WorkerVerticle
+* Fixed user permissions issues
 
 ## 2019-01-21 v1.0.2
 * Fixed reading "MessagingDescriptor" file from JAR file
