@@ -273,6 +273,11 @@
       "permissionName": "source-records-manager.events.post",
       "displayName": "Source Record Manager - post event",
       "description": "Post event"
+    },
+    {
+      "permissionName": "inventory.events.post",
+      "displayName": "Inventory - post event",
+      "description": "Post event to inventory"
     }
   ],
   "launchDescriptor": {
