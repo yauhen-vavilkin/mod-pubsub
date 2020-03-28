@@ -1,3 +1,6 @@
+## 2020-03-28 v1.1.1
+* Fixed permissions
+
 ## 2020-03-06 V1.1.0
 * Updated RMB version to 29.1.5
 * Fixed reading "MessagingDescriptor" file from JAR file
