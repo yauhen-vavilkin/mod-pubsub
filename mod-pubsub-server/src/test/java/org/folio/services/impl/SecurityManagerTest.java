@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
@@ -185,6 +188,26 @@ public class SecurityManagerTest extends AbstractRestTest {
       assertEquals("POST", requests.get(2).getMethod().getName());
       assertEquals(PERMISSIONS_URL, requests.get(3).getUrl());
       assertEquals("POST", requests.get(3).getMethod().getName());
+      async.complete();
+    });
+  }
+
+  @Test
+  public void shouldLoginPubSubUserWhenContextHasNoToken(TestContext context) {
+    Async async = context.async();
+    String expectedToken = UUID.randomUUID().toString();
+
+    WireMock.stubFor(WireMock.post(LOGIN_URL)
+      .willReturn(WireMock.created().withHeader(OKAPI_HEADER_TOKEN, expectedToken)));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    Future<String> future = securityManager.getJWTToken(params);
+
+    future.setHandler(ar -> {
+      assertTrue(ar.succeeded());
+      assertEquals(expectedToken, ar.result());
+      verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));
       async.complete();
     });
   }

@@ -74,7 +74,7 @@ public class SecurityManagerImpl implements SecurityManager {
     String token = vertx.getOrCreateContext().get(format(TOKEN_KEY_FORMAT, params.getTenantId()));
     if (StringUtils.isEmpty(token)) {
       return loginPubSubUser(params)
-        .map(vertx.getOrCreateContext().<String>get(format(TOKEN_KEY_FORMAT, params.getTenantId())));
+        .map(v -> vertx.getOrCreateContext().<String>get(format(TOKEN_KEY_FORMAT, params.getTenantId())));
     }
     return Future.succeededFuture(token);
   }
