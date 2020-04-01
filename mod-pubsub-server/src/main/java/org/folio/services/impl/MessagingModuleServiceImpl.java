@@ -107,7 +107,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getModuleId(), eventTypes, PUBLISHER, tenantId);
     if(messagingModules.isEmpty()) {
-      LOGGER.info("Publisher`s list is empty!");
+      LOGGER.info("List of Publishers is empty");
       return Future.succeededFuture(true);
     }
 
@@ -123,7 +123,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, params.getTenantId());
     if(messagingModules.isEmpty()) {
-      LOGGER.info("Subscriber`s list is empty!");
+      LOGGER.info("List of Subscribers is empty");
       return Future.succeededFuture(true);
     }
 

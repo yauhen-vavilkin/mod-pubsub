@@ -1,5 +1,9 @@
-## 2020-03-27 v1.2.0-SNAPSHOT
+## 2020-03-27 v1.1.2
 * Fixed issue with token when delivering the first event
+* Switched off by default logging of event payload
+
+## 2020-03-28 v1.1.1
+* Fixed permissions
 
 ## 2020-03-06 V1.1.0
 * Updated RMB version to 29.1.5
