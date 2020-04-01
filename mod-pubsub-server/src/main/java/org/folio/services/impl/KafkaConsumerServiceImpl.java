@@ -89,7 +89,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
     return record -> {
       try {
         String value = record.value();
-        LOGGER.info("Received event {}", value);
+        LOGGER.debug("Received event {}", value);
         Event event = new JsonObject(value).mapTo(Event.class);
         auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.RECEIVED));
         deliverEvent(event, params);
@@ -124,16 +124,16 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
     return ar -> {
       if (ar.failed()) {
-        LOGGER.error("Event {} was not delivered to {}", ar.cause(), event.getId(), subscriber.getSubscriberCallback());
+        LOGGER.error("{} event with id '{}' was not delivered to {}", ar.cause(), event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
       } else if (ar.result().statusCode() != HttpStatus.HTTP_OK.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_CREATED.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
-        LOGGER.error("Error delivering event {} to {}, response status code is {}, {}",
-          event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
+        LOGGER.error("Error delivering {} event with id '{}' to {}, response status code is {}, {}",
+          event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
       } else {
-        LOGGER.debug("Delivered event {} to {}", event.getId(), subscriber.getSubscriberCallback());
+        LOGGER.debug("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));
       }
     };
