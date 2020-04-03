@@ -298,7 +298,7 @@
     "env": [
       {
         "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0"
+        "value": "-XX:MaxRAMPercentage=66.0 -XX:+HeapDumpOnOutOfMemoryError"
       },
       {
         "name": "DB_HOST",
