@@ -1,6 +1,7 @@
 package org.folio.services.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -13,7 +14,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.folio.HttpStatus;
 import org.folio.kafka.KafkaConfig;
@@ -30,6 +30,7 @@ import org.folio.services.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,23 +67,35 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
 
   @Override
   public Future<Boolean> subscribe(String moduleId, List<String> eventTypes, OkapiConnectionParams params) {
-    Promise<Boolean> promise = Promise.promise();
+    Promise<Boolean> result = Promise.promise();
     Set<String> topics = eventTypes.stream()
       .map(eventType -> new PubSubConfig(params.getTenantId(), eventType).getTopicName())
       .collect(Collectors.toSet());
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
-    consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, params.getTenantId() + "." + moduleId);
-    KafkaConsumer.<String, String>create(vertx, consumerProps)
-      .subscribe(topics, ar -> {
-        if (ar.succeeded()) {
-          LOGGER.info("Subscribed to topics [{}]", StringUtils.join(topics, ","));
-          promise.complete(true);
-        } else {
-          LOGGER.error("Could not subscribe to some of the topics [{}]", ar.cause(), StringUtils.join(topics, ","));
-          promise.fail(ar.cause());
-        }
-      }).handler(getEventReceivedHandler(params));
-    return promise.future();
+    List<Future> list = new ArrayList<>();
+    for (String topic : topics) {
+      consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, params.getTenantId() + "." + topic);
+      Promise<Boolean> promise = Promise.promise();
+      KafkaConsumer.<String, String>create(vertx, consumerProps)
+        .subscribe(topic, ar -> {
+          if (ar.succeeded()) {
+            LOGGER.info(format("Subscribed to topic {%s}", topic));
+            promise.complete(true);
+          } else {
+            LOGGER.error(format("Could not subscribe to some of the topic {%s}", topic), ar.cause());
+            promise.fail(ar.cause());
+          }
+        }).handler(getEventReceivedHandler(params));
+      list.add(promise.future());
+    }
+    CompositeFuture.all(list).setHandler(ar -> {
+      if (ar.succeeded()) {
+        result.complete(true);
+      } else {
+        result.fail(ar.cause());
+      }
+    });
+    return result.future();
   }
 
   private Handler<KafkaConsumerRecord<String, String>> getEventReceivedHandler(OkapiConnectionParams params) {
