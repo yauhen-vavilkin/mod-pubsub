@@ -1,3 +1,6 @@
+## 2020-04-09 v1.1.3
+* [MODPUBSUB-73](https://issues.folio.org/browse/MODPUBSUB-73) Fixed duplicate delivery of events
+
 ## 2020-04-03 v1.1.2
 * [MODPUBSUB-71](https://issues.folio.org/browse/MODPUBSUB-71) Fixed issue with token when delivering the first event
 * [MODPUBSUB-74](https://issues.folio.org/browse/MODPUBSUB-74) Switched off by default logging of event payload
