@@ -77,6 +77,10 @@
       "type": "string"
     }
   },
+  "excludedFromEqualsAndHashCode": [
+    "eventMetadata",
+    "eventPayload"
+  ],
   "required": [
     "id",
     "eventType",

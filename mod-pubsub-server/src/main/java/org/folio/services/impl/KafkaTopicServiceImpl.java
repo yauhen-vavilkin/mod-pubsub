@@ -1,6 +1,7 @@
 package org.folio.services.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.admin.KafkaAdminClient;
@@ -27,19 +28,19 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
 
   @Override
   public Future<Boolean> createTopics(List<String> eventTypes, String tenantId, int numPartitions, short replicationFactor) {
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> promise = Promise.promise();
     List<NewTopic> topics = eventTypes.stream()
       .map(eventType -> new NewTopic(new PubSubConfig(tenantId, eventType).getTopicName(), numPartitions, replicationFactor))
       .collect(Collectors.toList());
     kafkaAdminClient.createTopics(topics, ar -> {
       if (ar.succeeded()) {
         LOGGER.info("Created topics: [{}]", StringUtils.join(eventTypes, ","));
-        future.complete(true);
+        promise.complete(true);
       } else {
         LOGGER.error("Some of the topics [{}] were not created. Cause: {}", StringUtils.join(eventTypes, ","), ar.cause().getMessage());
-        future.complete(false);
+        promise.complete(false);
       }
     });
-    return future;
+    return promise.future();
   }
 }

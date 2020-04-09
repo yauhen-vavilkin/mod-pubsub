@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.BadRequestException;
+import java.util.ArrayList;
 
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -76,12 +77,12 @@ public class KafkaPublisherServiceImpl implements PublisherService {
    */
   private Future<Boolean> verifyPublisher(Event event, String tenantId) {
     return cache.getMessagingModules()
-      .map(messagingModules -> filter(messagingModules,
+      .map(messagingModules -> new ArrayList<>(filter(messagingModules,
         new MessagingModuleFilter()
           .withModuleId(event.getEventMetadata().getPublishedBy())
           .withTenantId(tenantId)
           .withModuleRole(PUBLISHER)
-          .withEventType(event.getEventType())))
+          .withEventType(event.getEventType()))))
       .compose(publishers -> {
         if (isEmpty(publishers)) {
           String errorMessage = format("%s is not registered as PUBLISHER for event type %s", event.getEventMetadata().getPublishedBy(), event.getEventType());

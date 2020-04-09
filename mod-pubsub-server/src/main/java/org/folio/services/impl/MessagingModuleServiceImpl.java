@@ -134,7 +134,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     return messagingModuleDao.save(messagingModules)
       .onSuccess(ar -> cache.invalidate())
       .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR))
-      .compose(ar -> consumerService.subscribe(subscriberDescriptor.getModuleId(), eventTypes, params));
+      .compose(ar -> consumerService.subscribe(eventTypes, params));
   }
 
   @Override

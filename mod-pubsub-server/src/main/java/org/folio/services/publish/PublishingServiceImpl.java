@@ -45,7 +45,7 @@ public class PublishingServiceImpl implements PublishingService {
         try {
           manager.getKafkaProducer().write(new KafkaProducerRecordImpl<>(config.getTopicName(), event.encode()), done -> {
             if (done.succeeded()) {
-              LOGGER.info("Sent event to topic {}", config.getTopicName());
+              LOGGER.info("Sent {} event with id '{}' to topic {}",  event.getString("eventType"), event.getString("id"), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.PUBLISHED));
             } else {
               LOGGER.error("Event was not sent", done.cause());

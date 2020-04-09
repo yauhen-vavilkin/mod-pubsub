@@ -3,7 +3,7 @@ package org.folio.services.util;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
@@ -13,11 +13,11 @@ public final class MessagingModulesUtil {
   private MessagingModulesUtil() {
   }
 
-  public static List<MessagingModule> filter(List<MessagingModule> modules, MessagingModuleFilter filter) {
+  public static Set<MessagingModule> filter(Set<MessagingModule> modules, MessagingModuleFilter filter) {
     if (isNotEmpty(modules) && filter != null) {
       return modules.stream()
         .filter(messagingModule -> satisfiesCondition(messagingModule, filter))
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
     }
     return modules;
   }
