@@ -66,7 +66,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   @Override
-  public Future<Boolean> subscribe(String moduleId, List<String> eventTypes, OkapiConnectionParams params) {
+  public Future<Boolean> subscribe(List<String> eventTypes, OkapiConnectionParams params) {
     Promise<Boolean> result = Promise.promise();
     Set<String> topics = eventTypes.stream()
       .map(eventType -> new PubSubConfig(params.getTenantId(), eventType).getTopicName())
@@ -74,19 +74,22 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
     List<Future> list = new ArrayList<>();
     for (String topic : topics) {
-      consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, params.getTenantId() + "." + topic);
-      Promise<Boolean> promise = Promise.promise();
-      KafkaConsumer.<String, String>create(vertx, consumerProps)
-        .subscribe(topic, ar -> {
-          if (ar.succeeded()) {
-            LOGGER.info(format("Subscribed to topic {%s}", topic));
-            promise.complete(true);
-          } else {
-            LOGGER.error(format("Could not subscribe to some of the topic {%s}", topic), ar.cause());
-            promise.fail(ar.cause());
-          }
-        }).handler(getEventReceivedHandler(params));
-      list.add(promise.future());
+      if (!cache.containsSubscription(topic)) {
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, topic);
+        Promise<Boolean> promise = Promise.promise();
+        KafkaConsumer.<String, String>create(vertx, consumerProps)
+          .subscribe(topic, ar -> {
+            if (ar.succeeded()) {
+              cache.addSubscription(topic);
+              LOGGER.info(format("Subscribed to topic {%s}", topic));
+              promise.complete(true);
+            } else {
+              LOGGER.error(format("Could not subscribe to some of the topic {%s}", topic), ar.cause());
+              promise.fail(ar.cause());
+            }
+          }).handler(getEventReceivedHandler(params));
+        list.add(promise.future());
+      }
     }
     CompositeFuture.all(list).setHandler(ar -> {
       if (ar.succeeded()) {
@@ -102,8 +105,8 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
     return record -> {
       try {
         String value = record.value();
-        LOGGER.debug("Received event {}", value);
         Event event = new JsonObject(value).mapTo(Event.class);
+        LOGGER.info("Received {} event with id '{}'", event.getEventType(), event.getId());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.RECEIVED));
         deliverEvent(event, params);
       } catch (Exception e) {
@@ -146,7 +149,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
       } else {
-        LOGGER.debug("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
+        LOGGER.info("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));
       }
     };

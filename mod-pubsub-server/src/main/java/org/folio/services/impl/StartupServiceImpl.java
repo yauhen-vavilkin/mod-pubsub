@@ -41,7 +41,7 @@ public class StartupServiceImpl implements StartupService {
           OkapiConnectionParams params = new OkapiConnectionParams(vertx);
           params.setOkapiUrl(kafkaConfig.getOkapiUrl());
           params.setTenantId(messagingModule.getTenantId());
-          consumerService.subscribe(messagingModule.getModuleId(), Collections.singletonList(messagingModule.getEventType()), params);
+          consumerService.subscribe(Collections.singletonList(messagingModule.getEventType()), params);
         });
         return Future.succeededFuture();
       });

@@ -32,10 +32,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
@@ -159,7 +160,7 @@ public class ConsumerServiceUnitTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(new ArrayList<>()));
+    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(new HashSet<>()));
 
     Future<Void> future = consumerService.deliverEvent(event, params);
 
@@ -193,7 +194,7 @@ public class ConsumerServiceUnitTest {
     params.setToken(headers.getOrDefault("x-okapi-token", TOKEN));
     params.setTimeout(2000);
 
-    List<MessagingModule> messagingModuleList = new ArrayList<>();
+    Set<MessagingModule> messagingModuleList = new HashSet<>();
     messagingModuleList.add(new MessagingModule()
       .withId(UUID.randomUUID().toString())
       .withEventType(EVENT_TYPE)
