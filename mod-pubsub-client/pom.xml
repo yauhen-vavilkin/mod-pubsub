@@ -29,6 +29,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>3.4.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-api-interfaces</artifactId>
       <version>${raml-module-builder.version}</version>
@@ -37,6 +43,12 @@
       <groupId>org.folio</groupId>
       <artifactId>mod-pubsub-server</artifactId>
       <version>${project.parent.version}</version>
+      <exclusions>
+        <exclusion>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>test</scope>
     </dependency>
     <dependency>
