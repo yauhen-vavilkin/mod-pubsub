@@ -35,7 +35,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
 
   private static final String AUDIT_MESSAGE_TABLE = "audit_message";
   private static final String AUDIT_MESSAGE_PAYLOAD_TABLE = "audit_message_payload";
-  private static final String INSERT_AUDIT_MESSAGE_QUERY = "INSERT INTO %s.%s (id, event_id, event_type, tenant_id, audit_date, state, published_by, correlation_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+  private static final String INSERT_AUDIT_MESSAGE_QUERY = "INSERT INTO %s.%s (id, event_id, event_type, tenant_id, audit_date, state, published_by, correlation_id, created_by, error_message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
   private static final String INSERT_AUDIT_MESSAGE_PAYLOAD_QUERY = "INSERT INTO %s.%s (event_id, content) VALUES (?, ?);";
   private static final String SELECT_QUERY = "SELECT * FROM %s.%s";
   private static final String GET_BY_EVENT_ID_QUERY = "SELECT * FROM %s.%s WHERE event_id = ?;";
@@ -71,7 +71,8 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
         .add(auditMessage.getState())
         .add(auditMessage.getPublishedBy())
         .add(auditMessage.getCorrelationId() != null ? auditMessage.getCorrelationId() : "")
-        .add(auditMessage.getCreatedBy() != null ? auditMessage.getCreatedBy() : "");
+        .add(auditMessage.getCreatedBy() != null ? auditMessage.getCreatedBy() : "")
+        .add(auditMessage.getErrorMessage() != null ? auditMessage.getErrorMessage() : "");
       pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, promise);
     } catch (Exception e) {
       LOGGER.error("Error saving audit message with id {}", e, auditMessage.getId());
@@ -126,7 +127,8 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
       .withCreatedBy(result.getString("created_by"))
       .withPublishedBy(result.getString("published_by"))
       .withAuditDate(Date.from(LocalDateTime.parse(result.getString("audit_date")).toInstant(ZoneOffset.UTC)))
-      .withState(AuditMessage.State.fromValue(result.getString("state")));
+      .withState(AuditMessage.State.fromValue(result.getString("state")))
+      .withErrorMessage(result.getString("error_message"));
   }
 
   private AuditMessagePayload mapAuditMessagePayload(JsonObject result) {

@@ -41,6 +41,10 @@
       "description": "Current state of the message",
       "type": "string",
       "$ref": "./auditMessageState.json"
+    },
+    "errorMessage": {
+      "description": "Error message in case there is one",
+      "type": "string"
     }
   },
   "required": [
