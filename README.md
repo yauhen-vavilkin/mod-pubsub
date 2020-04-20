@@ -10,6 +10,7 @@ See the file "[LICENSE](LICENSE)" for more information.
 * [Docker](#docker)
 * [Installing the module](#installing-the-module)
 * [Deploying the module](#deploying-the-module)
+* [Verifying the module can connect and work with kafka](#verifying-the-module-can-connect-and-work-with-kafka)
 * [Database schemas](#Database-schemas)
 * [PubSub Client](#PubSub-Client)
 
@@ -95,6 +96,91 @@ curl -w '\n' -X POST -D -   \
     -d @target/TenantModuleDescriptor.json \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
+
+## Verifying the module can connect and work with kafka
+
+To verify that pubsub can successfully connect and work with kafka send the following requests:
+
+1.POST /pubsub/event-types - register event type
+
+```
+curl --location --request POST 'http://localhost:9130/pubsub/event-types' \
+--header 'X-Okapi-Tenant: <tenant>' \
+--header 'X-Okapi-Token: <token>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "eventType": "test-event",
+    "description": "test",
+    "eventTTL": 1,
+    "signed": false
+}'
+```
+
+2.POST /pubsub/declare/publisher - register publisher
+
+```
+curl --location --request POST 'http://localhost:9130/pubsub/event-types/declare/publisher' \
+--header 'X-Okapi-Tenant: <tenant>' \
+--header 'X-Okapi-Token: <token>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "moduleId": "test-publisher",
+    "eventDescriptors": [
+        {
+          "eventType": "test-event",
+          "description": "test",
+          "eventTTL": 1,
+          "signed": false
+        }
+    ]
+}'
+```
+
+3.POST /pubsub/declare/subscriber - register subscriber
+
+```
+curl --location --request POST 'http://localhost:9130/pubsub/event-types/declare/subscriber' \
+--header 'X-Okapi-Tenant: <tenant>' \
+--header 'X-Okapi-Token: <token>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "moduleId": "test-subscriber",
+    "subscriptionDefinitions": [
+        {
+          "eventType": "test-event",
+          "callbackAddress": "/test"
+        }
+    ]
+}'
+```
+
+4.POST /pubsub/publish - publish an event
+
+```
+curl --location --request POST 'http://localhost:9130/pubsub/publish' \
+--header 'X-Okapi-Tenant: <tenant>' \
+--header 'X-Okapi-Token: <token>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "id": "7d4f4ceb-4fc3-48cc-8b58-ff3c3862a12c",
+    "eventType": "test-event",
+    "eventMetadata": {
+    	"tenantId": "diku",
+    	"eventTTL": 1,
+    	"publishedBy": "test-publisher"
+    }
+}'
+```
+
+5.GET /pubsub/history - check history to verify that event was processed
+
+```
+curl --location --request GET 'http://localhost:9130/pubsub/history?startDate=<start-date>&endDate=<end-date>&eventType=test-event' \
+--header 'X-Okapi-Tenant: <tenant>' \
+--header 'X-Okapi-Token: <token>'
+```
+
+There should be 4 auditMessages at this point, verify there are CREATED, RECEIVED, PUBLISHED, REJECTED (test callback endpoint does not exist) records.
 
 ## Memory allocation level
 The appropriate container memory allocation level is 715827882 bytes, hence 66% of the container memory (472446402 bytes) will be reserved for java heap space.
@@ -426,10 +512,7 @@ At first "mod-pubsub" checks whether "pub-sub" user exists in the system. If use
  - "pub-sub" user credentials are created;
  - permissions are assigned for "pub-sub" user (new record added with "pub-sub" user and specific permissions for it to the "user_permissions" table). 
 
-
 ##### After the "pub-sub" user is logged in, it`s token is used for delivering events to subscriber module.
-
-
 
 - In "mod-pubsub" user permissions are declared in "mod-pubsub-server/src/main/resources/permissions/pubsub-user-permissions.csv"
 
