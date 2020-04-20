@@ -128,6 +128,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         if (isEmpty(subscribers)) {
           String errorMessage = format("There is no SUBSCRIBERS registered for event type %s. Event %s will not be delivered", event.getEventType(), event.getId());
           LOGGER.error(errorMessage);
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.REJECTED, errorMessage));
         } else {
           subscribers
             .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
@@ -140,14 +141,16 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
     return ar -> {
       if (ar.failed()) {
-        LOGGER.error("{} event with id '{}' was not delivered to {}", ar.cause(), event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
-        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
+        String errorMessage = format("%s event with id '%s' was not delivered to %s", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
+        LOGGER.error(errorMessage, ar.cause());
+        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
       } else if (ar.result().statusCode() != HttpStatus.HTTP_OK.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_CREATED.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
-        LOGGER.error("Error delivering {} event with id '{}' to {}, response status code is {}, {}",
+        String error = format("Error delivering %s event with id '%s' to %s, response status code is %s, %s",
           event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
-        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
+        LOGGER.error(error);
+        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
       } else {
         LOGGER.info("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));

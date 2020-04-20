@@ -87,12 +87,12 @@ public class KafkaPublisherServiceImpl implements PublisherService {
         if (isEmpty(publishers)) {
           String errorMessage = format("%s is not registered as PUBLISHER for event type %s", event.getEventMetadata().getPublishedBy(), event.getEventType());
           LOGGER.error(errorMessage);
-          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
           return Future.failedFuture(new BadRequestException(errorMessage));
         } else if (Boolean.FALSE.equals(publishers.get(0).getActivated())) {
           String error = format("Event type %s is not activated for tenant %s", event.getEventType(), tenantId);
           LOGGER.error(error);
-          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
           return Future.failedFuture(new BadRequestException(error));
         }
         return Future.succeededFuture(true);
@@ -117,7 +117,7 @@ public class KafkaPublisherServiceImpl implements PublisherService {
         if (isEmpty(subscribers)) {
           String errorMessage = format("There is no SUBSCRIBERS registered for event type %s. Event %s will not be published", event.getEventType(), event.getId());
           LOGGER.error(errorMessage);
-          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED));
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
           return Future.failedFuture(new BadRequestException(errorMessage));
         } else {
           return Future.succeededFuture(true);

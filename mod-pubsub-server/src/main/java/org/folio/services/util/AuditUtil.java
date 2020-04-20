@@ -8,6 +8,8 @@ import org.folio.rest.jaxrs.model.Event;
 import java.util.Date;
 import java.util.UUID;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
 public final class AuditUtil {
 
   private AuditUtil() {
@@ -20,7 +22,15 @@ public final class AuditUtil {
   }
 
   public static JsonObject constructJsonAuditMessage(Event event, String tenantId, AuditMessage.State state) {
-    return JsonObject.mapFrom(new AuditMessage()
+    return JsonObject.mapFrom(constructAuditMessage(event, tenantId, state, EMPTY));
+  }
+
+  public static JsonObject constructJsonAuditMessage(Event event, String tenantId, AuditMessage.State state, String errorMessage) {
+    return JsonObject.mapFrom(constructAuditMessage(event, tenantId, state, errorMessage));
+  }
+
+  private static AuditMessage constructAuditMessage(Event event, String tenantId, AuditMessage.State state, String errorMessage) {
+    return new AuditMessage()
       .withId(UUID.randomUUID().toString())
       .withEventId(event.getId())
       .withEventType(event.getEventType())
@@ -29,7 +39,8 @@ public final class AuditUtil {
       .withCreatedBy(event.getEventMetadata().getCreatedBy())
       .withPublishedBy(event.getEventMetadata().getPublishedBy())
       .withAuditDate(new Date())
-      .withState(state));
+      .withState(state)
+      .withErrorMessage(errorMessage);
   }
 
 }

@@ -48,13 +48,15 @@ public class PublishingServiceImpl implements PublishingService {
               LOGGER.info("Sent {} event with id '{}' to topic {}",  event.getString("eventType"), event.getString("id"), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.PUBLISHED));
             } else {
-              LOGGER.error("Event was not sent", done.cause());
-              auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.REJECTED));
+              String errorMessage = "Event was not sent";
+              LOGGER.error(errorMessage, done.cause());
+              auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.REJECTED, errorMessage));
             }
           });
         } catch (Exception e) {
-          LOGGER.error("Error publishing event", e);
-          auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.REJECTED));
+          String errorMessage = "Error publishing event";
+          LOGGER.error(errorMessage, e);
+          auditService.saveAuditMessage(constructJsonAuditMessage(eventObject, tenantId, AuditMessage.State.REJECTED, errorMessage));
         }
       }
       , null);
