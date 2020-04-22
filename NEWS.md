@@ -1,8 +1,10 @@
-## 2020-04-20 v1.1.4
+## 2020-04-22 v1.1.4
 * Extended README documentation
 * Added creating of topics on module startup
 * Added saving of error messages to audit for REJECTED events
+* Added utility method to construct module name on registration
 * [MODPUBSUB-76](https://issues.folio.org/browse/MODPUBSUB-76) Fixed filling the mod-pubsub container filesystem
+* [MODPUBSUB-80](https://issues.folio.org/browse/MODPUBSUB-80) Added override of subscriber with earlier version when new version is registered
 
 ## 2020-04-09 v1.1.3
 * [MODPUBSUB-73](https://issues.folio.org/browse/MODPUBSUB-73) Fixed duplicate delivery of events

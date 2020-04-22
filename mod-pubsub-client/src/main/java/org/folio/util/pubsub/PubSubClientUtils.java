@@ -188,10 +188,10 @@ public class PubSubClientUtils {
 
       return new DescriptorHolder()
         .withPublisherDescriptor(new PublisherDescriptor()
-          .withModuleId(PomReader.INSTANCE.getModuleName() + "-" + PomReader.INSTANCE.getVersion())
+          .withModuleId(constructModuleName())
           .withEventDescriptors(messagingDescriptor.getPublications()))
         .withSubscriberDescriptor(new SubscriberDescriptor()
-          .withModuleId(PomReader.INSTANCE.getModuleName() + "-" + PomReader.INSTANCE.getVersion())
+          .withModuleId(constructModuleName())
           .withSubscriptionDefinitions(messagingDescriptor.getSubscriptions()));
     } catch (JsonParseException | JsonMappingException e) {
       String errorMessage = "Can not read messaging descriptor, cause: " + e.getMessage();
@@ -234,6 +234,10 @@ public class PubSubClientUtils {
       return Optional.empty();
     }
     return Optional.of(fileStream);
+  }
+
+  public static String constructModuleName() {
+    return PomReader.INSTANCE.getModuleName().replace("_", "-") + "-" + PomReader.INSTANCE.getVersion();
   }
 
 }

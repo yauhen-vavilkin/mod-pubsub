@@ -61,7 +61,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     PublisherDescriptor publisherDescriptor2 = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(createdEventDescriptor2))
-      .withModuleId("test-module2-1.0.0");
+      .withModuleId("another-test-module-1.0.0");
 
     RestAssured.given()
       .spec(spec)

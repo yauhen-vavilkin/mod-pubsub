@@ -53,7 +53,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withCallbackAddress("/callback-path");
     SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
-      .withModuleId("test-module-1.0.0");
+      .withModuleId("test-module-14.0.0");
 
     RestAssured.given()
       .spec(spec)
@@ -67,7 +67,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(new SubscriptionDefinition()
           .withEventType(createdEventDescriptor2.getEventType())
           .withCallbackAddress("/callback-path2")))
-      .withModuleId("test-module2-1.0.0");
+      .withModuleId("another-test-module-1.10.0");
 
     RestAssured.given()
       .spec(spec)
@@ -119,7 +119,7 @@ public class SubscribersApiTest extends AbstractRestTest {
   public void shouldClearPreviousSubscriberInfoOnPostWithSameModuleNameAndTenantId() {
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
     EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
-    String moduleName = "test-module-1.0.0";
+    String moduleName = "test-module-14.23.1";
 
     SubscriptionDefinition subscriptionDefinition1 = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor1.getEventType())
@@ -204,7 +204,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withCallbackAddress("/callback-path");
     SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
-      .withModuleId("test-module-1.0.0");
+      .withModuleId("test-module-1.0.0-SNAPSHOT");
 
     RestAssured.given()
       .spec(spec)
