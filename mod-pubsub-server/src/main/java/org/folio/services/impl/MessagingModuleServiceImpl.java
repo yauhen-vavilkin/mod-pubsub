@@ -43,9 +43,6 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MessagingModuleServiceImpl.class);
 
-  private static final int NUMBER_OF_PARTITIONS = 1;
-  private static final short REPLICATION_FACTOR = 1;
-
   private MessagingModuleDao messagingModuleDao;
   private EventDescriptorDao eventDescriptorDao;
   private KafkaTopicService kafkaTopicService;
@@ -113,7 +110,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
     return messagingModuleDao.save(messagingModules)
       .onSuccess(ar -> cache.invalidate())
-      .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId, NUMBER_OF_PARTITIONS, REPLICATION_FACTOR));
+      .compose(ar -> kafkaTopicService.createTopics(eventTypes, tenantId));
   }
 
   @Override
@@ -133,7 +130,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
     return messagingModuleDao.save(messagingModules)
       .onSuccess(ar -> cache.invalidate())
-      .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR))
+      .compose(ar -> kafkaTopicService.createTopics(eventTypes, params.getTenantId()))
       .compose(ar -> consumerService.subscribe(eventTypes, params));
   }
 

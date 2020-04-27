@@ -1,3 +1,6 @@
+## 2020-04-27 v1.1.5
+* [MODPUBSUB-83](https://issues.folio.org/browse/MODPUBSUB-83) Add env variable to set replication factor and number of partitions for topics in kafka
+
 ## 2020-04-22 v1.1.4
 * Extended README documentation
 * Added creating of topics on module startup

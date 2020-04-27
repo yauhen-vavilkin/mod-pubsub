@@ -7,6 +7,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.NewTopic;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.PubSubConfig;
 import org.folio.services.KafkaTopicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,16 +22,18 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopicServiceImpl.class);
 
   private KafkaAdminClient kafkaAdminClient;
+  private KafkaConfig kafkaConfig;
 
-  public KafkaTopicServiceImpl(@Autowired KafkaAdminClient kafkaAdminClient) {
+  public KafkaTopicServiceImpl(@Autowired KafkaAdminClient kafkaAdminClient, @Autowired KafkaConfig kafkaConfig) {
     this.kafkaAdminClient = kafkaAdminClient;
+    this.kafkaConfig = kafkaConfig;
   }
 
   @Override
-  public Future<Boolean> createTopics(List<String> eventTypes, String tenantId, int numPartitions, short replicationFactor) {
+  public Future<Boolean> createTopics(List<String> eventTypes, String tenantId) {
     Promise<Boolean> promise = Promise.promise();
     List<NewTopic> topics = eventTypes.stream()
-      .map(eventType -> new NewTopic(new PubSubConfig(tenantId, eventType).getTopicName(), numPartitions, replicationFactor))
+      .map(eventType -> new NewTopic(new PubSubConfig(tenantId, eventType).getTopicName(), kafkaConfig.getNumberOfPartitions(), (short) kafkaConfig.getReplicationFactor()))
       .collect(Collectors.toList());
     kafkaAdminClient.createTopics(topics, ar -> {
       if (ar.succeeded()) {

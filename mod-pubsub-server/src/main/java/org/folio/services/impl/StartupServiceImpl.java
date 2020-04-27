@@ -19,9 +19,6 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 @Component
 public class StartupServiceImpl implements StartupService {
 
-  private static final int NUMBER_OF_PARTITIONS = 1;
-  private static final short REPLICATION_FACTOR = 1;
-
   private Vertx vertx;
   private KafkaConfig kafkaConfig;
   private MessagingModuleDao messagingModuleDao;
@@ -48,8 +45,7 @@ public class StartupServiceImpl implements StartupService {
           OkapiConnectionParams params = new OkapiConnectionParams(vertx);
           params.setOkapiUrl(kafkaConfig.getOkapiUrl());
           params.setTenantId(messagingModule.getTenantId());
-          kafkaTopicService.createTopics(Collections.singletonList(messagingModule.getEventType()),
-            messagingModule.getTenantId(), NUMBER_OF_PARTITIONS, REPLICATION_FACTOR)
+          kafkaTopicService.createTopics(Collections.singletonList(messagingModule.getEventType()), messagingModule.getTenantId())
             .compose(ar -> consumerService.subscribe(Collections.singletonList(messagingModule.getEventType()), params));
         });
         return Future.succeededFuture();
