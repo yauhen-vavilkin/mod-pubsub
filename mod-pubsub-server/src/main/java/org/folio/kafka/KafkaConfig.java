@@ -17,6 +17,10 @@ public class KafkaConfig {
   private String kafkaPort;
   @Value("${OKAPI_URL:http://10.0.2.15:9130}")
   private String okapiUrl;
+  @Value("${REPLICATION_FACTOR:1}")
+  private int replicationFactor;
+  @Value("${NUMBER_OF_PARTITIONS:1}")
+  private int numberOfPartitions;
 
   public String getKafkaHost() {
     return kafkaHost;
@@ -51,5 +55,13 @@ public class KafkaConfig {
 
   public String getKafkaUrl() {
     return kafkaHost + ":" + kafkaPort;
+  }
+
+  public int getReplicationFactor() {
+    return replicationFactor;
+  }
+
+  public int getNumberOfPartitions() {
+    return numberOfPartitions;
   }
 }
