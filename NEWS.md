@@ -1,4 +1,5 @@
 ## 2020-04-20 v.1.2.0-SNAPSHOT
+* [MODPUBSUB-82](https://issues.folio.org/browse/MODPUBSUB-82) Swicth Liquibase integration to use [folio-liquibase-util](https://github.com/folio-org/folio-liquibase-util)
 
 ## 2020-04-22 v1.1.4
 * Extended README documentation
