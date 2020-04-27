@@ -14,9 +14,7 @@ public interface KafkaTopicService {
    *
    * @param eventTypes        list of event types, for which topics should be created
    * @param tenantId          tenant id, for which topics should be created
-   * @param numPartitions     number of partitions
-   * @param replicationFactor replication factor
    * @return future with true if succeeded
    */
-  Future<Boolean> createTopics(List<String> eventTypes, String tenantId, int numPartitions, short replicationFactor);
+  Future<Boolean> createTopics(List<String> eventTypes, String tenantId);
 }

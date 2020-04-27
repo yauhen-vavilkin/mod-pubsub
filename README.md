@@ -10,6 +10,7 @@ See the file "[LICENSE](LICENSE)" for more information.
 * [Docker](#docker)
 * [Installing the module](#installing-the-module)
 * [Deploying the module](#deploying-the-module)
+* [Environment variables](#environment-variables)
 * [Verifying the module can connect and work with kafka](#verifying-the-module-can-connect-and-work-with-kafka)
 * [Database schemas](#Database-schemas)
 * [PubSub Client](#PubSub-Client)
@@ -96,6 +97,38 @@ curl -w '\n' -X POST -D -   \
     -d @target/TenantModuleDescriptor.json \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
+
+## Environment variables
+Pubsub requires kafka to be running, and to ensure it can connect and interact with kafka the following environment variable should be specified on deployment:
+ ```
+      {
+        "name": "KAFKA_HOST",
+        "value": "10.0.2.15"
+      },
+      {
+        "name": "KAFKA_PORT",
+        "value": "9092"
+      },
+      {
+        "name": "OKAPI_URL",
+        "value": "http://10.0.2.15:9130"
+      }
+```
+There are two additional parameters required for pubsub to create topics in kafka - number of partitions and replication factor. 
+The replication factor controls how many servers will replicate each message that is written. If replication factor set to 3 then up to 2 servers can fail before access to the data will be lost.
+The partition count controls how many logs the topic will be sharded into.
+
+ ```
+      {
+        "name": "REPLICATION_FACTOR",
+        "value": "3"
+      },
+      {
+        "name": "NUMBER_OF_PARTITIONS",
+        "value": "1"
+      }
+ ```   
+ If these values are not set then topics will be created with 1 partition and 1 replica. 
 
 ## Verifying the module can connect and work with kafka
 
