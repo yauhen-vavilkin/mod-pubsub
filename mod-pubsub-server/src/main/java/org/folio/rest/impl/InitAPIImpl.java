@@ -8,7 +8,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.serviceproxy.ServiceBinder;
 import org.folio.config.ApplicationConfig;
-import org.folio.dao.util.LiquibaseUtil;
+import org.folio.liquibase.LiquibaseUtil;
 import org.folio.rest.resource.interfaces.InitAPI;
 import org.folio.services.StartupService;
 import org.folio.services.audit.AuditService;
@@ -16,6 +16,8 @@ import org.folio.spring.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class InitAPIImpl implements InitAPI {
+
+  private static final String MODULE_CONFIGURATION_SCHEMA = "pubsub_config";
 
   @Autowired
   private StartupService startupService;
@@ -26,7 +28,7 @@ public class InitAPIImpl implements InitAPI {
       blockingFuture -> {
         SpringContextUtil.init(vertx, context, ApplicationConfig.class);
         SpringContextUtil.autowireDependencies(this, context);
-        LiquibaseUtil.initializeSchemaForModule(vertx);
+        LiquibaseUtil.initializeSchemaForModule(vertx, MODULE_CONFIGURATION_SCHEMA);
         startupService.initSubscribers();
         blockingFuture.complete();
       },
