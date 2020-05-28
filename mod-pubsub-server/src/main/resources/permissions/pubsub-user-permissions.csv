@@ -1,4 +1,4 @@
 source-storage.events.post
 source-records-manager.events.post
 inventory.events.post
-circulation.handlers.all
+circulation.events.post
