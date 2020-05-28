@@ -278,6 +278,11 @@
       "permissionName": "inventory.events.post",
       "displayName": "Inventory - post event",
       "description": "Post event to inventory"
+    },
+    {
+      "permissionName": "circulation.events.post",
+      "displayName": "Circulation - post event",
+      "description": "Post event to circulation"
     }
   ],
   "launchDescriptor": {
