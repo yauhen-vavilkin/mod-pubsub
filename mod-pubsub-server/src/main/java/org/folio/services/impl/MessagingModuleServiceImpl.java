@@ -91,7 +91,9 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
         .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
       for (String eventType : eventTypes) {
         if (descriptorsMap.get(eventType) == null) {
-          errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventType)));
+          String message = String.format("Event type '%s' does not exist", eventType);
+          LOGGER.error(message);
+          errors.getErrors().add(new Error().withMessage(message));
         }
       }
       return errors.withTotalRecords(errors.getErrors().size());
@@ -150,13 +152,16 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
 
   private void compareEventDescriptors(EventDescriptor eventDescriptor, EventDescriptor existingDescriptor, Errors errors) {
     if (existingDescriptor == null) {
-      errors.getErrors().add(new Error().withMessage(String.format("Event type '%s' does not exist", eventDescriptor.getEventType())));
+      String error = String.format("Event type '%s' does not exist", eventDescriptor.getEventType());
+      LOGGER.error(error);
+      errors.getErrors().add(new Error().withMessage(error));
     } else {
       if (!EqualsBuilder.reflectionEquals(eventDescriptor, existingDescriptor)) {
         String descriptorContent = JsonObject.mapFrom(existingDescriptor).encodePrettily();
         String message = String.format(
           "Publisher descriptor does not match existing descriptor for event type '%s'. To declare a publisher one should use the following descriptor: %s",
           eventDescriptor.getEventType(), descriptorContent);
+        LOGGER.error(message);
         errors.getErrors().add(new Error().withMessage(message));
       }
     }
