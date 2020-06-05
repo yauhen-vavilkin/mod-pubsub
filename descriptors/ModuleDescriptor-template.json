@@ -283,6 +283,11 @@
       "permissionName": "circulation.events.post",
       "displayName": "Circulation - post event",
       "description": "Post event to circulation"
+    },
+    {
+      "permissionName": "patron-blocks.events.post",
+      "displayName": "Patron blocks - post event",
+      "description": "Post events to patron blocks"
     }
   ],
   "launchDescriptor": {

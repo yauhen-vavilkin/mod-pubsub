@@ -537,7 +537,7 @@ As a result, we can send an event from the publisher module to "mod-pubsub" and 
 #### Permissions
 ##### "mod-pubsub" permissions workflow:
 At first "mod-pubsub" checks whether "pub-sub" user exists in the system. If user exists, then:
-- adds persmissions from the file "pubsub-user-permissions.csv" for the "pub-sub" user.
+- adds permissions from the file "pubsub-user-permissions.csv" for the "pub-sub" user.
 
  ##### Otherwise:
  If user does not exist in the system, then:

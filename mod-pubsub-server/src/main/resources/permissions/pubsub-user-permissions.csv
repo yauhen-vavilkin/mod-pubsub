@@ -2,3 +2,4 @@ source-storage.events.post
 source-records-manager.events.post
 inventory.events.post
 circulation.events.post
+patron-blocks.events.post
