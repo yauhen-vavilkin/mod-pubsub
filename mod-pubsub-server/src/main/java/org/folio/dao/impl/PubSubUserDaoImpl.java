@@ -2,12 +2,12 @@ package org.folio.dao.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.UpdateResult;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.dao.PubSubUserDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,22 +32,20 @@ public class PubSubUserDaoImpl implements PubSubUserDao {
 
   @Override
   public Future<Boolean> savePubSubJWTToken(String token, String tenantId) {
-    Promise<UpdateResult> promise = Promise.promise();
+    Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(SET_JWT_TOKEN, convertToPsqlStandard(tenantId), USER_TABLE_NAME);
-      JsonArray params = new JsonArray()
-        .add(token);
-      pgClientFactory.getInstance(tenantId).execute(query, params, promise);
+      pgClientFactory.getInstance(tenantId).execute(query, Tuple.of(token), promise);
     } catch (Exception e) {
       LOGGER.error("Error saving token for pub-sub user", e);
       promise.fail(e);
     }
-    return promise.future().map(updateResult -> updateResult.getUpdated() == 1);
+    return promise.future().map(updateResult -> updateResult.rowCount() == 1);
   }
 
   @Override
   public Future<String> getPubSubJWTToken(String tenantId) {
-    Promise<ResultSet> promise = Promise.promise();
+    Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(GET_JWT_TOKEN, convertToPsqlStandard(tenantId), USER_TABLE_NAME);
       pgClientFactory.getInstance(tenantId).select(query, promise);
@@ -55,12 +53,12 @@ public class PubSubUserDaoImpl implements PubSubUserDao {
       LOGGER.error("Error retrieving token for pub-sub user", e);
       promise.fail(e);
     }
-    return promise.future().map(resultSet -> resultSet.getRows().get(0).getString("token"));
+    return promise.future().map(resultSet -> resultSet.iterator().next().getString("token"));
   }
 
   @Override
   public Future<JsonObject> getPubSubUserCredentials(String tenantId) {
-    Promise<ResultSet> promise = Promise.promise();
+    Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(GET_CREDENTIALS, convertToPsqlStandard(tenantId), USER_TABLE_NAME);
       pgClientFactory.getInstance(tenantId).select(query, promise);
@@ -68,6 +66,6 @@ public class PubSubUserDaoImpl implements PubSubUserDao {
       LOGGER.error("Error retrieving pub-sub user credentials", e);
       promise.fail(e);
     }
-    return promise.future().map(resultSet -> resultSet.getRows().get(0));
+    return promise.future().map(resultSet -> JsonObject.mapFrom(resultSet.iterator().next()));
   }
 }

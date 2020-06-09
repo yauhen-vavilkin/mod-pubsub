@@ -1,8 +1,8 @@
 package org.folio.dao;
 
 import io.vertx.core.Future;
-import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.jaxrs.model.MessagingModule;
+import org.folio.rest.util.MessagingModuleFilter;
 
 import java.util.List;
 
@@ -14,8 +14,8 @@ public interface MessagingModuleDao {
   /**
    * Searches for {@link MessagingModule} entities by filter in database
    *
-   * @return return future with MessagingModule list
    * @param filter messagingModule filter
+   * @return return future with MessagingModule list
    */
   Future<List<MessagingModule>> get(MessagingModuleFilter filter);
 

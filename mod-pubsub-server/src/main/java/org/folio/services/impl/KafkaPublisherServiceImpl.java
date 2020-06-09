@@ -55,7 +55,7 @@ public class KafkaPublisherServiceImpl implements PublisherService {
     }
     auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.CREATED));
     verifyPublisher(event, tenantId)
-      .setHandler(ar -> {
+      .onComplete(ar -> {
         if (ar.succeeded()) {
           publishingService.sendEvent(JsonObject.mapFrom(event), tenantId);
           promise.complete(true);

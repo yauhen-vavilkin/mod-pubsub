@@ -105,7 +105,7 @@ public class ConsumerServiceUnitTest {
 
     Future<HttpResponse<Buffer>> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, HttpMethod.POST, params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       Assert.assertEquals(1, requests.size());
@@ -135,7 +135,7 @@ public class ConsumerServiceUnitTest {
 
     Future<HttpResponse<Buffer>> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, HttpMethod.POST, params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       Assert.assertEquals(1, requests.size());
@@ -164,7 +164,7 @@ public class ConsumerServiceUnitTest {
 
     Future<Void> future = consumerService.deliverEvent(event, params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       Assert.assertEquals(0, requests.size());
@@ -215,7 +215,7 @@ public class ConsumerServiceUnitTest {
 
     Future<Void> future = consumerService.deliverEvent(event, params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       verify(consumerService, times(messagingModuleList.size())).getEventDeliveredHandler(any(Event.class), anyString(), any(MessagingModule.class));
       async.complete();

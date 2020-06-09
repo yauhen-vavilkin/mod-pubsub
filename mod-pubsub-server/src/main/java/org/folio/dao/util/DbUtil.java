@@ -5,8 +5,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.sql.SQLConnection;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.SQLConnection;
 
 import java.util.function.Function;
 
@@ -15,7 +15,8 @@ import java.util.function.Function;
  */
 public final class DbUtil {
 
-  private DbUtil(){}
+  private DbUtil() {
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(DbUtil.class);
 
@@ -23,8 +24,8 @@ public final class DbUtil {
    * Executes passed action in transaction
    *
    * @param postgresClient Postgres Client
-   * @param action action that needs to be executed in transaction
-   * @param <T> result type returned from the action
+   * @param action         action that needs to be executed in transaction
+   * @param <T>            result type returned from the action
    * @return future with action result if succeeded or failed future
    */
   public static <T> Future<T> executeInTransaction(PostgresClient postgresClient,
@@ -37,7 +38,7 @@ public final class DbUtil {
         return tx.future();
       })
       .compose(v -> action.apply(tx.future()))
-      .setHandler(result -> {
+      .onComplete(result -> {
         if (result.succeeded()) {
           postgresClient.endTx(tx.future(), endTx -> promise.complete(result.result()));
         } else {

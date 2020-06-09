@@ -3,14 +3,16 @@ package org.folio.dao.impl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonArray;
-import io.vertx.ext.sql.UpdateResult;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.impl.ArrayTuple;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.helpers.LocalRowSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +25,6 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,23 +56,21 @@ public class MessagingModuleDaoImplUnitTest {
     // given
     Async async = context.async();
     int updatedRowsNumber = 1;
-    UpdateResult updateResult = new UpdateResult();
-    updateResult.setUpdated(updatedRowsNumber);
-    JsonArray queryParams = new JsonArray().add(messagingModule.getId());
+    RowSet<Row> updateResult = new LocalRowSet(updatedRowsNumber);
 
     doAnswer(invocation -> {
-      Handler<AsyncResult<UpdateResult>> handler = invocation.getArgument(2);
+      Handler<AsyncResult<RowSet<Row>>> handler = invocation.getArgument(2);
       handler.handle(Future.succeededFuture(updateResult));
       return updateResult;
     })
-      .when(pgClient).execute(anyString(), eq(queryParams), any(Handler.class));
+      .when(pgClient).execute(anyString(), any(ArrayTuple.class), any(Handler.class));
     // when
     messagingModuleDao.delete(messagingModule.getId())
-    // then
-      .setHandler(ar -> {
+      // then
+      .onComplete(ar -> {
         Assert.assertTrue(ar.succeeded());
         Assert.assertEquals(true, ar.result());
-        verify(pgClient).execute(anyString(), eq(queryParams), any(Handler.class));
+        verify(pgClient).execute(anyString(), any(ArrayTuple.class), any(Handler.class));
         async.complete();
       });
   }
@@ -80,24 +79,21 @@ public class MessagingModuleDaoImplUnitTest {
   public void shouldReturnFutureWithFalseWhenEntityWithSpecifiedIdNotFound(TestContext context) {
     // given
     Async async = context.async();
-    int updatedRowsNumber = 0;
-    UpdateResult updateResult = new UpdateResult();
-    updateResult.setUpdated(updatedRowsNumber);
-    JsonArray queryParams = new JsonArray().add(messagingModule.getId());
+    RowSet<Row> updateResult = new LocalRowSet(0);
 
     doAnswer(invocation -> {
-      Handler<AsyncResult<UpdateResult>> handler = invocation.getArgument(2);
+      Handler<AsyncResult<RowSet<Row>>> handler = invocation.getArgument(2);
       handler.handle(Future.succeededFuture(updateResult));
       return updateResult;
     })
-      .when(pgClient).execute(anyString(), eq(queryParams), any(Handler.class));
+      .when(pgClient).execute(anyString(), any(ArrayTuple.class), any(Handler.class));
     // when
     messagingModuleDao.delete(messagingModule.getId())
-    // then
-      .setHandler(ar -> {
+      // then
+      .onComplete(ar -> {
         Assert.assertTrue(ar.succeeded());
         Assert.assertEquals(false, ar.result());
-        verify(pgClient).execute(anyString(), eq(queryParams), any(Handler.class));
+        verify(pgClient).execute(anyString(), any(ArrayTuple.class), any(Handler.class));
         async.complete();
       });
   }

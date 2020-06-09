@@ -24,7 +24,7 @@ public interface PublishingService { //NOSONAR
   /**
    * Publishes an event to an appropriate topic
    *
-   * @param event {@link Event} in JsonObject representation
+   * @param event    {@link Event} in JsonObject representation
    * @param tenantId tenant id
    */
   void sendEvent(JsonObject event, String tenantId);

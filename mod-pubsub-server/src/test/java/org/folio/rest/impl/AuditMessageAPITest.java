@@ -119,7 +119,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
   @Test
   public void shouldReturnAuditMessagePayloadOnGet(TestContext context) {
     Async async = context.async();
-    addTestData().setHandler(ar -> {
+    addTestData().onComplete(ar -> {
       RestAssured.given()
         .spec(spec)
         .when()
@@ -134,7 +134,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
   @Test
   public void shouldReturnAuditMessagesOnGetFilteredByDates(TestContext context) {
     Async async = context.async();
-    addTestData().setHandler(ar -> {
+    addTestData().onComplete(ar -> {
       RestAssured.given()
         .spec(spec)
         .when()
@@ -150,7 +150,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
   @Test
   public void shouldReturnAuditMessagesOnGetFilteredByEventId(TestContext context) {
     Async async = context.async();
-    addTestData().setHandler(ar -> {
+    addTestData().onComplete(ar -> {
       RestAssured.given()
         .spec(spec)
         .when()
@@ -167,7 +167,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
   @Test
   public void shouldReturnAuditMessagesOnGetFilteredByEventType(TestContext context) {
     Async async = context.async();
-    addTestData().setHandler(ar -> {
+    addTestData().onComplete(ar -> {
       RestAssured.given()
         .spec(spec)
         .when()
@@ -184,7 +184,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
   @Test
   public void shouldReturnAuditMessagesOnGetFilteredByCorrelationId(TestContext context) {
     Async async = context.async();
-    addTestData().setHandler(ar -> {
+    addTestData().onComplete(ar -> {
       RestAssured.given()
         .spec(spec)
         .when()

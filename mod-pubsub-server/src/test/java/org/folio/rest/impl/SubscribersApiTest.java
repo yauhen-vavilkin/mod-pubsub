@@ -2,6 +2,8 @@ package org.folio.rest.impl;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -44,10 +46,13 @@ public class SubscribersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnSubscribersOnGetByEventType() {
+  public void shouldReturnSubscribersOnGetByEventType(TestContext context) {
+    Async async = context.async();
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
     EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
+    async.complete();
 
+    async = context.async();
     SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor1.getEventType())
       .withCallbackAddress("/callback-path");
@@ -62,7 +67,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     SubscriberDescriptor subscriberDescriptor2 = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.singletonList(new SubscriptionDefinition()
           .withEventType(createdEventDescriptor2.getEventType())
@@ -76,7 +83,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .when()
@@ -85,12 +94,16 @@ public class SubscribersApiTest extends AbstractRestTest {
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(1))
       .body("messagingModules.get(0).eventType", is(createdEventDescriptor1.getEventType()));
+    async.complete();
   }
 
   @Test
-  public void shouldCreateSubscriberOnPost() {
+  public void shouldCreateSubscriberOnPost(TestContext context) {
+    Async async = context.async();
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
+    async.complete();
 
+    async = context.async();
     SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor1.getEventType())
       .withCallbackAddress("/callback-path");
@@ -105,7 +118,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .when()
@@ -113,14 +128,18 @@ public class SubscribersApiTest extends AbstractRestTest {
       .then().log().all()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(1));
+    async.complete();
   }
 
   @Test
-  public void shouldClearPreviousSubscriberInfoOnPostWithSameModuleNameAndTenantId() {
+  public void shouldClearPreviousSubscriberInfoOnPostWithSameModuleNameAndTenantId(TestContext context) {
+    Async async = context.async();
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
     EventDescriptor createdEventDescriptor2 = postEventDescriptor(eventDescriptor2);
     String moduleName = "test-module-14.23.1";
+    async.complete();
 
+    async = context.async();
     SubscriptionDefinition subscriptionDefinition1 = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor1.getEventType())
       .withCallbackAddress("/callback-path");
@@ -135,7 +154,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     // post subscriber with same module name and tenant id
     SubscriptionDefinition subscriptionDefinition2 = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor2.getEventType())
@@ -151,7 +172,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .when()
@@ -159,7 +182,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .then().log().all()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(0));
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .when()
@@ -167,12 +192,16 @@ public class SubscribersApiTest extends AbstractRestTest {
       .then().log().all()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(1));
+    async.complete();
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenAnyEventTypeIsNotExists() {
+  public void shouldReturnBadRequestOnPostWhenAnyEventTypeIsNotExists(TestContext context) {
+    Async async = context.async();
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
+    async.complete();
 
+    async = context.async();
     SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition()
       .withEventType(createdEventDescriptor1.getEventType())
       .withCallbackAddress("/callback-path");
@@ -193,10 +222,12 @@ public class SubscribersApiTest extends AbstractRestTest {
       .statusCode(HttpStatus.SC_BAD_REQUEST)
       .body("total_records", is(1))
       .body("errors.get(0).message", notNullValue(String.class));
+    async.complete();
   }
 
   @Test
-  public void shouldDeleteSubscriberOnDelete() {
+  public void shouldDeleteSubscriberOnDelete(TestContext context) {
+    Async async = context.async();
     EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
 
     SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition()
@@ -213,7 +244,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
       .statusCode(HttpStatus.SC_CREATED);
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .queryParam("moduleId", subscriberDescriptor.getModuleId())
@@ -221,7 +254,9 @@ public class SubscribersApiTest extends AbstractRestTest {
       .delete(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType() + SUBSCRIBERS_PATH)
       .then()
       .statusCode(HttpStatus.SC_NO_CONTENT);
+    async.complete();
 
+    async = context.async();
     RestAssured.given()
       .spec(spec)
       .when()
@@ -229,10 +264,12 @@ public class SubscribersApiTest extends AbstractRestTest {
       .then()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(0));
+    async.complete();
   }
 
   @Test
-  public void shouldNotFailedWhenRegisterEmptySubscribersList() {
+  public void shouldNotFailedWhenRegisterEmptySubscribersList(TestContext context) {
+    Async async = context.async();
     SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.emptyList())
       .withModuleId("mod-important-1.0.0");
@@ -243,6 +280,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    async.complete();
   }
 
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {

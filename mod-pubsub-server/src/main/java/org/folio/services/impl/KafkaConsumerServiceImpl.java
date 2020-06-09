@@ -91,7 +91,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         list.add(promise.future());
       }
     }
-    CompositeFuture.all(list).setHandler(ar -> {
+    CompositeFuture.all(list).onComplete(ar -> {
       if (ar.succeeded()) {
         result.complete(true);
       } else {
@@ -132,7 +132,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         } else {
           subscribers
             .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
-              .setHandler(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
+              .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
         }
         return Future.succeededFuture();
       });

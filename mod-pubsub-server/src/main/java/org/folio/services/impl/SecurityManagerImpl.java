@@ -190,7 +190,7 @@ public class SecurityManagerImpl implements SecurityManager {
     String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
     permissions.forEach(permission -> {
       JsonObject requestBody = new JsonObject()
-        .put("permissionName",permission);
+        .put("permissionName", permission);
       futures.add(doRequest(requestBody.encode(), permUrl, HttpMethod.POST, params)
         .compose(response -> {
           Promise<Boolean> promise = Promise.promise();

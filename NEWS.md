@@ -4,6 +4,7 @@
 * [MODPUBSUB-97](https://issues.folio.org/browse/MODPUBSUB-97) Allow Kafka topic name to have a customized prefix
 * [MODPUBSUB-95](https://issues.folio.org/browse/MODPUBSUB-95) Allow publishing event when there are no subscribers
 * [MODPUBSUB-85](https://issues.folio.org/browse/MODPUBSUB-85) Client: Remove call for registering Publisher/Subscriber if none declared in MessagingDescriptor
+* [MODPUBSUB-88](https://issues.folio.org/browse/MODPUBSUB-88) Upgrade to RAML Module Builder 30.0.2
 
 ## 2020-04-27 v1.1.5
 * [MODPUBSUB-83](https://issues.folio.org/browse/MODPUBSUB-83) Add env variable to set replication factor and number of partitions for topics in kafka

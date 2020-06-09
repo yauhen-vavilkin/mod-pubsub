@@ -43,7 +43,7 @@ public class Cache {
           if (isEmpty(messagingModules)) {
             messagingModuleDao.getAll()
               .map(messagingModules::addAll)
-              .setHandler(ar -> promise.complete(messagingModules));
+              .onComplete(ar -> promise.complete(messagingModules));
           } else {
             promise.complete(messagingModules);
           }

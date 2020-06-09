@@ -12,6 +12,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.sqlclient.Tuple;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import net.mguenther.kafka.junit.TopicConfig;
 import org.folio.rest.RestVerticle;
@@ -156,8 +157,8 @@ public abstract class AbstractRestTest {
   private void clearModuleSchemaTables(TestContext context) {
     Async async = context.async();
     PostgresClient pgClient = PostgresClient.getInstance(vertx);
-    pgClient.execute(format(DELETE_ALL_SQL, MESSAGING_MODULE_TABLE), new JsonArray(), event ->
-      pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), new JsonArray(), event1 -> {
+    pgClient.execute(format(DELETE_ALL_SQL, MESSAGING_MODULE_TABLE), Tuple.tuple(), event ->
+      pgClient.execute(format(DELETE_ALL_SQL, EVENT_DESCRIPTOR_TABLE), Tuple.tuple(), event1 -> {
         if (event.failed()) {
           context.fail(event.cause());
         }

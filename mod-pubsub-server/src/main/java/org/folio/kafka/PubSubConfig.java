@@ -8,6 +8,7 @@ public class PubSubConfig {
   private String eventType;
   private String groupId;
   private String topicName;
+
   public PubSubConfig(String env, String tenant, String eventType) {
     this.tenant = tenant;
     this.eventType = eventType;

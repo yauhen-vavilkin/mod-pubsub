@@ -105,7 +105,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
     List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getModuleId(), eventTypes, PUBLISHER, tenantId);
-    if(messagingModules.isEmpty()) {
+    if (messagingModules.isEmpty()) {
       LOGGER.info("List of Publishers is empty");
       return Future.succeededFuture(true);
     }
@@ -121,7 +121,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, params.getTenantId());
-    if(messagingModules.isEmpty()) {
+    if (messagingModules.isEmpty()) {
       LOGGER.info("List of Subscribers is empty");
       return Future.succeededFuture(true);
     }
@@ -171,10 +171,10 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   /**
    * Creates Messaging Modules by event type and role
    *
-   * @param moduleId module id
+   * @param moduleId   module id
    * @param eventTypes event types list
    * @param moduleRole MessagingModule role
-   * @param tenantId tenant id
+   * @param tenantId   tenant id
    * @return Messaging Modules list
    */
   private List<MessagingModule> createMessagingModules(String moduleId, List<String> eventTypes, ModuleRole moduleRole, String tenantId) {
@@ -186,10 +186,10 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   /**
    * Creates Messaging Module by event type and role
    *
-   * @param moduleId module id
-   * @param eventType event type name
+   * @param moduleId   module id
+   * @param eventType  event type name
    * @param moduleRole module role
-   * @param tenantId tenant id
+   * @param tenantId   tenant id
    * @return MessagingModule
    */
   private MessagingModule createMessagingModule(String moduleId, String eventType, ModuleRole moduleRole, String tenantId) {

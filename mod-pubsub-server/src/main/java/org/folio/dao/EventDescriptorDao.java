@@ -45,7 +45,6 @@ public interface EventDescriptorDao {
   /**
    * Updates {@link EventDescriptor} in data base
    *
-   *
    * @param eventDescriptor entity to update
    * @return future with updated eventDescriptor
    */

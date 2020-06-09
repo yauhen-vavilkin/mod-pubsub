@@ -102,7 +102,7 @@ public class SecurityManagerTest extends AbstractRestTest {
     Future<String> future = securityManager.loginPubSubUser(params)
       .compose(ar -> securityManager.getJWTToken(params));
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       assertEquals(pubSubToken, ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
@@ -137,7 +137,7 @@ public class SecurityManagerTest extends AbstractRestTest {
 
     Future<Boolean> future = securityManager.createPubSubUser(params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       assertTrue(ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
@@ -175,7 +175,7 @@ public class SecurityManagerTest extends AbstractRestTest {
 
     Future<Boolean> future = securityManager.createPubSubUser(params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       assertTrue(ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
@@ -204,7 +204,7 @@ public class SecurityManagerTest extends AbstractRestTest {
 
     Future<String> future = securityManager.getJWTToken(params);
 
-    future.setHandler(ar -> {
+    future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       assertEquals(expectedToken, ar.result());
       verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));

@@ -62,7 +62,7 @@ public class PubSubImpl implements Pubsub {
         .map(PostPubsubEventTypesResponse.respond201WithApplicationJson(entity, PostPubsubEventTypesResponse.headersFor201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to save Event Descriptor for event type '{}'", e, entity.getEventType());
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -76,7 +76,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubEventTypesResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to get all Event Descriptors");
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -90,7 +90,7 @@ public class PubSubImpl implements Pubsub {
         .map(PutPubsubEventTypesByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to update Event Descriptor by event type name '{}'", e, eventTypeName);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -104,7 +104,7 @@ public class PubSubImpl implements Pubsub {
         .map(DeletePubsubEventTypesByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to delete event descriptor by event type name '{}'", e, eventTypeName);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -120,7 +120,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubEventTypesByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to get event descriptor by event type name '{}'", e, eventTypeName);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -138,7 +138,7 @@ public class PubSubImpl implements Pubsub {
           .map(v -> PostPubsubEventTypesDeclarePublisherResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to create publisher", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -153,7 +153,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubHistoryResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to retrieve audit messages", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -170,7 +170,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubAuditMessagesPayloadByEventIdResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to retrieve audit message payload for event {}", e, eventId);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -185,7 +185,7 @@ public class PubSubImpl implements Pubsub {
         .map(PostPubsubPublishResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Error publishing event", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -204,7 +204,7 @@ public class PubSubImpl implements Pubsub {
         .map(DeletePubsubEventTypesPublishersByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to delete publisher", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -218,7 +218,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubEventTypesPublishersByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to get publishers by event type '{}'", e, eventTypeName);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -236,7 +236,7 @@ public class PubSubImpl implements Pubsub {
           .map(v -> PostPubsubEventTypesDeclareSubscriberResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to create subscriber", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -250,7 +250,7 @@ public class PubSubImpl implements Pubsub {
         .map(GetPubsubEventTypesSubscribersByEventTypeNameResponse::respond200WithApplicationJson)
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to get subscribers by event type '{}'", e, eventTypeName);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
@@ -269,7 +269,7 @@ public class PubSubImpl implements Pubsub {
         .map(DeletePubsubEventTypesSubscribersByEventTypeNameResponse.respond204())
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
-        .setHandler(asyncResultHandler);
+        .onComplete(asyncResultHandler);
     } catch (Exception e) {
       LOGGER.error("Failed to delete subscriber", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));

@@ -407,7 +407,7 @@ public class ModTenantAPI extends TenantAPI {
         Vertx vertx = context.owner();
         vertx.executeBlocking(
           blockingFuture -> registerModuleToPubsub(headers, context.owner())
-            .setHandler(event -> handler.handle(postTenantAr)),
+            .onComplete(event -> handler.handle(postTenantAr)),
           result -> handler.handle(postTenantAr)
         );
       }

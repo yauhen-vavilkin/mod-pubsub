@@ -12,8 +12,8 @@ public interface KafkaTopicService {
   /**
    * Creates Kafka topics for specified event types
    *
-   * @param eventTypes        list of event types, for which topics should be created
-   * @param tenantId          tenant id, for which topics should be created
+   * @param eventTypes list of event types, for which topics should be created
+   * @param tenantId   tenant id, for which topics should be created
    * @return future with true if succeeded
    */
   Future<Boolean> createTopics(List<String> eventTypes, String tenantId);
