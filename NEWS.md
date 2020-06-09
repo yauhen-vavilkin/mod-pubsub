@@ -2,6 +2,7 @@
 * [MODPUBSUB-82](https://issues.folio.org/browse/MODPUBSUB-82) Switch Liquibase integration to use [folio-liquibase-util](https://github.com/folio-org/folio-liquibase-util)
 * [MODPUBSUB-96](https://issues.folio.org/browse/MODPUBSUB-96) Add permission to send events to mod-patron-blocks
 * [MODPUBSUB-97](https://issues.folio.org/browse/MODPUBSUB-97) Allow Kafka topic name to have a customized prefix
+* [MODPUBSUB-95](https://issues.folio.org/browse/MODPUBSUB-95) Allow publishing event when there are no subscribers
 
 ## 2020-04-27 v1.1.5
 * [MODPUBSUB-83](https://issues.folio.org/browse/MODPUBSUB-83) Add env variable to set replication factor and number of partitions for topics in kafka

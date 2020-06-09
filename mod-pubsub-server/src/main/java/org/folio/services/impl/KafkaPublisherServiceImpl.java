@@ -24,7 +24,6 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.logging.log4j.util.Strings.isNotEmpty;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
-import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 import static org.folio.services.util.AuditUtil.constructJsonAuditMessage;
 import static org.folio.services.util.AuditUtil.constructJsonAuditMessagePayload;
 import static org.folio.services.util.MessagingModulesUtil.filter;
@@ -56,7 +55,6 @@ public class KafkaPublisherServiceImpl implements PublisherService {
     }
     auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.CREATED));
     verifyPublisher(event, tenantId)
-      .compose(ar -> checkForRegisteredSubscribers(event, tenantId))
       .setHandler(ar -> {
         if (ar.succeeded()) {
           publishingService.sendEvent(JsonObject.mapFrom(event), tenantId);
@@ -96,32 +94,6 @@ public class KafkaPublisherServiceImpl implements PublisherService {
           return Future.failedFuture(new BadRequestException(error));
         }
         return Future.succeededFuture(true);
-      });
-  }
-
-  /**
-   * Checks for registered subscribers for event type, if no subscribers found event is rejected.
-   *
-   * @param event    event to publish
-   * @param tenantId tenant id
-   * @return future with true if succeeded
-   */
-  private Future<Boolean> checkForRegisteredSubscribers(Event event, String tenantId) {
-    return cache.getMessagingModules()
-      .map(messagingModules -> filter(messagingModules,
-        new MessagingModuleFilter()
-          .withTenantId(tenantId)
-          .withModuleRole(SUBSCRIBER)
-          .withEventType(event.getEventType())))
-      .compose(subscribers -> {
-        if (isEmpty(subscribers)) {
-          String errorMessage = format("There is no SUBSCRIBERS registered for event type %s. Event %s will not be published", event.getEventType(), event.getId());
-          LOGGER.error(errorMessage);
-          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
-          return Future.failedFuture(new BadRequestException(errorMessage));
-        } else {
-          return Future.succeededFuture(true);
-        }
       });
   }
 

@@ -92,15 +92,14 @@ public class PubSubClientTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestIfNoSubscribersRegistered() {
+  public void shouldPublishEventIfNoSubscribersRegistered() {
     EventDescriptor eventDescriptor = postEventDescriptor();
     registerPublisher(eventDescriptor);
     try {
       Event event = EVENT.mapTo(Event.class);
-      PubSubClientUtils.sendEventMessage(event, params).get();
-      Assert.fail();
+      Assert.assertTrue(PubSubClientUtils.sendEventMessage(event, params).get());
     } catch (Exception e) {
-      Assert.assertTrue(true);
+      Assert.fail();
     }
   }
 

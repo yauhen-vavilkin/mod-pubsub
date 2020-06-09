@@ -48,7 +48,7 @@ public class PublishTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestIfNoSubscribersRegistered() {
+  public void shouldPublishEventIfNoSubscribersRegistered() {
     EventDescriptor eventDescriptor = postEventDescriptor(EVENT_DESCRIPTOR);
     registerPublisher(eventDescriptor);
 
@@ -58,7 +58,7 @@ public class PublishTest extends AbstractRestTest {
       .when()
       .post(PUBLISH_PATH)
       .then()
-      .statusCode(HttpStatus.SC_BAD_REQUEST);
+      .statusCode(HttpStatus.SC_NO_CONTENT);
   }
 
   @Test
