@@ -76,7 +76,7 @@ public class PubSubClientTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldNotRegisterSubscribers() throws Exception {
+  public void shouldNotRegisterSubscribers() {
     WireMock.stubFor(post("/pubsub/event-types/declare/publisher")
       .willReturn(created()));
     WireMock.stubFor(post("/pubsub/event-types")

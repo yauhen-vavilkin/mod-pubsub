@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+
 /**
  * Util class for reading module messaging descriptors, sending messages using PubSub and register module in PubSub
  */
@@ -83,13 +85,15 @@ public class PubSubClientUtils {
       PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
       LOGGER.info("Reading MessagingDescriptor.json");
       DescriptorHolder descriptorHolder = readMessagingDescriptor();
-      if (descriptorHolder.getPublisherDescriptor() != null) {
+      if (descriptorHolder.getPublisherDescriptor() != null &&
+        isNotEmpty(descriptorHolder.getPublisherDescriptor().getEventDescriptors())) {
         LOGGER.info("Registering events for publishers");
         List<EventDescriptor> eventDescriptors = descriptorHolder.getPublisherDescriptor().getEventDescriptors();
         result = registerEventTypes(client, eventDescriptors)
           .thenCompose(ar -> registerPublishers(client, descriptorHolder.getPublisherDescriptor()));
       }
-      if (descriptorHolder.getSubscriberDescriptor() != null) {
+      if (descriptorHolder.getSubscriberDescriptor() != null &&
+        isNotEmpty(descriptorHolder.getSubscriberDescriptor().getSubscriptionDefinitions())) {
         result = result.thenCompose(ar -> registerSubscribers(client, descriptorHolder.getSubscriberDescriptor()));
       }
       return result;
