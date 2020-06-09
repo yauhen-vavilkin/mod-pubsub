@@ -69,7 +69,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   public Future<Boolean> subscribe(List<String> eventTypes, OkapiConnectionParams params) {
     Promise<Boolean> result = Promise.promise();
     Set<String> topics = eventTypes.stream()
-      .map(eventType -> new PubSubConfig(params.getTenantId(), eventType).getTopicName())
+      .map(eventType -> new PubSubConfig(kafkaConfig.getEnvId(), params.getTenantId(), eventType).getTopicName())
       .collect(Collectors.toSet());
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
     List<Future> list = new ArrayList<>();

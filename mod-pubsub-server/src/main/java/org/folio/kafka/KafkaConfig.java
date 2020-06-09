@@ -21,6 +21,8 @@ public class KafkaConfig {
   private int replicationFactor;
   @Value("${NUMBER_OF_PARTITIONS:1}")
   private int numberOfPartitions;
+  @Value("${ENV:folio}")
+  private String envId;
 
   public String getKafkaHost() {
     return kafkaHost;
@@ -63,5 +65,9 @@ public class KafkaConfig {
 
   public int getNumberOfPartitions() {
     return numberOfPartitions;
+  }
+
+  public String getEnvId() {
+    return envId;
   }
 }

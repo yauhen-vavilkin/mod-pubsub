@@ -33,7 +33,7 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
   public Future<Boolean> createTopics(List<String> eventTypes, String tenantId) {
     Promise<Boolean> promise = Promise.promise();
     List<NewTopic> topics = eventTypes.stream()
-      .map(eventType -> new NewTopic(new PubSubConfig(tenantId, eventType).getTopicName(), kafkaConfig.getNumberOfPartitions(), (short) kafkaConfig.getReplicationFactor()))
+      .map(eventType -> new NewTopic(new PubSubConfig(kafkaConfig.getEnvId(), tenantId, eventType).getTopicName(), kafkaConfig.getNumberOfPartitions(), (short) kafkaConfig.getReplicationFactor()))
       .collect(Collectors.toList());
     kafkaAdminClient.createTopics(topics, ar -> {
       if (ar.succeeded()) {

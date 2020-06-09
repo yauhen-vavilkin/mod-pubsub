@@ -128,7 +128,17 @@ The partition count controls how many logs the topic will be sharded into.
         "value": "1"
       }
  ```   
- If these values are not set then topics will be created with 1 partition and 1 replica. 
+If these values are not set then topics will be created with 1 partition and 1 replica. 
+
+There is also a possibility to set a customized prefix for kafka topics, specifying the environment in which pusub is deployed
+
+ ```
+      {
+        "name": "ENV",
+        "value": "folio-testing"
+      }
+ ```
+In case this variable is not set, default "folio" prefix will be used in topic names.
 
 ## Verifying the module can connect and work with kafka
 
