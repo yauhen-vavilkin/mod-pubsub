@@ -1,12 +1,13 @@
 package org.folio.rest.util;
 
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpRequest;
@@ -29,7 +30,7 @@ public final class RestUtil {
     try {
       HttpRequest<Buffer> request = WebClient.wrap(getHttpClient(params)).requestAbs(method, params.getOkapiUrl() + path);
 
-      CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+      MultiMap headers = new VertxHttpHeaders();
       headers.add(OKAPI_URL_HEADER, params.getOkapiUrl())
         .add(OKAPI_TENANT_HEADER, params.getTenantId())
         .add(OKAPI_TOKEN_HEADER, params.getToken())
