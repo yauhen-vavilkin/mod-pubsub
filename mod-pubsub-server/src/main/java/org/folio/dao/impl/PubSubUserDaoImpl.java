@@ -66,6 +66,15 @@ public class PubSubUserDaoImpl implements PubSubUserDao {
       LOGGER.error("Error retrieving pub-sub user credentials", e);
       promise.fail(e);
     }
-    return promise.future().map(resultSet -> JsonObject.mapFrom(resultSet.iterator().next()));
+    return promise.future().map(this::mapToUserCredentialsJson);
   }
+
+  private JsonObject mapToUserCredentialsJson(RowSet<Row> rowSet) {
+    JsonObject json = new JsonObject();
+    rowSet.forEach(row -> json
+      .put("username", row.getString("username"))
+      .put("password", row.getString("password")));
+    return json;
+  }
+
 }
