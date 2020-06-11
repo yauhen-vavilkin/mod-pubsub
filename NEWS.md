@@ -1,3 +1,6 @@
+## 2020-06-11 v1.2.1
+* [MODPUBSUB-99](https://issues.folio.org/browse/MODPUBSUB-99) Fix reading of pubsub user credentials 
+
 ## 2020-06-10 v.1.2.0
 * [MODPUBSUB-82](https://issues.folio.org/browse/MODPUBSUB-82) Switch Liquibase integration to use [folio-liquibase-util](https://github.com/folio-org/folio-liquibase-util)
 * [MODPUBSUB-96](https://issues.folio.org/browse/MODPUBSUB-96) Add permission to send events to mod-patron-blocks
