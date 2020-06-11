@@ -1,3 +1,6 @@
+## 2020-06-11 v1.2.2
+* Update dependency on "login" interface to v7.0
+
 ## 2020-06-11 v1.2.1
 * [MODPUBSUB-99](https://issues.folio.org/browse/MODPUBSUB-99) Fix reading of pubsub user credentials 
 
