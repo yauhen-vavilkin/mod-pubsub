@@ -2,6 +2,7 @@ package org.folio.dao.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.sqlclient.Row;
@@ -28,7 +29,6 @@ import java.util.stream.Stream;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.rest.tools.ClientHelpers.pojo2json;
 
 @Repository
 public class AuditMessageDaoImpl implements AuditMessageDao {
@@ -87,7 +87,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
     Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(INSERT_AUDIT_MESSAGE_PAYLOAD_QUERY, convertToPsqlStandard(tenantId), AUDIT_MESSAGE_PAYLOAD_TABLE);
-      pgClientFactory.getInstance(tenantId).execute(query, Tuple.of(UUID.fromString(auditMessagePayload.getEventId()), pojo2json(auditMessagePayload)),
+      pgClientFactory.getInstance(tenantId).execute(query, Tuple.of(UUID.fromString(auditMessagePayload.getEventId()), JsonObject.mapFrom(auditMessagePayload)),
         promise);
     } catch (Exception e) {
       LOGGER.error("Error saving audit message payload for event with id {}", e, auditMessagePayload.getEventId());
@@ -135,7 +135,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
   private AuditMessagePayload mapAuditMessagePayload(Row result) {
     return new AuditMessagePayload()
       .withEventId(result.getValue("event_id").toString())
-      .withContent(result.getString("content"));
+      .withContent(result.getValue("content").toString());
   }
 
   private String constructWhereClauseForGetAuditMessagesQuery(AuditMessageFilter filter) {
