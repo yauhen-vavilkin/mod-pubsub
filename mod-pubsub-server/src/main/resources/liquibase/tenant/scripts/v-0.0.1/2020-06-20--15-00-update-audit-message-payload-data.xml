@@ -1,0 +1,18 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2020-06-20--13-00-update-audit-message-payload-data" author="KaterynaSenchenko">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="audit_message_payload" schemaName="${database.defaultSchemaName}"/>
+    </preConditions>
+    <sql>
+      UPDATE ${database.defaultSchemaName}.audit_message_payload
+      SET content = (content #>> '{}')::jsonb
+      WHERE jsonb_typeof(content) = 'string';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

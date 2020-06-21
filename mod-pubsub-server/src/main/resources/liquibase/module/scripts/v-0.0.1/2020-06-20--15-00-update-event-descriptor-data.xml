@@ -1,0 +1,18 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+  <changeSet id="2020-06-20--13-00-update-event-descriptor-data" author="KaterynaSenchenko">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="event_descriptor" schemaName="${database.defaultSchemaName}"/>
+    </preConditions>
+    <sql>
+      UPDATE ${database.defaultSchemaName}.event_descriptor
+      SET descriptor = (descriptor #>> '{}')::jsonb
+      WHERE jsonb_typeof(descriptor) = 'string';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

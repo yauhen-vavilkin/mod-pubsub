@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.folio.rest.tools.ClientHelpers.pojo2json;
 
 /**
  * Implementation for the EventDescriptorDao, works with PostgresClient to access data.
@@ -93,7 +92,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(INSERT_SQL, MODULE_SCHEMA, TABLE_NAME);
-      pgClientFactory.getInstance().execute(query, Tuple.of(eventDescriptor.getEventType(), pojo2json(eventDescriptor)),
+      pgClientFactory.getInstance().execute(query, Tuple.of(eventDescriptor.getEventType(), JsonObject.mapFrom(eventDescriptor)),
         promise);
     } catch (Exception e) {
       LOGGER.error("Error saving EventDescriptor with event type '{}'", e, eventDescriptor.getEventType());
@@ -107,7 +106,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String query = format(UPDATE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-      pgClientFactory.getInstance().execute(query, Tuple.of(pojo2json(eventDescriptor), eventDescriptor.getEventType()),
+      pgClientFactory.getInstance().execute(query, Tuple.of(JsonObject.mapFrom((eventDescriptor)), eventDescriptor.getEventType()),
         promise);
     } catch (Exception e) {
       LOGGER.error("Error updating EventDescriptor by event type '{}'", e, eventDescriptor.getEventType());
@@ -134,7 +133,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
   private EventDescriptor mapRowJsonToEventDescriptor(Row rowAsJson) {
     EventDescriptor eventDescriptor = new EventDescriptor();
     eventDescriptor.setEventType(rowAsJson.getString("id"));
-    JsonObject descriptorAsJson = new JsonObject(rowAsJson.getString("descriptor"));
+    JsonObject descriptorAsJson = new JsonObject(rowAsJson.getValue("descriptor").toString());
     eventDescriptor.setDescription(descriptorAsJson.getString("description"));
     eventDescriptor.setEventTTL(descriptorAsJson.getInteger("eventTTL"));
     eventDescriptor.setSigned(descriptorAsJson.getBoolean("signed"));
