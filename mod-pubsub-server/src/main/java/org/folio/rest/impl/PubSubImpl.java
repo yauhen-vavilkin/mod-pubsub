@@ -229,16 +229,14 @@ public class PubSubImpl implements Pubsub {
   public void postPubsubEventTypesDeclareSubscriber(SubscriberDescriptor entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
       OkapiConnectionParams params = new OkapiConnectionParams(okapiHeaders, vertxContext.owner());
-      messagingModuleService.validateSubscriberDescriptor(entity)
-        .compose(errors -> errors.getTotalRecords() > 0
-          ? Future.succeededFuture(PostPubsubEventTypesDeclareSubscriberResponse.respond400WithApplicationJson(errors))
-          : messagingModuleService.saveSubscriber(entity, params)
+      messagingModuleService.createMissingEventTypes(entity)
+        .compose(done -> messagingModuleService.saveSubscriber(entity, params)
           .map(v -> PostPubsubEventTypesDeclareSubscriberResponse.respond201()))
         .map(Response.class::cast)
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to create subscriber", e);
+      LOGGER.error("Failed to register subscriber", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }

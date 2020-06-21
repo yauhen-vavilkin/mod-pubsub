@@ -40,7 +40,7 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
         LOGGER.info("Created topics: [{}]", StringUtils.join(eventTypes, ","));
         promise.complete(true);
       } else {
-        LOGGER.error("Some of the topics [{}] were not created. Cause: {}", StringUtils.join(eventTypes, ","), ar.cause().getMessage());
+        LOGGER.info("Some of the topics [{}] were not created. Cause: {}", StringUtils.join(eventTypes, ","), ar.cause().getMessage());
         promise.complete(false);
       }
     });

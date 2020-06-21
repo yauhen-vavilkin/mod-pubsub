@@ -1,5 +1,6 @@
 package org.folio.services.impl;
 
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -25,6 +26,7 @@ import org.folio.services.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -80,24 +82,28 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Errors> validateSubscriberDescriptor(SubscriberDescriptor subscriberDescriptor) {
-    Errors errors = new Errors();
+  public Future<Boolean> createMissingEventTypes(SubscriberDescriptor subscriberDescriptor) {
     List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
 
-    return eventDescriptorDao.getByEventTypes(eventTypes).map(existingDescriptorList -> {
-      Map<String, EventDescriptor> descriptorsMap = existingDescriptorList.stream()
-        .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
-      for (String eventType : eventTypes) {
-        if (descriptorsMap.get(eventType) == null) {
-          String message = String.format("Event type '%s' does not exist", eventType);
-          LOGGER.error(message);
-          errors.getErrors().add(new Error().withMessage(message));
+    return eventDescriptorDao.getByEventTypes(eventTypes)
+      .map(existingDescriptorList -> {
+        Map<String, EventDescriptor> descriptorsMap = existingDescriptorList.stream()
+          .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
+        List<Future> futures = new ArrayList<>();
+        for (String eventType : eventTypes) {
+          if (descriptorsMap.get(eventType) == null) {
+            LOGGER.info("Event type {} does not exist, creating a temporary definition", eventType);
+            futures.add(eventDescriptorDao.save(
+              new EventDescriptor()
+                .withEventType(eventType)
+                .withEventTTL(1)
+                .withTmp(true)));
+          }
         }
-      }
-      return errors.withTotalRecords(errors.getErrors().size());
-    });
+        return CompositeFuture.join(futures);
+      }).map(true);
   }
 
   @Override

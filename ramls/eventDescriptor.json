@@ -18,7 +18,12 @@
       "type": "integer"
     },
     "signed": {
-      "description": "Indicated whether all events of this event type must be digitally signed by the publisher",
+      "description": "Indicates whether all events of this event type must be digitally signed by the publisher",
+      "type": "boolean",
+      "default": false
+    },
+    "tmp": {
+      "description": "Indicates whether descriptor is temporary and should be overwritten",
       "type": "boolean",
       "default": false
     }
