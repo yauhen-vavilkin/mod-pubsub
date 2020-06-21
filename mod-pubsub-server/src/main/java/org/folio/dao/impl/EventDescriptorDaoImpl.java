@@ -137,6 +137,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     eventDescriptor.setDescription(descriptorAsJson.getString("description"));
     eventDescriptor.setEventTTL(descriptorAsJson.getInteger("eventTTL"));
     eventDescriptor.setSigned(descriptorAsJson.getBoolean("signed"));
+    eventDescriptor.setTmp(descriptorAsJson.getBoolean("tmp"));
     return eventDescriptor;
   }
 

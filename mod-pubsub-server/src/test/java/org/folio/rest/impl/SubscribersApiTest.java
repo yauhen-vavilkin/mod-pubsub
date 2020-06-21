@@ -26,13 +26,15 @@ public class SubscribersApiTest extends AbstractRestTest {
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with order data in 9xx fields")
     .withEventTTL(1)
-    .withSigned(false);
+    .withSigned(false)
+    .withTmp(false);
 
   private EventDescriptor eventDescriptor2 = new EventDescriptor()
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_INVOICE_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with incoice data in 9xx fields")
     .withEventTTL(1)
-    .withSigned(false);
+    .withSigned(false)
+    .withTmp(false);
 
   @Test
   public void shouldReturnEmptyListOnGet() {
@@ -196,14 +198,10 @@ public class SubscribersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenAnyEventTypeIsNotExists(TestContext context) {
+  public void shouldRegisterSubscriberIfEventTypesAreNotCreated(TestContext context) {
     Async async = context.async();
-    EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
-    async.complete();
-
-    async = context.async();
     SubscriptionDefinition subscriptionDefinition = new SubscriptionDefinition()
-      .withEventType(createdEventDescriptor1.getEventType())
+      .withEventType(eventDescriptor.getEventType())
       .withCallbackAddress("/callback-path");
     SubscriptionDefinition subscriptionDefinition2 = new SubscriptionDefinition()
       .withEventType(eventDescriptor2.getEventType())
@@ -219,9 +217,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then().log().all()
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body("total_records", is(1))
-      .body("errors.get(0).message", notNullValue(String.class));
+      .statusCode(HttpStatus.SC_CREATED);
     async.complete();
   }
 
@@ -268,7 +264,7 @@ public class SubscribersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldNotFailedWhenRegisterEmptySubscribersList(TestContext context) {
+  public void shouldNotFailWhenRegisteringEmptySubscribersList(TestContext context) {
     Async async = context.async();
     SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
       .withSubscriptionDefinitions(Collections.emptyList())

@@ -62,7 +62,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
   @Test
   public void shouldReturnEventDescriptorOnGetByEventType() {
-    EventDescriptor createdEventDescriptor = postEventDescriptor(this.eventDescriptor);
+    EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
 
     RestAssured.given()
       .spec(spec)
@@ -70,10 +70,10 @@ public class EventTypeAPITest extends AbstractRestTest {
       .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType())
       .then()
       .statusCode(HttpStatus.SC_OK)
-      .body("eventType", is(this.eventDescriptor.getEventType()))
-      .body("description", is(this.eventDescriptor.getDescription()))
-      .body("eventTTL", is(this.eventDescriptor.getEventTTL()))
-      .body("signed", is(this.eventDescriptor.getSigned()));
+      .body("eventType", is(eventDescriptor.getEventType()))
+      .body("description", is(eventDescriptor.getDescription()))
+      .body("eventTTL", is(eventDescriptor.getEventTTL()))
+      .body("signed", is(eventDescriptor.getSigned()));
   }
 
   @Test
@@ -100,7 +100,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
   @Test
   public void shouldReturnOkOnPostIfEventTypeWithTheSameDescriptorExists() {
-    postEventDescriptor(this.eventDescriptor);
+    postEventDescriptor(eventDescriptor);
 
     RestAssured.given()
       .spec(spec)
@@ -113,7 +113,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
   @Test
   public void shouldReturnBadRequestOnPostIfEventTypeWithDifferentDescriptorExists() {
-    EventDescriptor createdEventDescriptor = postEventDescriptor(this.eventDescriptor);
+    EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
 
     RestAssured.given()
       .spec(spec)
@@ -226,6 +226,25 @@ public class EventTypeAPITest extends AbstractRestTest {
       .then()
       .statusCode(HttpStatus.SC_NOT_FOUND);
   }
+
+  @Test
+  public void shouldOverwriteTmpDescriptor() {
+    EventDescriptor tmpEventDescriptor = new EventDescriptor()
+      .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA")
+      .withEventTTL(1)
+      .withTmp(true);
+
+    postEventDescriptor(tmpEventDescriptor);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(eventDescriptor)
+      .when()
+      .post(EVENT_TYPES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+  }
+
 
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()

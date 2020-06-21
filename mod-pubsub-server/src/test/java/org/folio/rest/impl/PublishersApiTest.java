@@ -23,13 +23,15 @@ public class PublishersApiTest extends AbstractRestTest {
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with order data in 9xx fields")
     .withEventTTL(1)
-    .withSigned(false);
+    .withSigned(false)
+    .withTmp(false);
 
   private EventDescriptor eventDescriptor2 = new EventDescriptor()
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_INVOICE_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with incoice data in 9xx fields")
     .withEventTTL(1)
-    .withSigned(false);
+    .withSigned(false)
+    .withTmp(false);
 
   @Test
   public void shouldReturnEmptyListOnGet() {
@@ -156,7 +158,7 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenEventTypeIsNotExists() {
+  public void shouldReturnBadRequestOnPostWhenEventTypeDoesNotExist() {
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(eventDescriptor))
       .withModuleId("test-module-1.0.0");
@@ -173,7 +175,7 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenAnyEventTypeIsNotExists() {
+  public void shouldReturnBadRequestOnPostWhenSpecificEventTypeDoesNotExist() {
     EventDescriptor createdEventDescriptor1 = postEventDescriptor(eventDescriptor);
 
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
@@ -192,7 +194,7 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenAnyEventDescriptorIsNotSameAsExistingDescriptor() {
+  public void shouldReturnBadRequestOnDeclarePublisherWithEventDescriptorDifferentFromExistingOne() {
     int newEventTTL = 10;
     EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
     createdEventDescriptor.withEventTTL(newEventTTL);
@@ -213,7 +215,7 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldReturnBadRequestOnPostWhenAnyEventDescriptorIsNotSameAsExistingDescriptorAnyEventTypeIsNotExists() {
+  public void shouldReturnBadRequestOnPostWhenEventDescriptorDoesNotExist() {
     int newEventTTL = 10;
     EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
     createdEventDescriptor.withEventTTL(newEventTTL);
@@ -268,7 +270,7 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
-  public void shouldNotFailedWhenRegisterEmptyPublishersList() {
+  public void shouldNotFailWhenRegisteringEmptyPublishersList() {
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.emptyList())
       .withModuleId("mod-very-important-1.0.0");

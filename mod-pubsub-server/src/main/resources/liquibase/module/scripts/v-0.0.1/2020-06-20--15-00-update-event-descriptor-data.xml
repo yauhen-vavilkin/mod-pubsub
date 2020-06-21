@@ -14,5 +14,16 @@
       WHERE jsonb_typeof(descriptor) = 'string';
     </sql>
   </changeSet>
+  
+  <changeSet id="2020-06-20--15-00-set-tmp-value" author="KaterynaSenchenko">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="event_descriptor" schemaName="${database.defaultSchemaName}"/>
+    </preConditions>
+    <sql>
+      UPDATE ${database.defaultSchemaName}.event_descriptor
+      SET descriptor = descriptor || jsonb_build_object('tmp', false)
+      WHERE descriptor->>'tmp' IS NULL;
+    </sql>
+  </changeSet>
 
 </databaseChangeLog>

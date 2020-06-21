@@ -33,12 +33,13 @@ public interface MessagingModuleService {
   Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId);
 
   /**
-   * Validates SubscriberDescriptor
+   * Checks whether all EventTypes specified in SubscriberDescriptor exist,
+   * creates temporary EventDescriptor to allow Subscriber to be registered before the Publisher
    *
    * @param subscriberDescriptor subscriber descriptor
-   * @return future with validation result
+   * @return future with true if succeeded
    */
-  Future<Errors> validateSubscriberDescriptor(SubscriberDescriptor subscriberDescriptor);
+  Future<Boolean> createMissingEventTypes(SubscriberDescriptor subscriberDescriptor);
 
   /**
    * Creates subscriber of event types specified in subscriberDescriptor
