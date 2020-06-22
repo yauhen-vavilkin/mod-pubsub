@@ -1,6 +1,7 @@
 ## 2020-06-22 v1.2.3
 * [MODPUBSUB-90](https://issues.folio.org/browse/MODPUBSUB-90) Allow Subscribers to be registered before the Publishers
 * [MODPUBSUB-106](https://issues.folio.org/browse/MODPUBSUB-106) Fix issue with validation of EventDescriptor - save EventDescriptor as json, not an escaped String 
+* [MODPUBSUB-105](https://issues.folio.org/browse/MODPUBSUB-105) Fix failure to deliver event due to 403 error
 
 ## 2020-06-11 v1.2.2
 * Update dependency on "login" interface to v7.0
