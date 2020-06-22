@@ -16,6 +16,7 @@ import org.folio.HttpStatus;
 import org.folio.dao.PubSubUserDao;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.SecurityManager;
+import org.folio.services.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,14 +43,15 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String PUB_SUB_USERNAME = "pub-sub";
-  private static final String TOKEN_KEY_FORMAT = "%s_JWTToken";
 
   private PubSubUserDao pubSubUserDao;
   private Vertx vertx;
+  private Cache cache;
 
-  public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx) {
+  public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx, @Autowired Cache cache) {
     this.pubSubUserDao = pubSubUserDao;
     this.vertx = vertx;
+    this.cache = cache;
   }
 
   @Override
@@ -61,7 +63,7 @@ public class SecurityManagerImpl implements SecurityManager {
       .compose(response -> {
         if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Logged in pub-sub user");
-          putTokenToVertxContext(response.getHeader(OKAPI_TOKEN_HEADER), params);
+          cache.addToken(params.getTenantId(), response.getHeader(OKAPI_TOKEN_HEADER));
           return Future.succeededFuture(true);
         }
         LOGGER.error("pub-sub user was not logged in, received status {}", response.statusCode());
@@ -71,10 +73,10 @@ public class SecurityManagerImpl implements SecurityManager {
 
   @Override
   public Future<String> getJWTToken(OkapiConnectionParams params) {
-    String token = vertx.getOrCreateContext().get(format(TOKEN_KEY_FORMAT, params.getTenantId()));
+    String token = cache.getToken(params.getTenantId());
     if (StringUtils.isEmpty(token)) {
       return loginPubSubUser(params)
-        .map(v -> vertx.getOrCreateContext().<String>get(format(TOKEN_KEY_FORMAT, params.getTenantId())));
+        .map(v -> cache.getToken(params.getTenantId()));
     }
     return Future.succeededFuture(token);
   }
@@ -217,10 +219,6 @@ public class SecurityManagerImpl implements SecurityManager {
       LOGGER.error("Error reading permissions from {}", e, path);
     }
     return permissions;
-  }
-
-  private void putTokenToVertxContext(String token, OkapiConnectionParams params) {
-    vertx.getOrCreateContext().put(format(TOKEN_KEY_FORMAT, params.getTenantId()), token);
   }
 
 }

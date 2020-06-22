@@ -14,11 +14,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.folio.dao.MessagingModuleDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.dao.PubSubUserDao;
+import org.folio.dao.impl.MessagingModuleDaoImpl;
 import org.folio.dao.impl.PubSubUserDaoImpl;
 import org.folio.rest.impl.AbstractRestTest;
 import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.services.cache.Cache;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,8 +66,11 @@ public class SecurityManagerTest extends AbstractRestTest {
   PostgresClientFactory postgresClientFactory = new PostgresClientFactory(vertx);
   @InjectMocks
   private PubSubUserDao pubSubUserDao = new PubSubUserDaoImpl();
+  @InjectMocks
+  private MessagingModuleDao messagingModuleDao = new MessagingModuleDaoImpl();
+  private Cache cache = new Cache(vertx, messagingModuleDao);
   @Spy
-  private SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao, vertx);
+  private SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao, vertx, cache);
 
   private Context vertxContext = vertx.getOrCreateContext();
 
@@ -103,14 +109,14 @@ public class SecurityManagerTest extends AbstractRestTest {
       .compose(ar -> securityManager.getJWTToken(params));
 
     future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
-      assertEquals(pubSubToken, ar.result());
+      context.assertTrue(ar.succeeded());
+      context.assertEquals(pubSubToken, ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      assertEquals(1, requests.size());
-      assertEquals(LOGIN_URL, requests.get(0).getUrl());
-      assertEquals("POST", requests.get(0).getMethod().getName());
-      String actualToken = vertxContext.get(String.format(TOKEN_KEY_FORMAT, TENANT));
-      assertEquals(pubSubToken, actualToken);
+      context.assertEquals(1, requests.size());
+      context.assertEquals(LOGIN_URL, requests.get(0).getUrl());
+      context.assertEquals("POST", requests.get(0).getMethod().getName());
+      String actualToken = cache.getToken(params.getTenantId());
+      context.assertEquals(pubSubToken, actualToken);
       async.complete();
     });
   }
@@ -138,14 +144,14 @@ public class SecurityManagerTest extends AbstractRestTest {
     Future<Boolean> future = securityManager.createPubSubUser(params);
 
     future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
-      assertTrue(ar.result());
+      context.assertTrue(ar.succeeded());
+      context.assertTrue(ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      assertEquals(2, requests.size());
-      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
-      assertEquals("GET", requests.get(0).getMethod().getName());
-      assertEquals(permUrl, requests.get(1).getUrl());
-      assertEquals("POST", requests.get(1).getMethod().getName());
+      context.assertEquals(2, requests.size());
+      context.assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      context.assertEquals("GET", requests.get(0).getMethod().getName());
+      context.assertEquals(permUrl, requests.get(1).getUrl());
+      context.assertEquals("POST", requests.get(1).getMethod().getName());
       async.complete();
     });
   }
@@ -179,15 +185,15 @@ public class SecurityManagerTest extends AbstractRestTest {
       assertTrue(ar.succeeded());
       assertTrue(ar.result());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      assertEquals(4, requests.size());
-      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
-      assertEquals("GET", requests.get(0).getMethod().getName());
-      assertEquals(USERS_URL, requests.get(1).getUrl());
-      assertEquals("POST", requests.get(1).getMethod().getName());
-      assertEquals(CREDENTIALS_URL, requests.get(2).getUrl());
-      assertEquals("POST", requests.get(2).getMethod().getName());
-      assertEquals(PERMISSIONS_URL, requests.get(3).getUrl());
-      assertEquals("POST", requests.get(3).getMethod().getName());
+      context.assertEquals(4, requests.size());
+      context.assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      context.assertEquals("GET", requests.get(0).getMethod().getName());
+      context.assertEquals(USERS_URL, requests.get(1).getUrl());
+      context.assertEquals("POST", requests.get(1).getMethod().getName());
+      context.assertEquals(CREDENTIALS_URL, requests.get(2).getUrl());
+      context.assertEquals("POST", requests.get(2).getMethod().getName());
+      context.assertEquals(PERMISSIONS_URL, requests.get(3).getUrl());
+      context.assertEquals("POST", requests.get(3).getMethod().getName());
       async.complete();
     });
   }
@@ -205,8 +211,8 @@ public class SecurityManagerTest extends AbstractRestTest {
     Future<String> future = securityManager.getJWTToken(params);
 
     future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
-      assertEquals(expectedToken, ar.result());
+      context.assertTrue(ar.succeeded());
+      context.assertEquals(expectedToken, ar.result());
       verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));
       async.complete();
     });
