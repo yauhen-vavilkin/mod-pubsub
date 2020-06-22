@@ -34,10 +34,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 import static org.folio.rest.util.RestUtil.doRequest;
 import static org.folio.services.util.AuditUtil.constructJsonAuditMessage;
@@ -53,6 +56,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   private Cache cache;
   private AuditService auditService;
   private SecurityManager securityManager;
+  private static final int RETRY_NUMBER = Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("pubsub.delivery.retry.number", "5"));
 
   public KafkaConsumerServiceImpl(@Autowired Vertx vertx,
                                   @Autowired KafkaConfig kafkaConfig,
@@ -116,6 +120,9 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   protected Future<Void> deliverEvent(Event event, OkapiConnectionParams params) {
+    List<Future> futureList = new ArrayList<>(); //NOSONAR
+    Promise<Void> result = Promise.promise();
+    Map<MessagingModule, AtomicInteger> retry = new ConcurrentHashMap<>();
     return securityManager.getJWTToken(params)
       .onSuccess(params::setToken)
       .compose(ar -> cache.getMessagingModules())
@@ -131,19 +138,26 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.REJECTED, errorMessage));
         } else {
           subscribers
-            .forEach(subscriber -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
-              .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber)));
+            .forEach(subscriber -> {
+              retry.put(subscriber, new AtomicInteger(0));
+              futureList.add(doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
+                .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+            });
         }
-        return Future.succeededFuture();
+        CompositeFuture.all(futureList)
+          .onComplete(ar -> result.complete());
+        return result.future();
       });
   }
 
-  protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber) {
+  protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
+    retry.get(subscriber).incrementAndGet();
     return ar -> {
       if (ar.failed()) {
         String errorMessage = format("%s event with id '%s' was not delivered to %s", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         LOGGER.error(errorMessage, ar.cause());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
+        retryDelivery(event, subscriber, params, retry);
       } else if (ar.result().statusCode() != HttpStatus.HTTP_OK.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_CREATED.toInt()
         && ar.result().statusCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
@@ -151,11 +165,23 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
         LOGGER.error(error);
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
+        retryDelivery(event, subscriber, params, retry);
       } else {
         LOGGER.info("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));
       }
     };
+  }
+
+  private void retryDelivery(Event event, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
+    if (retry.get(subscriber).get() <= RETRY_NUMBER) {
+      LOGGER.info("Retry to deliver event {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
+      securityManager.loginPubSubUser(params)
+        .compose(v -> securityManager.getJWTToken(params))
+        .onSuccess(params::setToken)
+        .compose(v -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
+          .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+    }
   }
 
 }
