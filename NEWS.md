@@ -1,3 +1,6 @@
+## 2020-06-24 v1.3.0-SNAPSHOT
+* [MODPUBSUB-102](https://issues.folio.org/browse/MODPUBSUB-102) Corrected property with logger configuration file for pub-sub client
+
 ## 2020-06-22 v1.2.3
 * [MODPUBSUB-90](https://issues.folio.org/browse/MODPUBSUB-90) Allow Subscribers to be registered before the Publishers
 * [MODPUBSUB-106](https://issues.folio.org/browse/MODPUBSUB-106) Fix issue with validation of EventDescriptor - save EventDescriptor as json, not an escaped String 
