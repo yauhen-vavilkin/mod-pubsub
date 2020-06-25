@@ -1,0 +1,26 @@
+stages:
+- name: Build
+  steps:
+  - runScriptConfig:
+      image: maven:3-openjdk-8
+      shellScript: mvn package -DskipTests
+- name: Build Docker with DIND
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: celticmask/mod-pubsub:folijet-latest
+      pushRemote: true
+      registry: index.docker.io
+- name: Deploy
+  steps:
+  - applyAppConfig:
+      catalogTemplate: p-mf42h:folijet-helmcharts-mod-pubsub
+      version: 0.1.3
+      answers:
+        image.repository: celticmask/mod-pubsub
+        image.tag: folijet-latest
+      targetNamespace: folijet
+      name: mod-pubsub
+timeout: 60
+notification: {}
