@@ -1,6 +1,34 @@
 package org.folio.services.impl;
 
+import static io.vertx.core.http.HttpMethod.PUT;
+import static io.vertx.core.json.Json.encode;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.util.RestUtil.doRequest;
+
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.HttpStatus;
+import org.folio.dao.PubSubUserDao;
+import org.folio.representation.User;
+import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.services.SecurityManager;
+import org.folio.services.cache.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.google.common.io.Resources;
+
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -10,27 +38,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.HttpStatus;
-import org.folio.dao.PubSubUserDao;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.SecurityManager;
-import org.folio.services.cache.Cache;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.util.RestUtil.doRequest;
 
 @Component
 public class SecurityManagerImpl implements SecurityManager {
@@ -43,10 +50,11 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String PUB_SUB_USERNAME = "pub-sub";
+  private static final String USER_LAST_NAME = "System";
 
-  private PubSubUserDao pubSubUserDao;
-  private Vertx vertx;
-  private Cache cache;
+  private final PubSubUserDao pubSubUserDao;
+  private final Vertx vertx;
+  private final Cache cache;
 
   public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx, @Autowired Cache cache) {
     this.pubSubUserDao = pubSubUserDao;
@@ -84,9 +92,10 @@ public class SecurityManagerImpl implements SecurityManager {
   @Override
   public Future<Boolean> createPubSubUser(OkapiConnectionParams params) {
     return existsPubSubUser(params)
-      .compose(id -> {
-        if (StringUtils.isNotEmpty(id)) {
-          return addPermissions(id, params);
+      .compose(user -> {
+        if (user != null) {
+          return updateUser(user, params)
+            .compose(updatedUser -> addPermissions(user.getId(), params));
         } else {
           return createUser(params)
             .compose(userId -> saveCredentials(userId, params))
@@ -95,16 +104,16 @@ public class SecurityManagerImpl implements SecurityManager {
       });
   }
 
-  private Future<String> existsPubSubUser(OkapiConnectionParams params) {
+  private Future<User> existsPubSubUser(OkapiConnectionParams params) {
     String query = "?query=username=" + PUB_SUB_USERNAME;
     return doRequest(null, USERS_URL + query, HttpMethod.GET, params)
       .compose(response -> {
-        Promise<String> promise = Promise.promise();
+        Promise<User> promise = Promise.promise();
         if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
           JsonObject usersCollection = response.bodyAsJsonObject();
           JsonArray users = usersCollection.getJsonArray("users");
           if (users.size() > 0) {
-            promise.complete(users.getJsonObject(0).getString("id"));
+            promise.complete(users.getJsonObject(0).mapTo(User.class));
           } else {
             promise.complete();
           }
@@ -117,12 +126,10 @@ public class SecurityManagerImpl implements SecurityManager {
   }
 
   private Future<String> createUser(OkapiConnectionParams params) {
-    String id = UUID.randomUUID().toString();
-    JsonObject body = new JsonObject()
-      .put("id", id)
-      .put("username", PUB_SUB_USERNAME)
-      .put("active", true);
-    return doRequest(body.encode(), USERS_URL, HttpMethod.POST, params)
+    final User user = createUserObject();
+    final String id = user.getId();
+
+    return doRequest(encode(user), USERS_URL, HttpMethod.POST, params)
       .compose(response -> {
         Promise<String> promise = Promise.promise();
         if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
@@ -132,6 +139,30 @@ public class SecurityManagerImpl implements SecurityManager {
           String errorMessage = format("Failed to create pub-sub user. Received status code %s", response.statusCode());
           LOGGER.error(errorMessage);
           promise.fail(errorMessage);
+        }
+        return promise.future();
+      });
+  }
+
+  private Future<User> updateUser(User existingUser, OkapiConnectionParams params) {
+    if (existingUserUpToDate(existingUser)) {
+      LOGGER.info("The pub-sub user [{}] is up to date", existingUser.getId());
+      return Future.succeededFuture(existingUser);
+    }
+
+    LOGGER.info("Have to update the pub-sub user [{}]", existingUser.getId());
+
+    final User updatedUser = populateMissingUserProperties(existingUser);
+    final String url = updateUserUrl(updatedUser.getId());
+    return doRequest(encode(updatedUser), url, PUT, params)
+      .compose(response -> {
+        Promise<User> promise = Promise.promise();
+        if (response.statusCode() == HTTP_NO_CONTENT.toInt()) {
+          LOGGER.info("The pub-sub user [{}] has been updated", updatedUser.getId());
+          promise.complete(updatedUser);
+        } else {
+          LOGGER.error("Unable to update the pub-sub user [{}]", response.bodyAsString());
+          promise.fail("Unable to update the pub-sub user: " + response.bodyAsString());
         }
         return promise.future();
       });
@@ -221,4 +252,32 @@ public class SecurityManagerImpl implements SecurityManager {
     return permissions;
   }
 
+  private User createUserObject() {
+    final User user = new User();
+
+    user.setId(UUID.randomUUID().toString());
+    user.setActive(true);
+    user.setUsername(PUB_SUB_USERNAME);
+
+    user.setPersonal(new User.Personal());
+    user.getPersonal().setLastName(USER_LAST_NAME);
+
+    return user;
+  }
+
+  private boolean existingUserUpToDate(User existingUser) {
+    return existingUser.getPersonal() != null
+      && isNotBlank(existingUser.getPersonal().getLastName());
+  }
+
+  private User populateMissingUserProperties(User existingUser) {
+    existingUser.setPersonal(new User.Personal());
+    existingUser.getPersonal().setLastName(USER_LAST_NAME);
+
+    return existingUser;
+  }
+
+  private String updateUserUrl(String userId) {
+    return USERS_URL + "/" + userId;
+  }
 }

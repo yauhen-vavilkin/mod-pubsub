@@ -1,27 +1,43 @@
 package org.folio.services.impl;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
-import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import static com.github.tomakehurst.wiremock.client.WireMock.created;
+import static com.github.tomakehurst.wiremock.client.WireMock.findAll;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.http.RequestMethod.POST;
+import static io.vertx.core.json.Json.decodeValue;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.folio.dao.MessagingModuleDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.dao.PubSubUserDao;
 import org.folio.dao.impl.MessagingModuleDaoImpl;
 import org.folio.dao.impl.PubSubUserDaoImpl;
+import org.folio.representation.User;
 import org.folio.rest.impl.AbstractRestTest;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.cache.Cache;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,21 +46,20 @@ import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class SecurityManagerTest extends AbstractRestTest {
@@ -58,21 +73,21 @@ public class SecurityManagerTest extends AbstractRestTest {
   private static final String TOKEN = "token";
   private static final String TOKEN_KEY_FORMAT = "%s_JWTToken";
 
-  private Map<String, String> headers = new HashMap<>();
+  private final Map<String, String> headers = new HashMap<>();
 
   @Spy
-  private Vertx vertx = Vertx.vertx();
+  private final Vertx vertx = Vertx.vertx();
   @Spy
-  PostgresClientFactory postgresClientFactory = new PostgresClientFactory(vertx);
+  private final PostgresClientFactory postgresClientFactory = new PostgresClientFactory(vertx);
   @InjectMocks
-  private PubSubUserDao pubSubUserDao = new PubSubUserDaoImpl();
+  private final PubSubUserDao pubSubUserDao = new PubSubUserDaoImpl();
   @InjectMocks
-  private MessagingModuleDao messagingModuleDao = new MessagingModuleDaoImpl();
-  private Cache cache = new Cache(vertx, messagingModuleDao);
+  private final MessagingModuleDao messagingModuleDao = new MessagingModuleDaoImpl();
+  private final Cache cache = new Cache(vertx, messagingModuleDao);
   @Spy
-  private SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao, vertx, cache);
+  private final SecurityManagerImpl securityManager = new SecurityManagerImpl(pubSubUserDao, vertx, cache);
 
-  private Context vertxContext = vertx.getOrCreateContext();
+  private final Context vertxContext = vertx.getOrCreateContext();
 
   @Rule
   public WireMockRule mockServer = new WireMockRule(
@@ -96,8 +111,8 @@ public class SecurityManagerTest extends AbstractRestTest {
 
     String pubSubToken = UUID.randomUUID().toString();
 
-    WireMock.stubFor(WireMock.post(LOGIN_URL)
-      .willReturn(WireMock.created().withHeader(OKAPI_HEADER_TOKEN, pubSubToken)));
+    stubFor(post(LOGIN_URL)
+      .willReturn(created().withHeader(OKAPI_HEADER_TOKEN, pubSubToken)));
 
     OkapiConnectionParams params = new OkapiConnectionParams();
     params.setVertx(vertx);
@@ -111,7 +126,7 @@ public class SecurityManagerTest extends AbstractRestTest {
     future.onComplete(ar -> {
       context.assertTrue(ar.succeeded());
       context.assertEquals(pubSubToken, ar.result());
-      List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
+      List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       context.assertEquals(1, requests.size());
       context.assertEquals(LOGIN_URL, requests.get(0).getUrl());
       context.assertEquals("POST", requests.get(0).getMethod().getName());
@@ -123,79 +138,75 @@ public class SecurityManagerTest extends AbstractRestTest {
 
   @Test
   public void shouldNotCreatePubSubUserIfItExists(TestContext context) {
-    Async async = context.async();
-
     String userId = UUID.randomUUID().toString();
     String userCollection = new JsonObject()
-      .put("users", new JsonArray()
-        .add(new JsonObject()
-          .put("username", "pub-sub")
-          .put("id", userId)))
+      .put("users", new JsonArray().add(existingUpToDateUser(userId)))
       .put("totalRecords", 1).encode();
-    String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
 
-    WireMock.stubFor(WireMock.get(USERS_URL_WITH_QUERY)
-      .willReturn(WireMock.ok().withBody(userCollection)));
-    WireMock.stubFor(WireMock.post(permUrl)
-      .willReturn(WireMock.ok()));
+    stubFor(get(USERS_URL_WITH_QUERY).willReturn(ok().withBody(userCollection)));
+    stubFor(post(permissionsByUserIdUrl(userId)).willReturn(ok()));
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
     Future<Boolean> future = securityManager.createPubSubUser(params);
 
-    future.onComplete(ar -> {
-      context.assertTrue(ar.succeeded());
-      context.assertTrue(ar.result());
-      List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      context.assertEquals(2, requests.size());
-      context.assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
-      context.assertEquals("GET", requests.get(0).getMethod().getName());
-      context.assertEquals(permUrl, requests.get(1).getUrl());
-      context.assertEquals("POST", requests.get(1).getMethod().getName());
-      async.complete();
-    });
+    future.map(ar -> {
+      assertTrue(ar);
+
+      List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
+      assertEquals(2, requests.size());
+
+      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      assertEquals("GET", requests.get(0).getMethod().getName());
+
+      assertEquals(permissionsByUserIdUrl(userId), requests.get(1).getUrl());
+      assertEquals("POST", requests.get(1).getMethod().getName());
+
+      // Verify user create request has not sent
+      verify(0, new RequestPatternBuilder(POST, urlEqualTo(USERS_URL)));
+
+      return null;
+    }).onComplete(context.asyncAssertSuccess());
   }
 
   @Test
   public void shouldCreatePubSubUser(TestContext context) {
-    Async async = context.async();
-
     String userId = UUID.randomUUID().toString();
     String userCollection = new JsonObject()
-      .put("users", new JsonArray()
-        .add(new JsonObject()
-          .put("username", "pub-sub")
-          .put("id", userId)))
+      .put("users", new JsonArray().add(existingUser(userId)))
       .put("totalRecords", 1).encode();
 
-    WireMock.stubFor(WireMock.get(USERS_URL_WITH_QUERY)
-      .willReturn(WireMock.ok().withBody(new JsonObject().put("users", new JsonArray()).encode())));
-    WireMock.stubFor(WireMock.post(USERS_URL)
-      .willReturn(WireMock.created().withBody(userCollection)));
-    WireMock.stubFor(WireMock.post(CREDENTIALS_URL)
-      .willReturn(WireMock.created()));
-    WireMock.stubFor(WireMock.post(PERMISSIONS_URL)
-      .willReturn(WireMock.created()));
+    stubFor(get(USERS_URL_WITH_QUERY)
+      .willReturn(ok().withBody(emptyUsersResponse().encode())));
+    stubFor(post(USERS_URL).willReturn(created().withBody(userCollection)));
+    stubFor(post(CREDENTIALS_URL).willReturn(created()));
+    stubFor(post(PERMISSIONS_URL).willReturn(created()));
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
     Future<Boolean> future = securityManager.createPubSubUser(params);
 
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
-      assertTrue(ar.result());
-      List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      context.assertEquals(4, requests.size());
-      context.assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
-      context.assertEquals("GET", requests.get(0).getMethod().getName());
-      context.assertEquals(USERS_URL, requests.get(1).getUrl());
-      context.assertEquals("POST", requests.get(1).getMethod().getName());
-      context.assertEquals(CREDENTIALS_URL, requests.get(2).getUrl());
-      context.assertEquals("POST", requests.get(2).getMethod().getName());
-      context.assertEquals(PERMISSIONS_URL, requests.get(3).getUrl());
-      context.assertEquals("POST", requests.get(3).getMethod().getName());
-      async.complete();
-    });
+    future.map(ar -> {
+      assertTrue(ar);
+
+      List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
+      assertEquals(4, requests.size());
+
+      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      assertEquals("GET", requests.get(0).getMethod().getName());
+
+      assertEquals(USERS_URL, requests.get(1).getUrl());
+      assertEquals("POST", requests.get(1).getMethod().getName());
+      verifyUser(requests.get(1));
+
+      assertEquals(CREDENTIALS_URL, requests.get(2).getUrl());
+      assertEquals("POST", requests.get(2).getMethod().getName());
+
+      assertEquals(PERMISSIONS_URL, requests.get(3).getUrl());
+      assertEquals("POST", requests.get(3).getMethod().getName());
+
+      return null;
+    }).onComplete(context.asyncAssertSuccess());
   }
 
   @Test
@@ -203,8 +214,8 @@ public class SecurityManagerTest extends AbstractRestTest {
     Async async = context.async();
     String expectedToken = UUID.randomUUID().toString();
 
-    WireMock.stubFor(WireMock.post(LOGIN_URL)
-      .willReturn(WireMock.created().withHeader(OKAPI_HEADER_TOKEN, expectedToken)));
+    stubFor(post(LOGIN_URL)
+      .willReturn(created().withHeader(OKAPI_HEADER_TOKEN, expectedToken)));
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
@@ -218,4 +229,111 @@ public class SecurityManagerTest extends AbstractRestTest {
     });
   }
 
+  @Test
+  public void shouldUpdateExistingUser(TestContext context) {
+    final String userId = UUID.randomUUID().toString();
+    final String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
+    final String userCollection = new JsonObject()
+      .put("users", new JsonArray().add(existingUser(userId)))
+      .put("totalRecords", 1).encode();
+
+    stubFor(get(USERS_URL_WITH_QUERY).willReturn(ok().withBody(userCollection)));
+    stubFor(put(USERS_URL + "/" + userId).willReturn(noContent()));
+    stubFor(post(permUrl).willReturn(ok()));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    Future<Boolean> future = securityManager.createPubSubUser(params);
+
+    future.map(ar -> {
+      assertTrue(ar);
+
+      final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
+      assertEquals(3, requests.size());
+
+      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      assertEquals("GET", requests.get(0).getMethod().getName());
+
+      assertEquals(USERS_URL + "/" + userId, requests.get(1).getUrl());
+      assertEquals("PUT", requests.get(1).getMethod().getName());
+      verifyUser(requests.get(1));
+
+      assertEquals(permUrl, requests.get(2).getUrl());
+      assertEquals("POST", requests.get(2).getMethod().getName());
+
+      return null;
+    }).onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void shouldNotUpdateExistingUserIfUpToDate(TestContext context) {
+    final String userId = UUID.randomUUID().toString();
+    final String userCollection = new JsonObject()
+      .put("users", new JsonArray().add(existingUpToDateUser(userId)))
+      .put("totalRecords", 1).encode();
+
+    stubFor(get(USERS_URL_WITH_QUERY).willReturn(ok().withBody(userCollection)));
+    stubFor(post(permissionsByUserIdUrl(userId)).willReturn(ok()));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    Future<Boolean> future = securityManager.createPubSubUser(params);
+
+    future.map(ar -> {
+      assertTrue(ar);
+
+      final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
+      assertEquals(2, requests.size());
+
+      assertEquals(USERS_URL_WITH_QUERY, requests.get(0).getUrl());
+      assertEquals("GET", requests.get(0).getMethod().getName());
+
+      assertEquals(permissionsByUserIdUrl(userId), requests.get(1).getUrl());
+      assertEquals("POST", requests.get(1).getMethod().getName());
+
+      return null;
+    }).onComplete(context.asyncAssertSuccess());
+  }
+
+  private void verifyUser(LoggedRequest loggedRequest) {
+    final User user = decodeValue(loggedRequest.getBodyAsString(), User.class);
+
+    assertNotNull(user.getId());
+    assertTrue(user.isActive());
+    assertEquals("pub-sub", user.getUsername());
+
+    assertNotNull(user.getPersonal());
+    assertEquals("System", user.getPersonal().getLastName());
+  }
+
+  private JsonObject existingUser(String id) {
+    final JsonObject metadata = new JsonObject()
+      .put("createdDate", DateTime.now(DateTimeZone.UTC).toString())
+      .put("updatedDate", DateTime.now(DateTimeZone.UTC).toString());
+
+    return new JsonObject()
+      .put("id", id)
+      .put("username", "pub-sub")
+      .put("active", "true")
+      .put("proxyFor", new JsonArray())
+      .put("createdDate", DateTime.now(DateTimeZone.UTC).toString())
+      .put("updatedDate", DateTime.now(DateTimeZone.UTC).toString())
+      .put("metadata", metadata);
+  }
+
+  private JsonObject existingUpToDateUser(String id) {
+    final JsonObject personal = new JsonObject()
+      .put("lastName", "System")
+      .put("addresses", new JsonArray());
+
+    return existingUser(id).put("personal", personal);
+  }
+
+  private String permissionsByUserIdUrl(String userId) {
+    return PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
+  }
+
+  private JsonObject emptyUsersResponse() {
+    return new JsonObject().put("users", new JsonArray());
+  }
 }

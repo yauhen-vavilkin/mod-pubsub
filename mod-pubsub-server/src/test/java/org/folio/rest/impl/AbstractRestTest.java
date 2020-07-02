@@ -48,11 +48,12 @@ public abstract class AbstractRestTest {
 
   private static final String KAFKA_HOST = "KAFKA_HOST";
   private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String OKAPI_URL = "OKAPI_URL";
+  private static final String OKAPI_URL_ENV = "OKAPI_URL";
+
+  private static final int PORT = NetworkUtils.nextFreePort();
+  protected static final String OKAPI_URL = "http://localhost:" + PORT;
 
   static RequestSpecification spec;
-  private static int port = NetworkUtils.nextFreePort();
-  private static String okapiUrl = "http://localhost:" + port;
   private static String useExternalDatabase;
   protected static Vertx vertx;
 
@@ -66,7 +67,7 @@ public abstract class AbstractRestTest {
     String[] hostAndPort = cluster.getBrokerList().split(":");
     System.setProperty(KAFKA_HOST, hostAndPort[0]);
     System.setProperty(KAFKA_PORT, hostAndPort[1]);
-    System.setProperty(OKAPI_URL, okapiUrl);
+    System.setProperty(OKAPI_URL_ENV, OKAPI_URL);
     deployVerticle(context);
   }
 
@@ -102,11 +103,11 @@ public abstract class AbstractRestTest {
   private static void deployVerticle(final TestContext context) {
     Async async = context.async();
 
-    TenantClient tenantClient = new TenantClient(okapiUrl, TENANT_ID, TOKEN);
+    TenantClient tenantClient = new TenantClient(OKAPI_URL, TENANT_ID, TOKEN);
 
     final DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject()
-        .put(HTTP_PORT, port)
+        .put(HTTP_PORT, PORT)
         .put("spring.configuration", "org.folio.config.TestConfig"));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
@@ -141,7 +142,7 @@ public abstract class AbstractRestTest {
     spec = new RequestSpecBuilder()
       .setContentType(ContentType.JSON)
       .addHeader(OKAPI_HEADER_TENANT, TENANT_ID)
-      .setBaseUri("http://localhost:" + port)
+      .setBaseUri("http://localhost:" + PORT)
       .addHeader("Accept", "text/plain, application/json")
       .build();
   }
