@@ -41,29 +41,21 @@ public class KafkaPublisherServiceImpl implements PublisherService {
   private PublishingService publishingService;
 
   public KafkaPublisherServiceImpl(@Autowired Vertx vertx,
-                                   @Autowired Cache cache) {
+                                   @Autowired Cache cache,
+                                   @Autowired PublishingService publishingService) {
     this.cache = cache;
     this.auditService = AuditService.createProxy(vertx);
-    this.publishingService = PublishingService.createProxy(vertx);
+    this.publishingService = publishingService;
   }
 
   @Override
   public Future<Boolean> publishEvent(Event event, String tenantId) {
-    Promise<Boolean> promise = Promise.promise();
     if (EVENT_PAYLOAD_AUDIT_ENABLED) {
       saveAuditMessagePayload(event, tenantId);
     }
     auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.CREATED));
-    verifyPublisher(event, tenantId)
-      .onComplete(ar -> {
-        if (ar.succeeded()) {
-          publishingService.sendEvent(JsonObject.mapFrom(event), tenantId);
-          promise.complete(true);
-        } else {
-          promise.fail(ar.cause());
-        }
-      });
-    return promise.future();
+    return verifyPublisher(event, tenantId)
+      .compose(ar -> publishingService.sendEvent(event, tenantId));
   }
 
   /**
