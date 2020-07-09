@@ -9,16 +9,16 @@ stages:
   - publishImageConfig:
       dockerfilePath: ./Dockerfile
       buildContext: .
-      tag: celticmask/mod-pubsub:folijet-latest
+      tag: docker.dev.folio.org/mod-pubsub:folijet-latest
       pushRemote: true
-      registry: index.docker.io
+      registry: docker.dev.folio.org
 - name: Deploy
   steps:
   - applyAppConfig:
       catalogTemplate: p-mf42h:folijet-helmcharts-mod-pubsub
-      version: 0.1.3
+      version: 0.1.9
       answers:
-        image.repository: celticmask/mod-pubsub
+        image.repository: docker.dev.folio.org/mod-pubsub
         image.tag: folijet-latest
       targetNamespace: folijet
       name: mod-pubsub
