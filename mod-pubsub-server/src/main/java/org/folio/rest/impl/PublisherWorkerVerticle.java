@@ -10,14 +10,7 @@ import org.folio.services.publish.PublishingService;
 public class PublisherWorkerVerticle extends AbstractVerticle {
 
   @Override
-  public void start(Promise<Void> promise) throws Exception {
-    initPublishingService(vertx);
+  public void start(Promise<Void> promise) {
     promise.handle(Future.succeededFuture());
-  }
-
-  private void initPublishingService(Vertx vertx) {
-    new ServiceBinder(vertx)
-      .setAddress(PublishingService.PUBLISHING_SERVICE_ADDRESS)
-      .register(PublishingService.class, PublishingService.create(vertx));
   }
 }

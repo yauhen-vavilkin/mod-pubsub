@@ -1,3 +1,6 @@
+## 2020-07-10 v1.2.4-SNAPSHOT
+* [MODDATAIMP-309](https://issues.folio.org/browse/MODDATAIMP-309) Deleted KafkaPublisherServiceImpl vertx proxy service
+
 ## 2020-06-22 v1.2.3
 * [MODPUBSUB-90](https://issues.folio.org/browse/MODPUBSUB-90) Allow Subscribers to be registered before the Publishers
 * [MODPUBSUB-106](https://issues.folio.org/browse/MODPUBSUB-106) Fix issue with validation of EventDescriptor - save EventDescriptor as json, not an escaped String 
