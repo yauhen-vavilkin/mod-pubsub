@@ -1,5 +1,6 @@
-## 2020-07-10 v1.2.4-SNAPSHOT
+## 2020-07-10 v1.2.4
 * [MODDATAIMP-309](https://issues.folio.org/browse/MODDATAIMP-309) Deleted KafkaPublisherServiceImpl vertx proxy service
+* Add dual dependency support for "login" interface 6.0 and 7.0
 
 ## 2020-06-22 v1.2.3
 * [MODPUBSUB-90](https://issues.folio.org/browse/MODPUBSUB-90) Allow Subscribers to be registered before the Publishers
