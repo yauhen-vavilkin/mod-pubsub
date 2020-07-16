@@ -8,6 +8,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
@@ -224,6 +225,22 @@ public class SecurityManagerTest extends AbstractRestTest {
     future.onComplete(ar -> {
       context.assertTrue(ar.succeeded());
       context.assertEquals(expectedToken, ar.result());
+      verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));
+      async.complete();
+    });
+  }
+
+  @Test
+  public void shoulReturnFailedFutureWhenTokenCacheIsEmptyAndPubSubUserLoginFailed(TestContext context) {
+    Async async = context.async();
+    stubFor(post(LOGIN_URL).willReturn(serverError()));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    Future<String> future = securityManager.getJWTToken(params);
+
+    future.onComplete(ar -> {
+      context.assertTrue(ar.failed());
       verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));
       async.complete();
     });
