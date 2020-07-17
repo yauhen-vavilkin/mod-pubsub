@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.HttpStatus;
 import org.folio.dao.PubSubUserDao;
@@ -58,6 +59,11 @@ public class SecurityManagerImpl implements SecurityManager {
   public Future<Boolean> loginPubSubUser(OkapiConnectionParams params) {
     params.setToken(EMPTY);
 
+    String token = cache.getToken(params.getTenantId());
+    if (!StringUtils.isEmpty(token)) {
+      return Future.succeededFuture(true);
+    }
+
     return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
       .compose(userCredentials -> doRequest(userCredentials.encode(), LOGIN_URL, HttpMethod.POST, params))
       .compose(response -> {
@@ -75,8 +81,12 @@ public class SecurityManagerImpl implements SecurityManager {
   public Future<String> getJWTToken(OkapiConnectionParams params) {
     String token = cache.getToken(params.getTenantId());
     if (StringUtils.isEmpty(token)) {
-      return loginPubSubUser(params)
-        .map(v -> cache.getToken(params.getTenantId()));
+      return loginPubSubUser(params).compose(isLoggedIn -> {
+        if (BooleanUtils.isTrue(isLoggedIn)) {
+          return Future.succeededFuture(cache.getToken(params.getTenantId()));
+        }
+        return Future.failedFuture("Failed pub-sub user log in");
+      });
     }
     return Future.succeededFuture(token);
   }
