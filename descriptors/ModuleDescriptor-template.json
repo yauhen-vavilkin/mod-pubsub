@@ -289,6 +289,11 @@
       "permissionName": "patron-blocks.events.post",
       "displayName": "Patron blocks - post event",
       "description": "Post events to patron blocks"
+    },
+    {
+      "permissionName": "audit-data.events.post",
+      "displayName": "Audit data - post event",
+      "description": "Post events to audit data"
     }
   ],
   "launchDescriptor": {
