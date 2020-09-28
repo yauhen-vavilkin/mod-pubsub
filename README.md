@@ -99,7 +99,7 @@ curl -w '\n' -X POST -D -   \
 ```
 
 ## Environment variables
-Pubsub requires kafka to be running, and to ensure it can connect and interact with kafka the following environment variable should be specified on deployment:
+Pubsub requires kafka to be running, and to ensure it can connect and interact with kafka the following environment variable must be specified on deployment:
  ```
       {
         "name": "KAFKA_HOST",
