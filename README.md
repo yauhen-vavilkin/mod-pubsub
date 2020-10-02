@@ -77,7 +77,7 @@ provides, and how to deploy it.
 
 Next we need to deploy the module. There is a deployment descriptor in
 `target/DeploymentDescriptor.json`. It tells Okapi to start the module on 'localhost'.
-Make sure Kafka is up and running on 9092 port before deployment.
+****Make sure Kafka is up and running before deployment and pass all the required environment variables.****
 
 Deploy it via Okapi discovery:
 
@@ -99,7 +99,7 @@ curl -w '\n' -X POST -D -   \
 ```
 
 ## Environment variables
-Pubsub requires kafka to be running, and to ensure it can connect and interact with kafka the following environment variable must be specified on deployment:
+****Pubsub requires kafka to be running, and to ensure it can connect and interact with kafka the following environment variable must be specified on deployment:****
  ```
       {
         "name": "KAFKA_HOST",
@@ -114,7 +114,7 @@ Pubsub requires kafka to be running, and to ensure it can connect and interact w
         "value": "http://10.0.2.15:9130"
       }
 ```
-There are two additional parameters required for pubsub to create topics in kafka - number of partitions and replication factor. 
+****There are two additional parameters required for pubsub to create topics in kafka - number of partitions and replication factor.**** 
 The replication factor controls how many servers will replicate each message that is written. If replication factor set to 3 then up to 2 servers can fail before access to the data will be lost.
 The partition count controls how many logs the topic will be sharded into.
 
@@ -130,15 +130,15 @@ The partition count controls how many logs the topic will be sharded into.
  ```   
 If these values are not set then topics will be created with 1 partition and 1 replica. 
 
-There is also a possibility to set a customized prefix for kafka topics, specifying the environment in which pusub is deployed
-
+****In case a single Kafka installation is shared between multiple environments, make sure to set a customized prefix for kafka topics, specifying the environment in which pubsub is deployed****
+This variable is used as a prefix to avoid any confusion with Kafka topics and consumer groups and is ****REQUIRED**** to prevent the situation when events are exchanged between pubsub instances belonging to different environments.
  ```
       {
         "name": "ENV",
         "value": "folio-testing"
       }
  ```
-In case this variable is not set, default "folio" prefix will be used in topic names.
+If this variable is not set, default "folio" prefix will be used in topic names, which is acceptable only if a separate Kafka installation is used on the environment.
 
 ## Verifying the module can connect and work with kafka
 
