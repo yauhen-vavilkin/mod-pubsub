@@ -1,9 +1,8 @@
-## 2020-06-24 v1.3.0-SNAPSHOT
+## 2020-10-06 v1.3.0
 * [MODPUBSUB-102](https://issues.folio.org/browse/MODPUBSUB-102) Corrected property with logger configuration file for pub-sub client
-* [MODDATAIMP-324](https://issues.folio.org/browse/MODDATAIMP-324) Update all Data-Import modules to the new RMB version
+* [MODDATAIMP-324](https://issues.folio.org/browse/MODDATAIMP-324) Update to RMB v31.0.2
 * [MODPUBSUB-110](https://issues.folio.org/browse/MODPUBSUB-110) Make env variables required for module deployment.
-* [MODPUBSUB-126](https://issues.folio.org/browse/MODPUBSUB-126) GET pubsub/history does not return audit messages[BUGFIX].
-
+* [MODPUBSUB-126](https://issues.folio.org/browse/MODPUBSUB-126) Make GET pubsub/history return audit messages filtered by date inclusively 
 
 ## 2020-07-10 v1.2.4
 * [MODDATAIMP-309](https://issues.folio.org/browse/MODDATAIMP-309) Deleted KafkaPublisherServiceImpl vertx proxy service
