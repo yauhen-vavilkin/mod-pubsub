@@ -2,6 +2,7 @@
 * [MODPUBSUB-102](https://issues.folio.org/browse/MODPUBSUB-102) Corrected property with logger configuration file for pub-sub client
 * [MODDATAIMP-324](https://issues.folio.org/browse/MODDATAIMP-324) Update all Data-Import modules to the new RMB version
 * [MODPUBSUB-110](https://issues.folio.org/browse/MODPUBSUB-110) Make env variables required for module deployment.
+* [MODPUBSUB-126](https://issues.folio.org/browse/MODPUBSUB-126) GET pubsub/history does not return audit messages[BUGFIX].
 
 
 ## 2020-07-10 v1.2.4

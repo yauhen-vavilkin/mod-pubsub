@@ -198,9 +198,57 @@ public class AuditMessageAPITest extends AbstractRestTest {
     });
   }
 
+  @Test
+  public void shouldReturnAuditMessagesOnGetFilteredOnlyByOneDayWithoutTime(TestContext context) {
+    Async async = context.async();
+    addTestData().onComplete(ar -> {
+      RestAssured.given()
+        .spec(spec)
+        .when()
+        .get(HISTORY_PATH + "?startDate=2019-09-27&endDate=2019-09-27")
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("totalRecords", is(2))
+        .body("auditMessages.size()", is(2));
+      async.complete();
+    });
+  }
+
+  @Test
+  public void shouldReturnAuditMessagesOnGetFilteredByManyDaysWithoutTime(TestContext context) {
+    Async async = context.async();
+    addTestData().onComplete(ar -> {
+      RestAssured.given()
+        .spec(spec)
+        .when()
+        .get(HISTORY_PATH + "?startDate=2019-09-27&endDate=2019-09-28")
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("totalRecords", is(3))
+        .body("auditMessages.size()", is(3));
+      async.complete();
+    });
+  }
+
+  @Test
+  public void shouldReturnAuditMessagesOnGetFilteredByManyDaysWithEndTime(TestContext context) {
+    Async async = context.async();
+    addTestData().onComplete(ar -> {
+      RestAssured.given()
+        .spec(spec)
+        .when()
+        .get(HISTORY_PATH + "?startDate=2019-09-27&endDate=2019-09-28T00:00:00")
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("totalRecords", is(2))
+        .body("auditMessages.size()", is(2));
+      async.complete();
+    });
+  }
+
   private CompositeFuture saveAuditMessages() {
     List<Future> futures = new ArrayList<>();
-    String[] dateFormats = {DateFormatUtils.ISO_DATE_FORMAT.getPattern()};
+    String[] dateFormats = {DateFormatUtils.ISO_DATETIME_FORMAT.getPattern()};
     try {
       AuditMessage auditMessage_1 = new AuditMessage()
         .withId(UUID.randomUUID().toString())
@@ -210,7 +258,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
         .withPublishedBy("mod-amazing-1.0.0")
-        .withAuditDate(DateUtils.parseDate("2019-09-15", dateFormats))
+        .withAuditDate(DateUtils.parseDate("2019-09-15T13:00:00", dateFormats))
         .withState(AuditMessage.State.CREATED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_1));
 
@@ -222,7 +270,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
         .withPublishedBy("mod-fantastic-1.0.0")
-        .withAuditDate(DateUtils.parseDate("2019-09-21", dateFormats))
+        .withAuditDate(DateUtils.parseDate("2019-09-21T13:00:00", dateFormats))
         .withState(AuditMessage.State.PUBLISHED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_2));
 
@@ -234,7 +282,7 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
         .withPublishedBy("mod-fabulous-1.0.0")
-        .withAuditDate(DateUtils.parseDate("2019-09-22", dateFormats))
+        .withAuditDate(DateUtils.parseDate("2019-09-22T13:00:00", dateFormats))
         .withState(AuditMessage.State.CREATED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_3));
 
@@ -246,9 +294,45 @@ public class AuditMessageAPITest extends AbstractRestTest {
         .withTenantId(TENANT_ID)
         .withCreatedBy("diku-admin")
         .withPublishedBy("mod-perfect-2.0.0")
-        .withAuditDate(DateUtils.parseDate("2019-09-25", dateFormats))
+        .withAuditDate(DateUtils.parseDate("2019-09-25T13:00:00", dateFormats))
         .withState(AuditMessage.State.RECEIVED);
       futures.add(auditMessageDao.saveAuditMessage(auditMessage_4));
+
+      AuditMessage auditMessage_5 = new AuditMessage()
+        .withId(UUID.randomUUID().toString())
+        .withEventId(eventId_2)
+        .withEventType(eventType)
+        .withCorrelationId(correlationId_2)
+        .withTenantId(TENANT_ID)
+        .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-perfect-2.0.0")
+        .withAuditDate(DateUtils.parseDate("2019-09-27T11:00:00", dateFormats))
+        .withState(AuditMessage.State.RECEIVED);
+      futures.add(auditMessageDao.saveAuditMessage(auditMessage_5));
+
+      AuditMessage auditMessage_6 = new AuditMessage()
+        .withId(UUID.randomUUID().toString())
+        .withEventId(eventId_2)
+        .withEventType(eventType)
+        .withCorrelationId(correlationId_2)
+        .withTenantId(TENANT_ID)
+        .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-perfect-2.0.0")
+        .withAuditDate(DateUtils.parseDate("2019-09-27T22:00:00", dateFormats))
+        .withState(AuditMessage.State.RECEIVED);
+      futures.add(auditMessageDao.saveAuditMessage(auditMessage_6));
+
+      AuditMessage auditMessage_7 = new AuditMessage()
+        .withId(UUID.randomUUID().toString())
+        .withEventId(eventId_2)
+        .withEventType(eventType)
+        .withCorrelationId(correlationId_2)
+        .withTenantId(TENANT_ID)
+        .withCreatedBy("diku-admin")
+        .withPublishedBy("mod-perfect-2.0.0")
+        .withAuditDate(DateUtils.parseDate("2019-09-28T20:00:00", dateFormats))
+        .withState(AuditMessage.State.RECEIVED);
+      futures.add(auditMessageDao.saveAuditMessage(auditMessage_7));
     } catch (Exception e) {
       futures.add(Future.failedFuture(e));
     }

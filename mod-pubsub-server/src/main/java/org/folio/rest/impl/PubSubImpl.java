@@ -7,6 +7,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.folio.rest.jaxrs.model.Event;
@@ -29,6 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
+
+import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
@@ -285,7 +289,7 @@ public class PubSubImpl implements Pubsub {
     };
     try {
       Date start = DateUtils.parseDate(startDate, dateFormats);
-      Date end = DateUtils.parseDate(endDate, dateFormats);
+      Date end = extractAndProcessEndDate(endDate, dateFormats);
       return new AuditMessageFilter(start, end)
         .withEventId(eventId)
         .withEventType(eventType)
@@ -294,5 +298,31 @@ public class PubSubImpl implements Pubsub {
       LOGGER.error("Error parsing date", e);
       throw new BadRequestException(format("Supported date formats %s, %s, %s", dateFormats[0], dateFormats[1], dateFormats[2]));
     }
+  }
+
+  private Date extractAndProcessEndDate(String endDate, String[] dateFormats) throws ParseException {
+    Date end;
+    if (checkIfISODateFormat(endDate)) {
+      end = DateUtils.parseDate(endDate, new String[]{DateFormatUtils.ISO_DATE_FORMAT.getPattern()});
+      Calendar calendar = Calendar.getInstance();
+      calendar.setTime(end);
+      calendar.set(Calendar.HOUR_OF_DAY, 23);
+      calendar.set(Calendar.MINUTE, 59);
+      calendar.set(Calendar.SECOND, 59);
+      calendar.set(Calendar.MILLISECOND, 999);
+      return calendar.getTime();
+    } else {
+      end = DateUtils.parseDate(endDate, dateFormats);
+      return end;
+    }
+  }
+
+  private boolean checkIfISODateFormat(String endDate) {
+    try {
+      DateUtils.parseDate(endDate, new String[]{DateFormatUtils.ISO_DATE_FORMAT.getPattern()});
+    } catch (Exception e) {
+      return false;
+    }
+    return true;
   }
 }
