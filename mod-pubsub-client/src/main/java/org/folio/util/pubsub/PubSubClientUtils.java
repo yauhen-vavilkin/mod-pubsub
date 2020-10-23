@@ -53,8 +53,8 @@ public class PubSubClientUtils {
    * @return - async result with boolean value. True if message was sanded successfully
    */
   public static CompletableFuture<Boolean> sendEventMessage(Event eventMessage, OkapiConnectionParams params) {
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     CompletableFuture<Boolean> result = new CompletableFuture<>();
+    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     try {
       client.postPubsubPublish(eventMessage, ar -> {
         if (ar.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
@@ -68,9 +68,8 @@ public class PubSubClientUtils {
     } catch (Exception e) {
       LOGGER.error("Error during sending event message to PubSub", e);
       result.completeExceptionally(e);
-      return result;
     }
-    return result;
+    return result.whenComplete((res, throwable) -> client.close());
   }
 
   /**
@@ -81,8 +80,8 @@ public class PubSubClientUtils {
    */
   public static CompletableFuture<Boolean> registerModule(OkapiConnectionParams params) {
     CompletableFuture<Boolean> result = new CompletableFuture<>();
+    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     try {
-      PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
       LOGGER.info("Reading MessagingDescriptor.json");
       DescriptorHolder descriptorHolder = readMessagingDescriptor();
       if (descriptorHolder.getPublisherDescriptor() != null &&
@@ -96,12 +95,11 @@ public class PubSubClientUtils {
         isNotEmpty(descriptorHolder.getSubscriberDescriptor().getSubscriptionDefinitions())) {
         result = result.thenCompose(ar -> registerSubscribers(client, descriptorHolder.getSubscriberDescriptor()));
       }
-      return result;
     } catch (Exception e) {
       LOGGER.error("Error during registration module in PubSub", e);
       result.completeExceptionally(e);
-      return result;
     }
+    return result.whenComplete((res, throwable) -> client.close());
   }
 
   private static CompletableFuture<Void> registerEventTypes(PubsubClient client, List<EventDescriptor> events) {
