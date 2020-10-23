@@ -1,3 +1,6 @@
+## 2020-10-23 v1.3.1
+* [MODPUBSUB-127](https://issues.folio.org/browse/MODPUBSUB-127) Explicitly close HttpClient created by PubsubClient
+
 ## 2020-10-06 v1.3.0
 * [MODPUBSUB-102](https://issues.folio.org/browse/MODPUBSUB-102) Corrected property with logger configuration file for pub-sub client
 * [MODDATAIMP-324](https://issues.folio.org/browse/MODDATAIMP-324) Update to RMB v31.0.2
