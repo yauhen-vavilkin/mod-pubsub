@@ -5,6 +5,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.tools.utils.VertxUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -21,6 +23,8 @@ public class PubsubClient {
   private String okapiUrl;
   private HttpClientOptions options;
   private HttpClient httpClient;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(PubsubClient.class);
 
   public PubsubClient(String okapiUrl, String tenantId, String token, boolean keepAlive, int connTO, int idleTO) {
     // Auto-generated code
@@ -503,7 +507,11 @@ public class PubsubClient {
    * Clients should always be closed after use.
    */
   public void close() {
-    httpClient.close();
+    try {
+      httpClient.close();
+    } catch (Exception e) {
+      LOGGER.error("Error closing HTTP client", e);
+    }
   }
 
 }
