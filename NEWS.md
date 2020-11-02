@@ -1,4 +1,5 @@
 ## 2020-10-29 v1.4.0-SNAPSHOT
+* [MODPUBSUB-129](https://issues.folio.org/browse/MODPUBSUB-129) Create script that would delete module subscriptions with "_" in their names.[BUGFIX]
 
 ## 2020-10-23 v1.3.1
 * [MODPUBSUB-127](https://issues.folio.org/browse/MODPUBSUB-127) Explicitly close HttpClient created by PubsubClient
