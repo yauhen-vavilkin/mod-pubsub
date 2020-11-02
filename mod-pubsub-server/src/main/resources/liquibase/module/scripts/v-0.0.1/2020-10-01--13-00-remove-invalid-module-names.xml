@@ -1,0 +1,17 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+
+  <changeSet id="2020-10-01--13-00-remove-invalid-module-names" author="VolodymyrRohach">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="messaging_module" schemaName="${database.defaultSchemaName}"/>
+    </preConditions>
+    <sql>
+      DELETE FROM ${database.defaultSchemaName}.messaging_module
+      WHERE ${database.defaultSchemaName}.messaging_module.module_id LIKE '%\_%';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>
