@@ -1,5 +1,5 @@
 ## 2020-10-29 v1.4.0-SNAPSHOT
-* [MODPUBSUB-129](https://issues.folio.org/browse/MODPUBSUB-129) Create script that would delete module subscriptions with "_" in their names.[BUGFIX]
+* [MODPUBSUB-134](https://issues.folio.org/browse/MODPUBSUB-134) Upgrade to RMB v31.1.5
 
 ## 2020-10-23 v1.3.1
 * [MODPUBSUB-127](https://issues.folio.org/browse/MODPUBSUB-127) Explicitly close HttpClient created by PubsubClient
@@ -9,6 +9,10 @@
 * [MODDATAIMP-324](https://issues.folio.org/browse/MODDATAIMP-324) Update to RMB v31.0.2
 * [MODPUBSUB-110](https://issues.folio.org/browse/MODPUBSUB-110) Make env variables required for module deployment.
 * [MODPUBSUB-126](https://issues.folio.org/browse/MODPUBSUB-126) Make GET pubsub/history return audit messages filtered by date inclusively 
+
+## 2020-11-03 v1.2.6
+* [MODPUBSUB-133](https://issues.folio.org/browse/MODPUBSUB-133) Explicitly close HttpClient created by PubsubClient
+* [MODPUBSUB-129](https://issues.folio.org/browse/MODPUBSUB-129) Create script that would delete module subscriptions with "_" in their names
 
 ## 2020-07-17 v1.2.5
 * [MODDATAIMP-309](https://issues.folio.org/browse/MODDATAIMP-309) Remove unnecessary requests to login
