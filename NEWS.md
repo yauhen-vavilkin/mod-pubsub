@@ -1,3 +1,7 @@
+## 2020-11-03 v1.2.6
+[MODPUBSUB-133](https://issues.folio.org/browse/MODPUBSUB-133) Explicitly close HttpClient created by PubsubClient
+[MODPUBSUB-129](https://issues.folio.org/browse/MODPUBSUB-129) Create script that would delete module subscriptions with "_" in their names
+
 ## 2020-07-17 v1.2.5
 * [MODDATAIMP-309](https://issues.folio.org/browse/MODDATAIMP-309) Remove unnecessary requests to login
 
