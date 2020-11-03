@@ -19,8 +19,8 @@
   </modules>
 
   <properties>
-    <raml-module-builder.version>31.0.2</raml-module-builder.version>
-    <vertx.version>3.9.1</vertx.version>
+    <raml-module-builder.version>31.1.5</raml-module-builder.version>
+    <vertx.version>3.9.4</vertx.version>
     <wiremock.version>2.19.0</wiremock.version>
     <junit.version>4.13</junit.version>
     <rest-assured.version>4.0.0</rest-assured.version>
@@ -29,6 +29,27 @@
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-sql-client</artifactId>
+        <version>${vertx.version}-FOLIO</version>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-pg-client</artifactId>
+        <version>${vertx.version}-FOLIO</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <resources>
