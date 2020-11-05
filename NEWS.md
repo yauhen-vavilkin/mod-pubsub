@@ -1,3 +1,6 @@
+## 2020-11-05 v1.3.3
+* Fix logging after RMB upgrade
+
 ## 2020-11-03 v1.3.2
 * [MODPUBSUB-129](https://issues.folio.org/browse/MODPUBSUB-129) Create script that would delete module subscriptions with "_" in their names
 * [MODPUBSUB-134](https://issues.folio.org/browse/MODPUBSUB-134) Upgrade to RMB v31.1.5
