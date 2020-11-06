@@ -226,3 +226,26 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error"
+  /messaging-modules:
+    displayName: Delete publisher or subscriber declarations by moduleId
+    description: API to delete publisher or subscriber declarations for module with specified moduleId
+    delete:
+      queryParameters:
+        moduleId:
+          description: module name and version
+          required: true
+          type: string
+          example: mod-pubsub-1.0.0
+        moduleRole:
+          description: module role (PUBLISHER/SUBSCRIBER)
+          required: true
+          type: string
+          pattern: PUBLISHER|SUBSCRIBER
+          example: PUBLISHER
+      responses:
+        204:
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+              example: "Bad request"

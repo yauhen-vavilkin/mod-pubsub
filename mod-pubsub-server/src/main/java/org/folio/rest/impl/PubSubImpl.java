@@ -4,6 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -12,6 +13,7 @@ import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
+import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.resource.Pubsub;
@@ -43,6 +45,7 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 public class PubSubImpl implements Pubsub {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubImpl.class);
+  public static final String MODULE_ID_AND_ROLE_ARE_NOT_SET_MSG = "ModuleId and moduleRole are required query parameters";
   private final String tenantId;
 
   @Autowired
@@ -276,6 +279,43 @@ public class PubSubImpl implements Pubsub {
       LOGGER.error("Failed to delete subscriber", e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
+  }
+
+  @Override
+  public void deletePubsubMessagingModules(String moduleId, String moduleRole, Map<String, String> okapiHeaders,
+                                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try {
+      getMessagingModuleFilter(moduleId, moduleRole)
+        .compose(moduleFilter -> messagingModuleService.delete(moduleFilter))
+        .map(DeletePubsubMessagingModulesResponse.respond204())
+        .map(Response.class::cast)
+        .otherwise(ExceptionHelper::mapExceptionToResponse)
+        .onComplete(asyncResultHandler);
+    } catch (Exception e) {
+      LOGGER.error("Failed to delete messaging module", e);
+      asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
+    }
+  }
+
+  private Future<MessagingModuleFilter> getMessagingModuleFilter(String moduleId, String moduleRole) {
+    Promise<MessagingModuleFilter> promise = Promise.promise();
+    if (moduleId == null || moduleRole == null) {
+      LOGGER.error(MODULE_ID_AND_ROLE_ARE_NOT_SET_MSG);
+      promise.fail(new BadRequestException(MODULE_ID_AND_ROLE_ARE_NOT_SET_MSG));
+      return promise.future();
+    }
+
+    try {
+      MessagingModuleFilter filter = new MessagingModuleFilter()
+        .withModuleId(moduleId)
+        .withModuleRole(MessagingModule.ModuleRole.fromValue(moduleRole));
+      promise.complete(filter);
+    } catch (IllegalArgumentException e) {
+      String msg = format("Invalid moduleRole was specified: %s. Acceptable moduleRole values are: PUBLISHER, SUBSCRIBER.", moduleRole);
+      LOGGER.error(msg);
+      promise.fail(new BadRequestException(msg));
+    }
+    return promise.future();
   }
 
   private AuditMessageFilter constructAuditMessageFilter(String startDate, String endDate, String eventId, String eventType, String correlationId) {

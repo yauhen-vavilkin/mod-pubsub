@@ -1,13 +1,18 @@
 package org.folio.util.pubsub;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.matching.RegexPattern;
+import com.github.tomakehurst.wiremock.matching.UrlPathPattern;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
+import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
@@ -19,10 +24,15 @@ import org.junit.runner.RunWith;
 
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
 import static com.github.tomakehurst.wiremock.client.WireMock.created;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -45,6 +55,7 @@ public class PubSubClientTest extends AbstractRestTest {
   private static final String EVENT_TYPES_PATH = "/pubsub/event-types";
   private static final String DECLARE_PUBLISHER_PATH = "/declare/publisher";
   private static final String DECLARE_SUBSCRIBER_PATH = "/declare/subscriber";
+  public static final String MESSAGING_MODULES_PATH = "/pubsub/messaging-modules";
 
   @Before
   public void prepareParams() {
@@ -115,6 +126,18 @@ public class PubSubClientTest extends AbstractRestTest {
     } catch (Exception e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void shouldUnregisterModuleSuccessfully() throws Exception {
+    Assert.assertTrue(PubSubClientUtils.unregisterModule(params).get());
+  }
+
+  @Test(expected = ExecutionException.class)
+  public void shouldReturnFailedFutureWhenPubsubReturnsServerError() throws Exception {
+    WireMock.stubFor(delete(new UrlPathPattern(new RegexPattern(MESSAGING_MODULES_PATH + "?.*"), true))
+      .willReturn(serverError()));
+    PubSubClientUtils.unregisterModule(fakeParams).get();
   }
 
   private void registerPublisher(EventDescriptor eventDescriptor) {

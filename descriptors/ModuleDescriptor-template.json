@@ -173,6 +173,19 @@
       ]
     },
     {
+      "id": "pubsub-messaging-modules",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/pubsub/messaging-modules",
+          "permissionsRequired": [
+            "pubsub.messaging-modules.delete"
+          ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "1.2",
       "interfaceType": "system",
@@ -264,6 +277,11 @@
       "permissionName": "pubsub.publish.post",
       "displayName": "PubSub - publish event",
       "description": "Publish event"
+    },
+    {
+      "permissionName": "pubsub.messaging-modules.delete",
+      "displayName": "PubSub - delete publishers and subscribers declarations",
+      "description": "Delete publishers or subscribers"
     },
     {
       "permissionName": "source-storage.events.post",
