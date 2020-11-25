@@ -1,5 +1,6 @@
-## 2020-10-29 v1.4.0-SNAPSHOT
+## xxxx-xx-xx v1.4.0-SNAPSHOT
 * [MODPUBSUB-87](https://issues.folio.org/browse/MODPUBSUB-87) Create utility method for module unregistering
+* [MODPUBSUB-118](https://issues.folio.org/browse/MODPUBSUB-118) Create sub-project in mod-pubsub for utility transport layer classes
 
 ## 2020-11-05 v1.3.3
 * Fix logging after RMB upgrade
