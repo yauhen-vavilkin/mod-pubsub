@@ -1,5 +1,7 @@
 package org.folio.kafka;
 
+import org.folio.rest.tools.PomReader;
+
 import static java.lang.String.join;
 
 public class PubSubConfig {
@@ -12,8 +14,11 @@ public class PubSubConfig {
   public PubSubConfig(String env, String tenant, String eventType) {
     this.tenant = tenant;
     this.eventType = eventType;
-    this.groupId = join(".", env, PUB_SUB_PREFIX, tenant, eventType);
-    this.topicName = join(".", env, PUB_SUB_PREFIX, tenant, eventType);
+    /* moduleNameWithVersion variable need for unique topic and group names for different pub-sub versions.
+    It was encapsulated here, in constructor, for better creating/subscribing/sending events.*/
+    String moduleNameWithVersion = PomReader.INSTANCE.getModuleName().replace("_", "-") + "-" + PomReader.INSTANCE.getVersion();
+    this.groupId = join(".", env, PUB_SUB_PREFIX, tenant, eventType, moduleNameWithVersion);
+    this.topicName = join(".", env, PUB_SUB_PREFIX, tenant, eventType, moduleNameWithVersion);
   }
 
   public String getTenant() {
