@@ -282,6 +282,11 @@
       "permissionName": "pubsub.messaging-modules.delete",
       "displayName": "PubSub - delete publishers and subscribers declarations",
       "description": "Delete publishers or subscribers"
+    },
+    {
+      "permissionName": "pubsub.events.post",
+      "displayName": "PubSub - post event.",
+      "description": "Post all events."
     }
   ],
   "launchDescriptor": {
