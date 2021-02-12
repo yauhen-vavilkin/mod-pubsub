@@ -6,11 +6,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.MessagingModule;
@@ -44,7 +45,7 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
 public class PubSubImpl implements Pubsub {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(PubSubImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
   public static final String MODULE_ID_AND_ROLE_ARE_NOT_SET_MSG = "ModuleId and moduleRole are required query parameters";
   private final String tenantId;
 
@@ -71,7 +72,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to save Event Descriptor for event type '{}'", e, entity.getEventType());
+      LOGGER.error("Failed to save Event Descriptor for event type '{}'", entity.getEventType(), e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -99,7 +100,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to update Event Descriptor by event type name '{}'", e, eventTypeName);
+      LOGGER.error("Failed to update Event Descriptor by event type name '{}'", eventTypeName, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -113,7 +114,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to delete event descriptor by event type name '{}'", e, eventTypeName);
+      LOGGER.error("Failed to delete event descriptor by event type name '{}'", eventTypeName, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -129,7 +130,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to get event descriptor by event type name '{}'", e, eventTypeName);
+      LOGGER.error("Failed to get event descriptor by event type name '{}'", eventTypeName, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -179,7 +180,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to retrieve audit message payload for event {}", e, eventId);
+      LOGGER.error("Failed to retrieve audit message payload for event {}", eventId, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -227,7 +228,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to get publishers by event type '{}'", e, eventTypeName);
+      LOGGER.error("Failed to get publishers by event type '{}'", eventTypeName, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }
@@ -257,7 +258,7 @@ public class PubSubImpl implements Pubsub {
         .otherwise(ExceptionHelper::mapExceptionToResponse)
         .onComplete(asyncResultHandler);
     } catch (Exception e) {
-      LOGGER.error("Failed to get subscribers by event type '{}'", e, eventTypeName);
+      LOGGER.error("Failed to get subscribers by event type '{}'", eventTypeName, e);
       asyncResultHandler.handle(Future.succeededFuture(ExceptionHelper.mapExceptionToResponse(e)));
     }
   }

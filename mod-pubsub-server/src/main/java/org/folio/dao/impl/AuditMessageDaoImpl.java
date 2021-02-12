@@ -3,11 +3,11 @@ package org.folio.dao.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.dao.AuditMessageDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.rest.jaxrs.model.AuditMessage;
@@ -33,7 +33,7 @@ import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 @Repository
 public class AuditMessageDaoImpl implements AuditMessageDao {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AuditMessageDaoImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final String AUDIT_MESSAGE_TABLE = "audit_message";
   private static final String AUDIT_MESSAGE_PAYLOAD_TABLE = "audit_message_payload";
@@ -76,7 +76,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
         auditMessage.getErrorMessage() != null ? auditMessage.getErrorMessage() : EMPTY);
       pgClientFactory.getInstance(auditMessage.getTenantId()).execute(query, params, promise);
     } catch (Exception e) {
-      LOGGER.error("Error saving audit message with id {}", e, auditMessage.getId());
+      LOGGER.error("Error saving audit message with id {}", auditMessage.getId(), e);
       promise.fail(e);
     }
     return promise.future().map(updateResult -> auditMessage);
@@ -90,7 +90,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
       pgClientFactory.getInstance(tenantId).execute(query, Tuple.of(UUID.fromString(auditMessagePayload.getEventId()), JsonObject.mapFrom(auditMessagePayload)),
         promise);
     } catch (Exception e) {
-      LOGGER.error("Error saving audit message payload for event with id {}", e, auditMessagePayload.getEventId());
+      LOGGER.error("Error saving audit message payload for event with id {}", auditMessagePayload.getEventId(), e);
       promise.fail(e);
     }
     return promise.future().map(updateResult -> auditMessagePayload);
@@ -104,7 +104,7 @@ public class AuditMessageDaoImpl implements AuditMessageDao {
       String query = format(GET_BY_EVENT_ID_QUERY, convertToPsqlStandard(tenantId), AUDIT_MESSAGE_PAYLOAD_TABLE);
       pgClientFactory.getInstance(tenantId).select(query, Tuple.of(UUID.fromString(eventId)), promise);
     } catch (Exception e) {
-      LOGGER.error("Error while searching for audit message payload by event id {}", e, eventId);
+      LOGGER.error("Error while searching for audit message payload by event id {}", eventId, e);
       promise.fail(e);
     }
     return promise.future().map(resultSet -> resultSet.rowCount() == 0

@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -55,7 +56,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor1)
+      .body(JsonObject.mapFrom(publisherDescriptor1).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -67,7 +68,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor2)
+      .body(JsonObject.mapFrom(publisherDescriptor2).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -94,7 +95,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -121,7 +122,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then()
@@ -134,7 +135,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor2)
+      .body(JsonObject.mapFrom(publisherDescriptor2).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then()
@@ -165,7 +166,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -184,7 +185,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -205,7 +206,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -226,7 +227,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -246,7 +247,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then().log().all()
@@ -277,7 +278,7 @@ public class PublishersApiTest extends AbstractRestTest {
 
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
@@ -286,10 +287,10 @@ public class PublishersApiTest extends AbstractRestTest {
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
-    return postResponse.body().as(EventDescriptor.class);
+    return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 }

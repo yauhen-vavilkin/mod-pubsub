@@ -8,12 +8,10 @@ import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.client.HttpResponse;
 import org.folio.kafka.KafkaConfig;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventMetadata;
@@ -104,7 +102,7 @@ public class ConsumerServiceUnitTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<HttpResponse<Buffer>> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, HttpMethod.POST, params);
+    Future<RestUtil.WrappedResponse> future = RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload());
 
     future.onComplete(ar -> {
       assertTrue(ar.succeeded());
@@ -134,7 +132,7 @@ public class ConsumerServiceUnitTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<HttpResponse<Buffer>> future = RestUtil.doRequest(event.getEventPayload(), CALLBACK_ADDRESS, HttpMethod.POST, params);
+    Future<RestUtil.WrappedResponse> future = RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload());
 
     future.onComplete(ar -> {
       assertTrue(ar.succeeded());

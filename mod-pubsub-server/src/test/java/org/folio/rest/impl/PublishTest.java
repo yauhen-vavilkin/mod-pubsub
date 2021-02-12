@@ -98,7 +98,7 @@ public class PublishTest extends AbstractRestTest {
 
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
@@ -107,11 +107,11 @@ public class PublishTest extends AbstractRestTest {
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
-    return postResponse.body().as(EventDescriptor.class);
+    return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 
   private void registerSubscriber(EventDescriptor eventDescriptor) {
@@ -124,7 +124,7 @@ public class PublishTest extends AbstractRestTest {
 
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));

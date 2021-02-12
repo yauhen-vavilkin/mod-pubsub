@@ -1,13 +1,13 @@
 package org.folio.services.impl;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.MessagingModuleDao;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -43,7 +43,7 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 @Component
 public class MessagingModuleServiceImpl implements MessagingModuleService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MessagingModuleServiceImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private MessagingModuleDao messagingModuleDao;
   private EventDescriptorDao eventDescriptorDao;
@@ -102,7 +102,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
                 .withTmp(true)));
           }
         }
-        return CompositeFuture.join(futures);
+        return GenericCompositeFuture.join(futures);
       }).map(true);
   }
 

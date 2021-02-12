@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -64,7 +65,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -80,7 +81,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor2)
+      .body(JsonObject.mapFrom(subscriberDescriptor2).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -115,7 +116,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -151,7 +152,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor1)
+      .body(JsonObject.mapFrom(subscriberDescriptor1).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -169,7 +170,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor2)
+      .body(JsonObject.mapFrom(subscriberDescriptor2).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -213,7 +214,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then().log().all()
@@ -235,7 +236,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
       .then()
@@ -272,7 +273,7 @@ public class SubscribersApiTest extends AbstractRestTest {
 
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(subscriberDescriptor)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
@@ -282,10 +283,10 @@ public class SubscribersApiTest extends AbstractRestTest {
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
-    return postResponse.body().as(EventDescriptor.class);
+    return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 }

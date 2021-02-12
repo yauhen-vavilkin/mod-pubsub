@@ -1,6 +1,6 @@
 package org.folio.util.pubsub;
 
-import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.builder.RequestSpecBuilder;
@@ -8,7 +8,6 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -62,7 +61,7 @@ public abstract class AbstractRestTest {
   public WireMockRule mockServer = new WireMockRule(
     WireMockConfiguration.wireMockConfig()
       .port(stubPort)
-      .notifier(new Slf4jNotifier(true)));
+      .notifier(new ConsoleNotifier(true)));
 
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
@@ -136,6 +135,7 @@ public abstract class AbstractRestTest {
       if (useExternalDatabase.equals("embedded")) {
         PostgresClient.stopEmbeddedPostgres();
       }
+      cluster.stop();
       System.clearProperty(KAFKA_HOST);
       System.clearProperty(KAFKA_PORT);
       async.complete();

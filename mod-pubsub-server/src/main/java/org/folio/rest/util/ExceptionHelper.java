@@ -1,9 +1,9 @@
 package org.folio.rest.util;
 
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.tools.utils.ValidationHelper;
 
 import javax.ws.rs.BadRequestException;
@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 
 public final class ExceptionHelper {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHelper.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private ExceptionHelper() {
   }

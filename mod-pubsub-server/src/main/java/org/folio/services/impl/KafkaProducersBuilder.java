@@ -16,14 +16,14 @@ import static com.google.common.collect.Iterators.cycle;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 
 @Component
-public class KafkaProducerManager {
+public class KafkaProducersBuilder {
 
   // number of producers to be created is equal to allocated thread pool
   private static final int NUMBER_OF_PRODUCERS =
     Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "20"));
   private Iterator<KafkaProducer<String, String>> producerIterator;
 
-  public KafkaProducerManager(@Autowired Vertx vertx, @Autowired KafkaConfig config) {
+  public KafkaProducersBuilder(@Autowired Vertx vertx, @Autowired KafkaConfig config) {
     List<KafkaProducer<String, String>> producers =
       Stream.generate(() -> KafkaProducer.<String, String>create(vertx, config.getProducerProps()))
         .limit(NUMBER_OF_PRODUCERS)

@@ -1,10 +1,8 @@
 package org.folio.rest.impl;
 
-import static io.vertx.core.Future.succeededFuture;
-import static org.folio.rest.jaxrs.resource.Tenant.PostTenantResponse.respond500WithTextPlain;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import org.folio.liquibase.LiquibaseUtil;
@@ -31,40 +29,23 @@ public class ModTenantAPI extends TenantAPI {
   @Validate
   @Override
   public void postTenant(TenantAttributes tenantAttributes, Map<String, String> headers, Handler<AsyncResult<Response>> handler, Context context) {
-    super.postTenant(tenantAttributes, headers, postTenantAr -> {
+    super.postTenantSync(tenantAttributes, headers, postTenantAr -> {
       if (postTenantAr.failed()) {
         handler.handle(postTenantAr);
       } else {
-        String tenantId = headers.get(RestVerticle.OKAPI_HEADER_TENANT);
-        Vertx vertx = context.owner();
-        vertx.executeBlocking(
-          blockingFuture -> {
-            LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
-            OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
-
-            securityManager.createPubSubUser(params)
-              .compose(ar -> securityManager.loginPubSubUser(params))
-              .map(this::toObject)
-              .onComplete(blockingFuture);
-          },
-          result -> handleResult(result, postTenantAr, handler)
-        );
+        try {
+          String tenantId = headers.get(RestVerticle.OKAPI_HEADER_TENANT);
+          Vertx vertx = context.owner();
+          LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
+          OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+          securityManager.createPubSubUser(params)
+            .compose(ar -> securityManager.loginPubSubUser(params))
+            .onSuccess(v -> handler.handle(Future.succeededFuture()))
+            .onFailure(e -> handler.handle(Future.failedFuture(e)));
+        } catch (Exception e) {
+          handler.handle(Future.failedFuture(e));
+        }
       }
     }, context);
-  }
-
-  private <T> Object toObject(T specificType) {
-    return specificType;
-  }
-
-  private void handleResult(AsyncResult<Object> pubSubResult,
-    AsyncResult<Response> rmbMigrationResult, Handler<AsyncResult<Response>> handler) {
-
-    if (pubSubResult.succeeded()) {
-      handler.handle(rmbMigrationResult);
-    } else {
-      handler.handle(succeededFuture(respond500WithTextPlain(pubSubResult.cause()
-        .getMessage())));
-    }
   }
 }

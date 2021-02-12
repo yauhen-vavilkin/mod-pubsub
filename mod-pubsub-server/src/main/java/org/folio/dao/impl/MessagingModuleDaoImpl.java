@@ -3,11 +3,11 @@ package org.folio.dao.impl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.dao.util.DbUtil;
@@ -36,7 +36,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 @Repository
 public class MessagingModuleDaoImpl implements MessagingModuleDao {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MessagingModuleDaoImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final String TABLE_NAME = "messaging_module";
   private static final String MODULE_SCHEMA = "pubsub_config";

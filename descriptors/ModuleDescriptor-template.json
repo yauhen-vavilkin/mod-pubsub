@@ -177,7 +177,9 @@
       "version": "0.1",
       "handlers": [
         {
-          "methods": ["DELETE"],
+          "methods": [
+            "DELETE"
+          ],
           "pathPattern": "/pubsub/messaging-modules",
           "permissionsRequired": [
             "pubsub.messaging-modules.delete"
@@ -187,7 +189,7 @@
     },
     {
       "id": "_tenant",
-      "version": "1.2",
+      "version": "2.0",
       "interfaceType": "system",
       "handlers": [
         {
@@ -205,9 +207,10 @@
         },
         {
           "methods": [
-            "DELETE"
+            "DELETE",
+            "GET"
           ],
-          "pathPattern": "/_/tenant"
+          "pathPattern": "/_/tenant/{id}"
         }
       ]
     }

@@ -72,8 +72,6 @@ public abstract class AbstractRestTest {
   }
 
   private static void runDatabase() throws Exception {
-    PostgresClient.stopEmbeddedPostgres();
-    PostgresClient.closeAllClients();
     useExternalDatabase = System.getProperty(
       "org.folio.pubsub.test.database",
       "embedded");
@@ -103,7 +101,6 @@ public abstract class AbstractRestTest {
   private static void deployVerticle(final TestContext context) {
     Async async = context.async();
 
-    TenantClient tenantClient = new TenantClient(OKAPI_URL, TENANT_ID, TOKEN);
 
     final DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject()
@@ -111,6 +108,7 @@ public abstract class AbstractRestTest {
         .put("spring.configuration", "org.folio.config.TestConfig"));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
+        TenantClient tenantClient = new TenantClient(OKAPI_URL, TENANT_ID, TOKEN);
         TenantAttributes tenantAttributes = new TenantAttributes();
         tenantAttributes.setModuleTo(PomReader.INSTANCE.getModuleName());
         tenantClient.postTenant(tenantAttributes, res2 -> {

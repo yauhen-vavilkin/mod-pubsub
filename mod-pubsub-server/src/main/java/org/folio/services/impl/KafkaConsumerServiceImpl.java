@@ -1,7 +1,6 @@
 package org.folio.services.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -9,20 +8,22 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.PubSubConfig;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.rest.util.RestUtil;
 import org.folio.services.ConsumerService;
 import org.folio.services.SecurityManager;
 import org.folio.services.audit.AuditService;
@@ -49,7 +50,7 @@ import static org.folio.services.util.MessagingModulesUtil.filter;
 @Component
 public class KafkaConsumerServiceImpl implements ConsumerService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumerServiceImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private Vertx vertx;
   private KafkaConfig kafkaConfig;
@@ -76,7 +77,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       .map(eventType -> new PubSubConfig(kafkaConfig.getEnvId(), params.getTenantId(), eventType).getTopicName())
       .collect(Collectors.toSet());
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
-    List<Future> list = new ArrayList<>();
+    List<Future<Boolean>> list = new ArrayList<>();
     for (String topic : topics) {
       if (!cache.containsSubscription(topic)) {
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, topic);
@@ -95,13 +96,14 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         list.add(promise.future());
       }
     }
-    CompositeFuture.all(list).onComplete(ar -> {
-      if (ar.succeeded()) {
-        result.complete(true);
-      } else {
-        result.fail(ar.cause());
-      }
-    });
+    GenericCompositeFuture.all(list)
+      .onComplete(ar -> {
+        if (ar.succeeded()) {
+          result.complete(true);
+        } else {
+          result.fail(ar.cause());
+        }
+      });
     return result.future();
   }
 
@@ -120,7 +122,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   protected Future<Void> deliverEvent(Event event, OkapiConnectionParams params) {
-    List<Future> futureList = new ArrayList<>(); //NOSONAR
+    List<Future<RestUtil.WrappedResponse>> futureList = new ArrayList<>(); //NOSONAR
     Promise<Void> result = Promise.promise();
     Map<MessagingModule, AtomicInteger> retry = new ConcurrentHashMap<>();
     return securityManager.getJWTToken(params)
@@ -140,11 +142,11 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           subscribers
             .forEach(subscriber -> {
               retry.put(subscriber, new AtomicInteger(0));
-              futureList.add(doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
-                .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+              futureList.add(RestUtil.doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
+                .onComplete(v -> getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
             });
         }
-        CompositeFuture.all(futureList)
+        GenericCompositeFuture.all(futureList)
           .onComplete(ar -> result.complete());
         return result.future();
       });
@@ -179,8 +181,8 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       securityManager.loginPubSubUser(params)
         .compose(v -> securityManager.getJWTToken(params))
         .onSuccess(params::setToken)
-        .compose(v -> doRequest(event.getEventPayload(), subscriber.getSubscriberCallback(), HttpMethod.POST, params)
-          .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+        .compose(v -> doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
+          .onComplete(result -> getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
     }
   }
 

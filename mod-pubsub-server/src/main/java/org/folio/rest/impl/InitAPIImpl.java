@@ -24,24 +24,19 @@ public class InitAPIImpl implements InitAPI {
 
   @Override
   public void init(Vertx vertx, Context context, Handler<AsyncResult<Boolean>> handler) {
-    vertx.executeBlocking(
-      blockingFuture -> {
-        SpringContextUtil.init(vertx, context, ApplicationConfig.class);
-        SpringContextUtil.autowireDependencies(this, context);
-        LiquibaseUtil.initializeSchemaForModule(vertx, MODULE_CONFIGURATION_SCHEMA);
-        startupService.initSubscribers();
-        blockingFuture.complete();
-      },
-      result -> {
-        if (result.succeeded()) {
-          initAuditService(vertx);
-          DeploymentOptions options = new DeploymentOptions().setWorker(true);
-          vertx.deployVerticle(new PublisherWorkerVerticle(), options);
-          handler.handle(Future.succeededFuture(true));
-        } else {
-          handler.handle(Future.failedFuture(result.cause()));
-        }
-      });
+    try {
+      SpringContextUtil.init(vertx, context, ApplicationConfig.class);
+      SpringContextUtil.autowireDependencies(this, context);
+      LiquibaseUtil.initializeSchemaForModule(vertx, MODULE_CONFIGURATION_SCHEMA);
+      startupService.initSubscribers();
+      initAuditService(vertx);
+      DeploymentOptions options = new DeploymentOptions().setWorker(true);
+      vertx.deployVerticle(new PublisherWorkerVerticle(), options)
+        .onSuccess(v -> handler.handle(Future.succeededFuture(true)))
+        .onFailure(e -> handler.handle(Future.failedFuture(e)));
+    } catch (Exception e) {
+      handler.handle(Future.failedFuture(e));
+    }
   }
 
   private void initAuditService(Vertx vertx) {

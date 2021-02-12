@@ -1,19 +1,20 @@
 package org.folio.kafka;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.producer.KafkaHeader;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import lombok.Builder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 public class SimpleProcessRecordErrorHandler<K, V> implements ProcessRecordErrorHandler<K, V> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SimpleProcessRecordErrorHandler.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final int DEFAULT_DELAY_QUANTUM = 250; //milliseconds
 
@@ -45,7 +46,7 @@ public class SimpleProcessRecordErrorHandler<K, V> implements ProcessRecordError
         .orElse("0"));
 
     if (resendCounter == maxResendNumber) {
-      LOGGER.error("Max resend number reached (" + maxResendNumber + ") for record: " + record, maxResendNumber);
+      LOGGER.error("Max resend number reached (" + maxResendNumber + ") for record: " + record);
       return;
     }
 

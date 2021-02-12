@@ -80,7 +80,7 @@ public class EventTypeAPITest extends AbstractRestTest {
   public void shouldCreateEventDescriptorOnPost() {
     RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH)
       .then()
@@ -104,7 +104,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH)
       .then()
@@ -117,11 +117,11 @@ public class EventTypeAPITest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(new EventDescriptor()
+      .body(JsonObject.mapFrom(new EventDescriptor()
         .withEventType(createdEventDescriptor.getEventType())
         .withDescription("Test description")
         .withEventTTL(1)
-        .withSigned(false))
+        .withSigned(false)).encode())
       .when()
       .post(EVENT_TYPES_PATH)
       .then()
@@ -141,7 +141,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(createdEventDescriptor)
+      .body(JsonObject.mapFrom(createdEventDescriptor).encode())
       .when()
       .put(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType())
       .then()
@@ -167,7 +167,7 @@ public class EventTypeAPITest extends AbstractRestTest {
   public void shouldReturnNotFoundOnPut() {
     RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .put(EVENT_TYPES_PATH + "/" + eventDescriptor.getEventType())
       .then()
@@ -203,7 +203,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(publisherDescriptor)
+      .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
       .then()
@@ -238,7 +238,7 @@ public class EventTypeAPITest extends AbstractRestTest {
 
     RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH)
       .then()
@@ -249,11 +249,11 @@ public class EventTypeAPITest extends AbstractRestTest {
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
     Response postResponse = RestAssured.given()
       .spec(spec)
-      .body(eventDescriptor)
+      .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
     Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
-    return postResponse.body().as(EventDescriptor.class);
+    return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 
 }

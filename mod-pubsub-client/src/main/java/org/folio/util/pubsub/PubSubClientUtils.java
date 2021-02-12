@@ -3,11 +3,9 @@ package org.folio.util.pubsub;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
 import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.Event;
@@ -48,7 +46,7 @@ public class PubSubClientUtils {
   public static final String MESSAGING_CONFIG_PATH_PROPERTY = "messaging_config_path";
   private static final String MESSAGING_CONFIG_FILE_NAME = "MessagingDescriptor.json";
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(PubSubClientUtils.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private PubSubClientUtils() {
   }
@@ -65,10 +63,10 @@ public class PubSubClientUtils {
     PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     try {
       client.postPubsubPublish(eventMessage, ar -> {
-        if (ar.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
+        if (ar.result().statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           result.complete(true);
         } else {
-          EventSendingException exception = new EventSendingException(format("Error during publishing Event Message in PubSub. Status code: %s . Status message: %s ", ar.statusCode(), ar.statusMessage()));
+          EventSendingException exception = new EventSendingException(format("Error during publishing Event Message in PubSub. Status code: %s . Status message: %s ", ar.result().statusCode(), ar.result().statusMessage()));
           LOGGER.error(exception);
           result.completeExceptionally(exception);
         }
@@ -77,7 +75,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during sending event message to PubSub", e);
       result.completeExceptionally(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   /**
@@ -107,7 +105,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during registration module in PubSub", e);
       result.completeExceptionally(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   private static CompletableFuture<Void> registerEventTypes(PubsubClient client, List<EventDescriptor> events) {
@@ -116,10 +114,10 @@ public class PubSubClientUtils {
       for (EventDescriptor eventDescriptor : events) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         client.postPubsubEventTypes(null, eventDescriptor, ar -> {
-          if (ar.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+          if (ar.result().statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
             future.complete(true);
           } else {
-            ModuleRegistrationException exception = new ModuleRegistrationException(format("EventDescriptor was not registered for eventType: %s . Status code: %s", eventDescriptor.getEventType(), ar.statusCode()));
+            ModuleRegistrationException exception = new ModuleRegistrationException(format("EventDescriptor was not registered for eventType: %s . Status code: %s", eventDescriptor.getEventType(), ar.result().statusCode()));
             LOGGER.error(exception);
             future.completeExceptionally(exception);
           }
@@ -140,11 +138,11 @@ public class PubSubClientUtils {
     CompletableFuture<Boolean> subscribersResult = new CompletableFuture<>();
     try {
       client.postPubsubEventTypesDeclareSubscriber(descriptor, ar -> {
-        if (ar.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+        if (ar.result().statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Module's subscribers were successfully registered");
           subscribersResult.complete(true);
         } else {
-          ModuleRegistrationException exception = new ModuleRegistrationException("Module's subscribers were not registered in PubSub. HTTP status: " + ar.statusCode());
+          ModuleRegistrationException exception = new ModuleRegistrationException("Module's subscribers were not registered in PubSub. HTTP status: " + ar.result().statusCode());
           LOGGER.error(exception);
           subscribersResult.completeExceptionally(exception);
         }
@@ -161,11 +159,11 @@ public class PubSubClientUtils {
     CompletableFuture<Boolean> publishersResult = new CompletableFuture<>();
     try {
       client.postPubsubEventTypesDeclarePublisher(descriptor, ar -> {
-        if (ar.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+        if (ar.result().statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Module's publishers were successfully registered");
           publishersResult.complete(true);
         } else {
-          ModuleRegistrationException exception = new ModuleRegistrationException("Module's publishers were not registered in PubSub. HTTP status: " + ar.statusCode());
+          ModuleRegistrationException exception = new ModuleRegistrationException("Module's publishers were not registered in PubSub. HTTP status: " + ar.result().statusCode());
           LOGGER.error(exception);
           publishersResult.completeExceptionally(exception);
         }
@@ -188,8 +186,7 @@ public class PubSubClientUtils {
     String moduleId = constructModuleName();
 
     return unregisterModuleByIdAndRole(client, moduleId, PUBLISHER)
-      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER))
-      .whenComplete((ar, e) -> client.close());
+      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER));
   }
 
   private static CompletableFuture<Boolean> unregisterModuleByIdAndRole(PubsubClient client, String moduleId, MessagingModule.ModuleRole moduleRole) {
@@ -198,17 +195,17 @@ public class PubSubClientUtils {
     try {
       LOGGER.info("Trying to unregister module with name '{}' as {}", moduleId, moduleRole);
       client.deletePubsubMessagingModules(moduleId, moduleRole.value(), response -> {
-        if (response.statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
+        if (response.result().statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           LOGGER.info("Module {} was successfully unregistered as '{}'", moduleId, moduleRole);
           future.complete(true);
         } else {
-          String msg = format("Module %s was not unregistered as '%s' in PubSub. HTTP status: %s", moduleId, moduleRole, response.statusCode());
+          String msg = format("Module %s was not unregistered as '%s' in PubSub. HTTP status: %s", moduleId, moduleRole, response.result().statusCode());
           LOGGER.error(msg);
           future.completeExceptionally(new ModuleUnregistrationException(msg));
         }
       });
     } catch (Exception e) {
-      LOGGER.error("Module was not unregistered as '{}' in PubSub.", e, moduleRole);
+      LOGGER.error("Module was not unregistered as '{}' in PubSub.", moduleRole, e);
       promise.fail(e);
       future.completeExceptionally(e);
     }

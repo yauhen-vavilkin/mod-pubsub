@@ -1,5 +1,36 @@
 package org.folio.services.impl;
 
+import com.google.common.io.Resources;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.HttpStatus;
+import org.folio.dao.PubSubUserDao;
+import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.representation.User;
+import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.rest.util.RestUtil;
+import org.folio.services.SecurityManager;
+import org.folio.services.cache.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import static io.vertx.core.http.HttpMethod.PUT;
 import static io.vertx.core.json.Json.encode;
 import static java.lang.String.format;
@@ -9,42 +40,10 @@ import static org.folio.HttpStatus.HTTP_NO_CONTENT;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.RestUtil.doRequest;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import com.google.common.primitives.Booleans;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.HttpStatus;
-import org.folio.dao.PubSubUserDao;
-import org.folio.representation.User;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.SecurityManager;
-import org.folio.services.cache.Cache;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.google.common.io.Resources;
-
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-
 @Component
 public class SecurityManagerImpl implements SecurityManager {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SecurityManagerImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final String LOGIN_URL = "/authn/login";
   private static final String USERS_URL = "/users";
@@ -54,9 +53,9 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String PUB_SUB_USERNAME = "pub-sub";
   private static final String USER_LAST_NAME = "System";
 
-  private final PubSubUserDao pubSubUserDao;
-  private final Vertx vertx;
-  private final Cache cache;
+  private PubSubUserDao pubSubUserDao;
+  private Vertx vertx;
+  private Cache cache;
 
   public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx, @Autowired Cache cache) {
     this.pubSubUserDao = pubSubUserDao;
@@ -74,14 +73,14 @@ public class SecurityManagerImpl implements SecurityManager {
     }
 
     return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
-      .compose(userCredentials -> doRequest(userCredentials.encode(), LOGIN_URL, HttpMethod.POST, params))
+      .compose(userCredentials -> doRequest(params, LOGIN_URL, HttpMethod.POST, userCredentials.encode()))
       .compose(response -> {
-        if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+        if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Logged in pub-sub user");
-          cache.addToken(params.getTenantId(), response.getHeader(OKAPI_TOKEN_HEADER));
+          cache.addToken(params.getTenantId(), response.getResponse().getHeader(OKAPI_TOKEN_HEADER));
           return Future.succeededFuture(true);
         }
-        LOGGER.error("pub-sub user was not logged in, received status {}", response.statusCode());
+        LOGGER.error("pub-sub user was not logged in, received status {}", response.getCode());
         return Future.succeededFuture(false);
       });
   }
@@ -117,11 +116,11 @@ public class SecurityManagerImpl implements SecurityManager {
 
   private Future<User> existsPubSubUser(OkapiConnectionParams params) {
     String query = "?query=username=" + PUB_SUB_USERNAME;
-    return doRequest(null, USERS_URL + query, HttpMethod.GET, params)
+    return doRequest(params, USERS_URL + query, HttpMethod.GET, null)
       .compose(response -> {
         Promise<User> promise = Promise.promise();
-        if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
-          JsonObject usersCollection = response.bodyAsJsonObject();
+        if (response.getCode() == HttpStatus.HTTP_OK.toInt()) {
+          JsonObject usersCollection = response.getJson();
           JsonArray users = usersCollection.getJsonArray("users");
           if (users.size() > 0) {
             promise.complete(users.getJsonObject(0).mapTo(User.class));
@@ -129,7 +128,7 @@ public class SecurityManagerImpl implements SecurityManager {
             promise.complete();
           }
         } else {
-          LOGGER.error("Failed request on GET users. Received status code {}", response.statusCode());
+          LOGGER.error("Failed request on GET users. Received status code {}", response.getCode());
           promise.complete();
         }
         return promise.future();
@@ -140,14 +139,14 @@ public class SecurityManagerImpl implements SecurityManager {
     final User user = createUserObject();
     final String id = user.getId();
 
-    return doRequest(encode(user), USERS_URL, HttpMethod.POST, params)
+    return doRequest(params, USERS_URL, HttpMethod.POST, encode(user))
       .compose(response -> {
         Promise<String> promise = Promise.promise();
-        if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+        if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Created pub-sub user");
           promise.complete(id);
         } else {
-          String errorMessage = format("Failed to create pub-sub user. Received status code %s", response.statusCode());
+          String errorMessage = format("Failed to create pub-sub user. Received status code %s", response.getCode());
           LOGGER.error(errorMessage);
           promise.fail(errorMessage);
         }
@@ -165,15 +164,15 @@ public class SecurityManagerImpl implements SecurityManager {
 
     final User updatedUser = populateMissingUserProperties(existingUser);
     final String url = updateUserUrl(updatedUser.getId());
-    return doRequest(encode(updatedUser), url, PUT, params)
+    return doRequest(params, url, PUT, encode(updatedUser))
       .compose(response -> {
         Promise<User> promise = Promise.promise();
-        if (response.statusCode() == HTTP_NO_CONTENT.toInt()) {
+        if (response.getCode() == HTTP_NO_CONTENT.toInt()) {
           LOGGER.info("The pub-sub user [{}] has been updated", updatedUser.getId());
           promise.complete(updatedUser);
         } else {
-          LOGGER.error("Unable to update the pub-sub user [{}]", response.bodyAsString());
-          promise.fail("Unable to update the pub-sub user: " + response.bodyAsString());
+          LOGGER.error("Unable to update the pub-sub user [{}]", response.getBody());
+          promise.fail("Unable to update the pub-sub user: " + response.getBody());
         }
         return promise.future();
       });
@@ -183,14 +182,14 @@ public class SecurityManagerImpl implements SecurityManager {
     return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
       .compose(credentials -> {
         credentials.put("userId", userId);
-        return doRequest(credentials.encode(), CREDENTIALS_URL, HttpMethod.POST, params)
+        return doRequest(params, CREDENTIALS_URL, HttpMethod.POST, credentials.encode())
           .compose(response -> {
             Promise<String> promise = Promise.promise();
-            if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+            if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
               LOGGER.info("Saved pub-sub user credentials");
               promise.complete(userId);
             } else {
-              String errorMessage = format("Failed to save pub-sub user credentials. Received status code %s", response.statusCode());
+              String errorMessage = format("Failed to save pub-sub user credentials. Received status code %s", response.getCode());
               LOGGER.error(errorMessage);
               promise.fail(errorMessage);
             }
@@ -209,14 +208,14 @@ public class SecurityManagerImpl implements SecurityManager {
       .put("id", UUID.randomUUID().toString())
       .put("userId", userId)
       .put("permissions", new JsonArray(permissions));
-    return doRequest(requestBody.encode(), PERMISSIONS_URL, HttpMethod.POST, params)
+    return doRequest(params, PERMISSIONS_URL, HttpMethod.POST, requestBody.encode())
       .compose(response -> {
         Promise<Boolean> promise = Promise.promise();
-        if (response.statusCode() == HttpStatus.HTTP_CREATED.toInt()) {
+        if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Added permissions [{}] for pub-sub user", StringUtils.join(permissions, ","));
           promise.complete(true);
         } else {
-          String errorMessage = format("Failed to add permissions for pub-sub user. Received status code %s", response.statusCode());
+          String errorMessage = format("Failed to add permissions for pub-sub user. Received status code %s", response.getCode());
           LOGGER.error(errorMessage);
           promise.complete(false);
         }
@@ -230,26 +229,26 @@ public class SecurityManagerImpl implements SecurityManager {
       LOGGER.info("No permissions found to add for pub-sub user");
       return Future.succeededFuture(false);
     }
-    List<Future> futures = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
     String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
     permissions.forEach(permission -> {
       JsonObject requestBody = new JsonObject()
         .put("permissionName", permission);
-      futures.add(doRequest(requestBody.encode(), permUrl, HttpMethod.POST, params)
+      futures.add(doRequest(params, permUrl, HttpMethod.POST, requestBody.encode())
         .compose(response -> {
           Promise<Boolean> promise = Promise.promise();
-          if (response.statusCode() == HttpStatus.HTTP_OK.toInt()) {
+          if (response.getCode() == HttpStatus.HTTP_OK.toInt()) {
             LOGGER.info("Added permission {} for pub-sub user", permission);
             promise.complete(true);
           } else {
-            String errorMessage = format("Failed to add permission %s for pub-sub user. Received status code %s", permission, response.statusCode());
+            String errorMessage = format("Failed to add permission %s for pub-sub user. Received status code %s", permission, response.getCode());
             LOGGER.error(errorMessage);
             promise.complete(false);
           }
           return promise.future();
         }));
     });
-    return CompositeFuture.all(futures).map(true);
+    return GenericCompositeFuture.all(futures).map(true);
   }
 
   private List<String> readPermissionsFromResource(String path) {
@@ -258,7 +257,7 @@ public class SecurityManagerImpl implements SecurityManager {
     try {
       permissions = Resources.readLines(url, StandardCharsets.UTF_8);
     } catch (IOException e) {
-      LOGGER.error("Error reading permissions from {}", e, path);
+      LOGGER.error("Error reading permissions from {}", path, e);
     }
     return permissions;
   }

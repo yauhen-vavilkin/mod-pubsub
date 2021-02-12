@@ -2,11 +2,11 @@ package org.folio.services.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.NewTopic;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.PubSubConfig;
 import org.folio.services.KafkaTopicService;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 public class KafkaTopicServiceImpl implements KafkaTopicService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopicServiceImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private KafkaAdminClient kafkaAdminClient;
   private KafkaConfig kafkaConfig;

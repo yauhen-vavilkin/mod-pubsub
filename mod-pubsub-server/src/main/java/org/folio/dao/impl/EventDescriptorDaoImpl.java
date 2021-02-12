@@ -3,11 +3,11 @@ package org.folio.dao.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.dao.EventDescriptorDao;
 import org.folio.dao.PostgresClientFactory;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -31,7 +31,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 @Repository
 public class EventDescriptorDaoImpl implements EventDescriptorDao {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(EventDescriptorDaoImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final String TABLE_NAME = "event_descriptor";
   private static final String MODULE_SCHEMA = "pubsub_config";
@@ -59,7 +59,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
       String preparedQuery = format(GET_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
       pgClientFactory.getInstance().select(preparedQuery, Tuple.of(eventType), promise);
     } catch (Exception e) {
-      LOGGER.error("Error getting EventDescriptor by event type '{}'", e, eventType);
+      LOGGER.error("Error getting EventDescriptor by event type '{}'", eventType, e);
       promise.fail(e);
     }
     return promise.future().map(resultSet -> resultSet.rowCount() == 0 ? Optional.empty()
@@ -95,7 +95,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
       pgClientFactory.getInstance().execute(query, Tuple.of(eventDescriptor.getEventType(), JsonObject.mapFrom(eventDescriptor)),
         promise);
     } catch (Exception e) {
-      LOGGER.error("Error saving EventDescriptor with event type '{}'", e, eventDescriptor.getEventType());
+      LOGGER.error("Error saving EventDescriptor with event type '{}'", eventDescriptor.getEventType(), e);
       promise.fail(e);
     }
     return promise.future().map(updateResult -> eventDescriptor.getEventType());
@@ -109,7 +109,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
       pgClientFactory.getInstance().execute(query, Tuple.of(JsonObject.mapFrom((eventDescriptor)), eventDescriptor.getEventType()),
         promise);
     } catch (Exception e) {
-      LOGGER.error("Error updating EventDescriptor by event type '{}'", e, eventDescriptor.getEventType());
+      LOGGER.error("Error updating EventDescriptor by event type '{}'", eventDescriptor.getEventType(), e);
       promise.fail(e);
     }
     return promise.future().compose(updateResult -> updateResult.rowCount() == 1
@@ -124,7 +124,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
       String query = format(DELETE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
       pgClientFactory.getInstance().execute(query, Tuple.of(eventType), promise);
     } catch (Exception e) {
-      LOGGER.error("Error deleting EventDescriptor with event type '{}'", e, eventType);
+      LOGGER.error("Error deleting EventDescriptor with event type '{}'", eventType, e);
       promise.fail(e);
     }
     return promise.future().map(updateResult -> updateResult.rowCount() == 1);

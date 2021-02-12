@@ -1,11 +1,9 @@
 package org.folio.services.impl;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.util.MessagingModuleFilter;
@@ -31,7 +29,7 @@ import static org.folio.services.util.MessagingModulesUtil.filter;
 @Component
 public class KafkaPublisherServiceImpl implements PublisherService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(KafkaPublisherServiceImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private static final boolean EVENT_PAYLOAD_AUDIT_ENABLED =
     Boolean.parseBoolean(MODULE_SPECIFIC_ARGS.getOrDefault("event.payload.audit.enabled", "false"));

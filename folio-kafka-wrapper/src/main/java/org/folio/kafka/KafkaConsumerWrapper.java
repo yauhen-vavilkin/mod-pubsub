@@ -6,8 +6,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
@@ -19,11 +17,13 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.regex.Pattern;
 
 public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K, V>> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumerWrapper.class);
+  private static final Logger LOGGER = LogManager.getLogger();
 
   public static final int GLOBAL_SENSOR_NA = -1;
 
