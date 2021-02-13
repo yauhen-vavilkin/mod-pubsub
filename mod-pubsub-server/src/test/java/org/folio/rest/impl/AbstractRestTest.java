@@ -28,7 +28,6 @@ import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.useDefaults;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
-
   protected static final String TENANT_ID = "diku";
   private static final String TOKEN = "token";
   private static final String HTTP_PORT = "http.port";
@@ -99,25 +98,27 @@ public abstract class AbstractRestTest {
   }
 
   private static void deployVerticle(final TestContext context) {
-    Async async = context.async();
-
-
     final DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject()
         .put(HTTP_PORT, PORT)
         .put("spring.configuration", "org.folio.config.TestConfig"));
-    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       try {
         TenantClient tenantClient = new TenantClient(OKAPI_URL, TENANT_ID, TOKEN);
         TenantAttributes tenantAttributes = new TenantAttributes();
         tenantAttributes.setModuleTo(PomReader.INSTANCE.getModuleName());
-        tenantClient.postTenant(tenantAttributes, res2 -> {
-          async.complete();
-        });
+
+        tenantClient.postTenant(tenantAttributes, context.asyncAssertSuccess(res2 -> {
+          if (res2.statusCode() == 400) {
+            context.assertEquals("Failed to create pub-sub user. Received status code 400", res2.bodyAsString());
+          } else {
+            context.assertEquals(204, res2.statusCode());
+          }
+        }));
       } catch (Exception e) {
         e.printStackTrace();
       }
-    });
+    }));
   }
 
   @AfterClass

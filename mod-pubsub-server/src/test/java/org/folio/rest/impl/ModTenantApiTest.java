@@ -62,7 +62,7 @@ public class ModTenantApiTest extends AbstractRestTest {
       .header(OKAPI_URL_HEADER, mockOkapiUrl())
       .body(JsonObject.mapFrom(new TenantAttributes().withModuleTo(MODULE_TO_VERSION)).encode())
       .when().post(TENANT_URL)
-      .then().statusCode(500)
+      .then().statusCode(400)
       .extract().body().asString();
 
   }

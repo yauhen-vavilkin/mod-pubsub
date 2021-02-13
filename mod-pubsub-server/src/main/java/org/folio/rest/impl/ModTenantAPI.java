@@ -29,23 +29,19 @@ public class ModTenantAPI extends TenantAPI {
   @Validate
   @Override
   public void postTenant(TenantAttributes tenantAttributes, Map<String, String> headers, Handler<AsyncResult<Response>> handler, Context context) {
-    super.postTenantSync(tenantAttributes, headers, postTenantAr -> {
-      if (postTenantAr.failed()) {
-        handler.handle(postTenantAr);
-      } else {
-        try {
-          String tenantId = headers.get(RestVerticle.OKAPI_HEADER_TENANT);
-          Vertx vertx = context.owner();
-          LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
-          OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
-          securityManager.createPubSubUser(params)
-            .compose(ar -> securityManager.loginPubSubUser(params))
-            .onSuccess(v -> handler.handle(Future.succeededFuture()))
-            .onFailure(e -> handler.handle(Future.failedFuture(e)));
-        } catch (Exception e) {
-          handler.handle(Future.failedFuture(e));
-        }
-      }
-    }, context);
+    super.postTenantSync(tenantAttributes, headers, handler, context);
+  }
+
+  @Override
+  Future<Integer> loadData(TenantAttributes attributes, String tenantId,
+                           Map<String, String> headers, Context context) {
+    return super.loadData(attributes, tenantId, headers, context)
+      .compose(num -> {
+        Vertx vertx = context.owner();
+        LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
+        OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+        return securityManager.createPubSubUser(params)
+          .compose(ar -> securityManager.loginPubSubUser(params)).map(num);
+      });
   }
 }
