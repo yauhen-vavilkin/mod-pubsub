@@ -14,6 +14,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
@@ -21,6 +23,8 @@ import java.util.Map;
  * Util class with static method for sending http request
  */
 public final class RestUtil {
+
+  private static final Logger LOGGER = LogManager.getLogger();
 
   public static class WrappedResponse {
     private final int code;
@@ -84,6 +88,7 @@ public final class RestUtil {
           request.putHeader(entry.getKey(), entry.getValue());
         }
       }
+      LOGGER.info("Sending {} for {}", method.name(), requestUrl);
       if (method == HttpMethod.PUT || method == HttpMethod.POST) {
         request.sendBuffer(Buffer.buffer(payload instanceof String ? (String) payload : new ObjectMapper().writeValueAsString(payload)), handleResponse(promise));
       } else {
@@ -91,6 +96,7 @@ public final class RestUtil {
       }
       return promise.future();
     } catch (Exception e) {
+      LOGGER.error("Error happened during sending request", e);
       promise.fail(e);
       return promise.future();
     }
@@ -99,9 +105,11 @@ public final class RestUtil {
   private static Handler<AsyncResult<HttpResponse<Buffer>>> handleResponse(Promise<WrappedResponse> promise) {
     return ar -> {
       if (ar.succeeded()) {
+        LOGGER.info("Response received with statusCode {}", ar.result().statusCode());
         WrappedResponse wr = new WrappedResponse(ar.result().statusCode(), ar.result().bodyAsString(), ar.result());
         promise.complete(wr);
       } else {
+        LOGGER.error("Error during sending request", ar.cause());
         promise.fail(ar.cause());
       }
     };

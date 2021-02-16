@@ -5,10 +5,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -142,8 +140,9 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           subscribers
             .forEach(subscriber -> {
               retry.put(subscriber, new AtomicInteger(0));
+              LOGGER.info("Start delivering messages to subscriber {}", subscriber.getSubscriberCallback());
               futureList.add(RestUtil.doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
-                .onComplete(v -> getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+                .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
             });
         }
         GenericCompositeFuture.all(futureList)
@@ -152,19 +151,20 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
       });
   }
 
-  protected Handler<AsyncResult<HttpResponse<Buffer>>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
+  protected Handler<AsyncResult<RestUtil.WrappedResponse>> getEventDeliveredHandler(Event event, String tenantId, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
     retry.get(subscriber).incrementAndGet();
     return ar -> {
+      LOGGER.info("Delivering was complete. Checking for response...");
       if (ar.failed()) {
         String errorMessage = format("%s event with id '%s' was not delivered to %s", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
         LOGGER.error(errorMessage, ar.cause());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
         retryDelivery(event, subscriber, params, retry);
-      } else if (ar.result().statusCode() != HttpStatus.HTTP_OK.toInt()
-        && ar.result().statusCode() != HttpStatus.HTTP_CREATED.toInt()
-        && ar.result().statusCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
+      } else if (ar.result().getCode() != HttpStatus.HTTP_OK.toInt()
+        && ar.result().getCode() != HttpStatus.HTTP_CREATED.toInt()
+        && ar.result().getCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
         String error = format("Error delivering %s event with id '%s' to %s, response status code is %s, %s",
-          event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().statusCode(), ar.result().statusMessage());
+          event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().getCode(), ar.result().getResponse().statusMessage());
         LOGGER.error(error);
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
         retryDelivery(event, subscriber, params, retry);
