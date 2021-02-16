@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.folio.representation.User;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -57,14 +58,24 @@ public class ModTenantApiTest extends AbstractRestTest {
     wireMockRule.stubFor(put(userByIdUrl(user.getId()))
       .willReturn(aResponse().withStatus(400).withBody(expectedErrorMessage)));
 
-    final String body = RestAssured.given()
+    String body = RestAssured.given()
       .spec(spec)
       .header(OKAPI_URL_HEADER, mockOkapiUrl())
       .body(JsonObject.mapFrom(new TenantAttributes().withModuleTo(MODULE_TO_VERSION)).encode())
       .when().post(TENANT_URL)
-      .then().statusCode(400)
+      .then().statusCode(201)
       .extract().body().asString();
 
+    String id = new JsonObject(body).getString("id");
+    body = RestAssured.given()
+      .spec(spec)
+      .header(OKAPI_URL_HEADER, mockOkapiUrl())
+      .when().get(TENANT_URL + "/" + id + "?wait=60000")
+      .then().statusCode(200)
+      .extract().body().asString();
+    Assert.assertTrue(body, new JsonObject(body).getBoolean("complete"));
+    Assert.assertEquals("Unable to update the pub-sub user: " + expectedErrorMessage,
+      new JsonObject(body).getString("error"));
   }
 
   private User existingUser() {

@@ -13,6 +13,7 @@ import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.PomReader;
@@ -109,10 +110,22 @@ public abstract class AbstractRestTest {
         tenantAttributes.setModuleTo(PomReader.INSTANCE.getModuleName());
 
         tenantClient.postTenant(tenantAttributes, context.asyncAssertSuccess(res2 -> {
-          if (res2.statusCode() == 400) {
-            context.assertEquals("Failed to create pub-sub user. Received status code 400", res2.bodyAsString());
+          if (res2.statusCode() == 204) {
+            return;
+          } if (res2.statusCode() == 201) {
+            JsonObject o = res2.bodyAsJsonObject();
+            tenantClient.getTenantByOperationId(res2.bodyAsJson(TenantJob.class).getId(), 60000, context.asyncAssertSuccess(res3 -> {
+              context.assertTrue(res3.bodyAsJson(TenantJob.class).getComplete());
+              String error = res3.bodyAsJson(TenantJob.class).getError();
+              // it would be better if this would actually succeed.. But we'll accept this error for now
+              if (error != null) {
+                context.assertEquals("Failed to create pub-sub user. Received status code 400", error);
+              }
+            }));
           } else {
-            context.assertEquals(204, res2.statusCode());
+            // if we get here and error is immediately returned from tenant init
+            // it would be better if this would actually succeed.. But we'll accept this error for now
+            context.assertEquals("Failed to create pub-sub user. Received status code 400", res2.bodyAsString());
           }
         }));
       } catch (Exception e) {
