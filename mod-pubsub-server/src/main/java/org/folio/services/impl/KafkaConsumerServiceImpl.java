@@ -182,8 +182,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         .compose(v -> securityManager.getJWTToken(params))
         .onSuccess(params::setToken)
         .compose(v -> doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
-          .onComplete(result -> getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
+          .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));
     }
   }
-
 }

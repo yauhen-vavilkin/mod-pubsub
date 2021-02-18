@@ -2,6 +2,7 @@ package org.folio.rest.util;
 
 import io.vertx.core.Vertx;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class OkapiConnectionParams {
@@ -12,7 +13,7 @@ public final class OkapiConnectionParams {
   private String okapiUrl;
   private String tenantId;
   private String token;
-  private Map<String, String> headers;
+  private Map<String, String> headers = new HashMap<>();
   private Vertx vertx;
   private int timeout = 2000;
 
@@ -37,6 +38,7 @@ public final class OkapiConnectionParams {
 
   public void setOkapiUrl(String okapiUrl) {
     this.okapiUrl = okapiUrl;
+    this.headers.put(OKAPI_URL_HEADER, okapiUrl);
   }
 
   public String getTenantId() {
@@ -45,6 +47,7 @@ public final class OkapiConnectionParams {
 
   public void setTenantId(String tenantId) {
     this.tenantId = tenantId;
+    this.headers.put(OKAPI_TENANT_HEADER, okapiUrl);
   }
 
   public String getToken() {
@@ -52,6 +55,7 @@ public final class OkapiConnectionParams {
   }
 
   public void setToken(String token) {
+    this.headers.put(OKAPI_TOKEN_HEADER, okapiUrl);
     this.token = token;
   }
 
