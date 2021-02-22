@@ -1,7 +1,7 @@
-## xxxx-xx-xx v1.4.0-SNAPSHOT
+## 2021-02-22 v2.0.0
 * [MODPUBSUB-87](https://issues.folio.org/browse/MODPUBSUB-87) Create utility method for module unregistering
 * [MODPUBSUB-118](https://issues.folio.org/browse/MODPUBSUB-118) Create sub-project in mod-pubsub for utility transport layer classes
-* [MODPUBSUB-139](https://issues.folio.org/browse/MODPUBSUB-139) Multiple versions of mod-pubsub in the same environment consume events for all tenants[BUGFIX]
+* [MODPUBSUB-139](https://issues.folio.org/browse/MODPUBSUB-139) Fix multiple versions of mod-pubsub in the same environment consuming events for all tenants
 * [MODPUBSUB-140](https://issues.folio.org/browse/MODPUBSUB-140) Upgrade to RAML Module Builder 32.x
 * [MODPUBSUB-137](https://issues.folio.org/browse/MODPUBSUB-137) Add personal data disclosure form
 
