@@ -19,6 +19,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
+
 /**
  * Util class with static method for sending http request
  */
@@ -82,6 +86,9 @@ public final class RestUtil {
 
       HttpRequest<Buffer> request = client.requestAbs(method, requestUrl);
       if (headers != null) {
+        headers.put(OKAPI_URL_HEADER, params.getOkapiUrl());
+        headers.put(OKAPI_TENANT_HEADER, params.getTenantId());
+        headers.put(OKAPI_TOKEN_HEADER, params.getToken());
         headers.put("Content-type", "application/json");
         headers.put("Accept", "application/json, text/plain");
         for (Map.Entry<String, String> entry : headers.entrySet()) {

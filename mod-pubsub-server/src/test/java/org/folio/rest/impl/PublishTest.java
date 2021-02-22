@@ -134,7 +134,7 @@ public class PublishTest extends AbstractRestTest {
   public void cleanUp() {
     RestAssured.given()
       .spec(spec)
-      .queryParam("moduleId","mod-very-important-1.0.0")
+      .queryParam("moduleId", "mod-very-important-1.0.0")
       .when()
       .delete(EVENT_TYPES_PATH + "/record_created" + PUBLISHERS_PATH)
       .then().log().all()
