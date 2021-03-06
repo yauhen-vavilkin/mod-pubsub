@@ -10,13 +10,13 @@ import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
 import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -101,7 +101,7 @@ public class PublishTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
   }
 
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
@@ -110,7 +110,7 @@ public class PublishTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
     return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 
@@ -127,7 +127,7 @@ public class PublishTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
   }
 
   @After

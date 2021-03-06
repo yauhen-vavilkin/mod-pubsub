@@ -7,13 +7,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
 import org.folio.representation.User;
 import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -73,8 +73,8 @@ public class ModTenantApiTest extends AbstractRestTest {
       .when().get(TENANT_URL + "/" + id + "?wait=60000")
       .then().statusCode(200)
       .extract().body().asString();
-    Assert.assertTrue(body, new JsonObject(body).getBoolean("complete"));
-    Assert.assertEquals("Unable to update the pub-sub user: " + expectedErrorMessage,
+    assertTrue(body, new JsonObject(body).getBoolean("complete"));
+    assertEquals("Unable to update the pub-sub user: " + expectedErrorMessage,
       new JsonObject(body).getString("error"));
   }
 
