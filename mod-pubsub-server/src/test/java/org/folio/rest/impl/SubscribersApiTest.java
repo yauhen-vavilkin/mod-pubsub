@@ -10,15 +10,14 @@ import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 
 @RunWith(VertxUnitRunner.class)
 public class SubscribersApiTest extends AbstractRestTest {
@@ -276,7 +275,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
     async.complete();
   }
 
@@ -286,7 +285,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
     return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 }

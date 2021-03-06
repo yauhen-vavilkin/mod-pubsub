@@ -9,7 +9,6 @@ import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -18,6 +17,7 @@ import java.util.Collections;
 
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -143,7 +143,7 @@ public class MessagingModulesApiTest extends AbstractRestTest {
       .body(JsonObject.mapFrom(eventDescriptor).encode())
       .when()
       .post(EVENT_TYPES_PATH);
-    Assert.assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
     return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
   }
 }

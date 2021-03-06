@@ -20,7 +20,6 @@ import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.rest.util.RestUtil;
 import org.folio.services.SecurityManager;
 import org.folio.services.cache.Cache;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +39,7 @@ import java.util.UUID;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -107,9 +107,9 @@ public class ConsumerServiceUnitTest {
     future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      Assert.assertEquals(1, requests.size());
-      Assert.assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
-      Assert.assertEquals("POST", requests.get(0).getMethod().getName());
+      assertEquals(1, requests.size());
+      assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
+      assertEquals("POST", requests.get(0).getMethod().getName());
       async.complete();
     });
   }
@@ -137,10 +137,10 @@ public class ConsumerServiceUnitTest {
     future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      Assert.assertEquals(1, requests.size());
-      Assert.assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
-      Assert.assertEquals("POST", requests.get(0).getMethod().getName());
-      Assert.assertEquals(event.getEventPayload(), requests.get(0).getBodyAsString());
+      assertEquals(1, requests.size());
+      assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
+      assertEquals("POST", requests.get(0).getMethod().getName());
+      assertEquals(event.getEventPayload(), requests.get(0).getBodyAsString());
       async.complete();
     });
   }
@@ -166,7 +166,7 @@ public class ConsumerServiceUnitTest {
     future.onComplete(ar -> {
       assertTrue(ar.succeeded());
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
-      Assert.assertEquals(0, requests.size());
+      assertEquals(0, requests.size());
       async.complete();
     });
   }
