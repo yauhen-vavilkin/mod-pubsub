@@ -1,5 +1,3 @@
-## xxxx-xx-xx v2.1.0-SNAPSHOT
-
 ## 2021-03-06 v2.0.1
 * [MODPUBSUB-152](https://issues.folio.org/browse/MODPUBSUB-152) Module registration in mod-pubsub fails when MessagingDescriptor contains no publications
 
