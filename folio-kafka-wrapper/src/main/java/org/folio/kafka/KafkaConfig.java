@@ -8,7 +8,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.kafka.cache.KafkaInternalCache;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,9 +33,6 @@ public class KafkaConfig {
   public static final String KAFKA_CONSUMER_MAX_POLL_INTERVAL_MS_CONFIG_DEFAULT = "300000";
 
   private static final String KAFKA_CACHE_TOPIC_PROPERTY = "kafkacache.topic";
-
-  private static final Logger LOGGER = LogManager.getLogger(KafkaConfig.class);
-
 
   private final String kafkaHost;
   private final String kafkaPort;
@@ -68,10 +64,8 @@ public class KafkaConfig {
 
   public KafkaCacheConfig getCacheConfig() {
     Properties props = new Properties();
-    props.put("kafkastore.bootstrap.servers", "PLAINTEXT://" + getKafkaUrl());
-    props.put(KafkaCacheConfig.KAFKACACHE_BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://" + getKafkaUrl());
+    props.put(KafkaCacheConfig.KAFKACACHE_BOOTSTRAP_SERVERS_CONFIG, /*"PLAINTEXT://" +*/ getKafkaUrl());
     props.put(KAFKA_CACHE_TOPIC_PROPERTY, "events_cache");
-    LOGGER.info("URL: " + getKafkaUrl());
     return new KafkaCacheConfig(props);
   }
 
