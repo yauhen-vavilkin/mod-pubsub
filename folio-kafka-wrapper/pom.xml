@@ -52,6 +52,11 @@
       <version>2.13.3</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>io.kcache</groupId>
+      <artifactId>kcache</artifactId>
+      <version>3.4.3</version>
+    </dependency>
   </dependencies>
 
   <build>
