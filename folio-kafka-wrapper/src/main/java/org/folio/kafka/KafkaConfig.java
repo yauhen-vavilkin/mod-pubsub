@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.ToString;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,7 +62,7 @@ public class KafkaConfig {
 
   public KafkaCacheConfig getCacheConfig() {
     Properties props = new Properties();
-    props.put(KafkaCacheConfig.KAFKACACHE_BOOTSTRAP_SERVERS_CONFIG, /*"PLAINTEXT://" +*/ getKafkaUrl());
+    props.put(KafkaCacheConfig.KAFKACACHE_BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://" + getKafkaUrl()); //It should be as PLAINTEXT, as known issue in Kafka.
     props.put(KAFKA_CACHE_TOPIC_PROPERTY, "events_cache");
     return new KafkaCacheConfig(props);
   }
