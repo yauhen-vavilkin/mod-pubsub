@@ -5,6 +5,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.Json;
+import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +14,6 @@ import org.folio.kafka.PubSubConfig;
 import org.folio.rest.jaxrs.model.AuditMessage;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.services.audit.AuditService;
-import org.folio.services.impl.KafkaProducersBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,17 +28,16 @@ public class PublishingServiceImpl implements PublishingService {
   private static final int THREAD_POOL_SIZE =
     Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "20"));
 
-  private KafkaProducersBuilder manager;
   private KafkaConfig kafkaConfig;
   private WorkerExecutor executor;
   private AuditService auditService;
+  private Vertx vertx;
 
   public PublishingServiceImpl(@Autowired Vertx vertx,
-                               @Autowired KafkaProducersBuilder manager,
                                @Autowired KafkaConfig kafkaConfig) {
-    this.manager = manager;
     this.kafkaConfig = kafkaConfig;
     this.auditService = AuditService.createProxy(vertx);
+    this.vertx = vertx;
     this.executor = vertx.createSharedWorkerExecutor("event-publishing-thread-pool", THREAD_POOL_SIZE);
   }
 
@@ -46,9 +45,9 @@ public class PublishingServiceImpl implements PublishingService {
   public Future<Boolean> sendEvent(Event event, String tenantId) {
     Promise<Boolean> promise = Promise.promise();
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
-    executor.<Boolean>executeBlocking(future -> {
+    executor.executeBlocking(future -> {
         try {
-          manager.getKafkaProducer().write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
+          KafkaProducer.<String, String>createShared(vertx, config.getTopicName() + "_Producer", kafkaConfig.getProducerProps()).write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
             if (done.succeeded()) {
               LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
