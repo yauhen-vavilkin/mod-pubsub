@@ -1,4 +1,4 @@
-## xxxx-xx-xx v2.1.0-SNAPSHOT
+## 2021-03-25 v2.0.2
 * [MODINV-373](https://issues.folio.org/browse/MODINV-373) Ensure exactly once processing for interaction via Kafka.
 * [MODDATAIMP-372](https://issues.folio.org/browse/MODDATAIMP-372) Data Import job creates SRS records but not all expected Inventory records
 
