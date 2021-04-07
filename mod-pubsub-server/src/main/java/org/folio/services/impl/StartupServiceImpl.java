@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
@@ -45,6 +46,7 @@ public class StartupServiceImpl implements StartupService {
           OkapiConnectionParams params = new OkapiConnectionParams(vertx);
           params.setOkapiUrl(kafkaConfig.getOkapiUrl());
           params.setTenantId(messagingModule.getTenantId());
+          params.setHeaders(new HashMap<>());
           kafkaTopicService.createTopics(Collections.singletonList(messagingModule.getEventType()), messagingModule.getTenantId())
             .compose(ar -> consumerService.subscribe(Collections.singletonList(messagingModule.getEventType()), params));
         });
