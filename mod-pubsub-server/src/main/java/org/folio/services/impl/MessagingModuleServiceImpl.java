@@ -88,7 +88,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .collect(Collectors.toList());
 
     return eventDescriptorDao.getByEventTypes(eventTypes)
-      .map(existingDescriptorList -> {
+      .compose(existingDescriptorList -> {
         Map<String, EventDescriptor> descriptorsMap = existingDescriptorList.stream()
           .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
         List<Future> futures = new ArrayList<>();
