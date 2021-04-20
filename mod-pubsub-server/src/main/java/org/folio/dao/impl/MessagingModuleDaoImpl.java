@@ -158,8 +158,9 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
       conditionBuilder.append(" AND event_type_id = '").append(filter.getEventType()).append("'");
     }
     if (filter.getModuleId() != null) {
-      conditionBuilder.append(" AND module_id ~ '").append(filter.getModuleId()
-        .replaceAll("\\d+", "\\\\d+")).append("'");
+      conditionBuilder.append(" AND module_id ~ '")
+        .append(buildRegexPatternForModuleId(filter))
+        .append("'");
     }
     if (filter.getTenantId() != null) {
       conditionBuilder.append(" AND tenant_id = '").append(filter.getTenantId()).append("'");
@@ -174,5 +175,11 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
       conditionBuilder.append(" AND subscriber_callback = '").append(filter.getSubscriberCallback()).append("'");
     }
     return conditionBuilder.toString();
+  }
+
+  private static String buildRegexPatternForModuleId(MessagingModuleFilter filter) {
+    return filter.getModuleId()
+      .replaceAll("\\d+", "\\\\d+")
+      .replace(".", "\\."); // escape version separators to avoid matching any character
   }
 }
