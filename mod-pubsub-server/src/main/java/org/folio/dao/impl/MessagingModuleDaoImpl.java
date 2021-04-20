@@ -158,8 +158,8 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
       conditionBuilder.append(" AND event_type_id = '").append(filter.getEventType()).append("'");
     }
     if (filter.getModuleId() != null) {
-      conditionBuilder.append(" AND module_id LIKE '").append(filter.getModuleId()
-        .replaceAll("\\d", "%")).append("'");
+      conditionBuilder.append(" AND module_id ~ '").append(filter.getModuleId()
+        .replaceAll("\\d+", "\\\\d+")).append("'");
     }
     if (filter.getTenantId() != null) {
       conditionBuilder.append(" AND tenant_id = '").append(filter.getTenantId()).append("'");
