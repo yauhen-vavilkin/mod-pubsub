@@ -159,6 +159,45 @@ public class PublishersApiTest extends AbstractRestTest {
   }
 
   @Test
+  public void shouldNotClearExistingPublisherInfoOnPostWithSameTenantIdAndSimilarModuleId() {
+    EventDescriptor createdEventDescriptor = postEventDescriptor(eventDescriptor);
+    String circulationStorageModuleId = "mod-circulation-storage-1.2.3";
+    String circulationModuleId = "mod-circulation-1.2.3";
+
+    PublisherDescriptor publisherDescriptor1 = new PublisherDescriptor()
+      .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
+      .withModuleId(circulationStorageModuleId);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(JsonObject.mapFrom(publisherDescriptor1).encode())
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    PublisherDescriptor publisherDescriptor2 = new PublisherDescriptor()
+      .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
+      .withModuleId(circulationModuleId);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(JsonObject.mapFrom(publisherDescriptor2).encode())
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    RestAssured.given()
+      .spec(spec)
+      .when()
+      .get(EVENT_TYPES_PATH + "/" + createdEventDescriptor.getEventType() + PUBLISHERS_PATH)
+      .then().log().all()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(2));
+  }
+
+  @Test
   public void shouldReturnBadRequestOnPostWhenEventTypeDoesNotExist() {
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
       .withEventDescriptors(Collections.singletonList(eventDescriptor))
