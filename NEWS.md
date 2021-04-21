@@ -1,3 +1,7 @@
+## 2021-04-21 v2.0.4
+* [MODPUBSUB-155](https://issues.folio.org/browse/MODPUBSUB-155) Fix intermittent module initialization failures
+* [MODPUBSUB-157](https://issues.folio.org/browse/MODPUBSUB-157) Fix query used to delete existing subscriber/publisher definitions
+
 ## 2021-04-08 v2.0.3
 * [MODPUBSUB-158](https://issues.folio.org/browse/MODPUBSUB-158) Fix registration of existing subscribers upon startup
 
