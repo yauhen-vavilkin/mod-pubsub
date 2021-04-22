@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static io.kcache.KafkaCacheConfig.KAFKACACHE_TOPIC_REQUIRE_COMPACT_CONFIG;
+
 @Getter
 @Builder
 @ToString
@@ -31,6 +33,7 @@ public class KafkaConfig {
   public static final String KAFKA_CONSUMER_MAX_POLL_INTERVAL_MS_CONFIG_DEFAULT = "300000";
 
   private static final String KAFKA_CACHE_TOPIC_PROPERTY = "kafkacache.topic";
+  private static final String KAFKA_CACHE_TOPIC_PROPERTY_DEFAULT = "events_cache";
 
   private final String kafkaHost;
   private final String kafkaPort;
@@ -63,7 +66,8 @@ public class KafkaConfig {
   public KafkaCacheConfig getCacheConfig() {
     Properties props = new Properties();
     props.put(KafkaCacheConfig.KAFKACACHE_BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://" + getKafkaUrl()); //It should be as PLAINTEXT, as known issue in Kafka.
-    props.put(KAFKA_CACHE_TOPIC_PROPERTY, "events_cache");
+    props.put(KAFKA_CACHE_TOPIC_PROPERTY, SimpleConfigurationReader.getValue(KAFKA_CACHE_TOPIC_PROPERTY, KAFKA_CACHE_TOPIC_PROPERTY_DEFAULT));
+    props.put(KAFKACACHE_TOPIC_REQUIRE_COMPACT_CONFIG, false);
     return new KafkaCacheConfig(props);
   }
 

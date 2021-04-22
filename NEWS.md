@@ -1,4 +1,7 @@
-## xxxx-xx-xx v2.1.0-SNAPSHOT
+## xxxx-xx-xx v2.0.5-SNAPSHOT
+* [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
+
+## 2021-03-25 v2.0.2-SNAPSHOT
 * [MODINV-373](https://issues.folio.org/browse/MODINV-373) Ensure exactly once processing for interaction via Kafka.
 * [MODDATAIMP-372](https://issues.folio.org/browse/MODDATAIMP-372) Data Import job creates SRS records but not all expected Inventory records
 
