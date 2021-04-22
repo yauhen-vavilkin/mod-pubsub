@@ -1,7 +1,16 @@
-## xxxx-xx-xx v2.0.5-SNAPSHOT
+## XXXX-XX-XX 2.1.0-SNAPSHOT
+
+## 2021-04-22 v2.0.5
 * [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
 
-## 2021-03-25 v2.0.2-SNAPSHOT
+## 2021-04-21 v2.0.4
+* [MODPUBSUB-155](https://issues.folio.org/browse/MODPUBSUB-155) Fix intermittent module initialization failures
+* [MODPUBSUB-157](https://issues.folio.org/browse/MODPUBSUB-157) Fix query used to delete existing subscriber/publisher definitions
+
+## 2021-04-08 v2.0.3
+* [MODPUBSUB-158](https://issues.folio.org/browse/MODPUBSUB-158) Fix registration of existing subscribers upon startup
+
+## 2021-03-25 v2.0.2
 * [MODINV-373](https://issues.folio.org/browse/MODINV-373) Ensure exactly once processing for interaction via Kafka.
 * [MODDATAIMP-372](https://issues.folio.org/browse/MODDATAIMP-372) Data Import job creates SRS records but not all expected Inventory records
 
