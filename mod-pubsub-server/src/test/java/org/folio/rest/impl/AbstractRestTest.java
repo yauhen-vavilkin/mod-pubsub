@@ -53,6 +53,11 @@ public abstract class AbstractRestTest {
   private static final int PORT = NetworkUtils.nextFreePort();
   protected static final String OKAPI_URL = "http://localhost:" + PORT;
 
+  protected static final String SYSTEM_USER_NAME_ENV = "SYSTEM_USER_NAME";
+  protected static final String SYSTEM_USER_PASSWORD_ENV = "SYSTEM_USER_PASSWORD";
+  protected static final String SYSTEM_USER_NAME = "test-pubsub-username";
+  protected static final String SYSTEM_USER_PASSWORD = "test-pubsub-password";
+
   static RequestSpecification spec;
   private static String useExternalDatabase;
   protected static Vertx vertx;
@@ -68,6 +73,8 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_HOST, hostAndPort[0]);
     System.setProperty(KAFKA_PORT, hostAndPort[1]);
     System.setProperty(OKAPI_URL_ENV, OKAPI_URL);
+    System.setProperty(SYSTEM_USER_NAME_ENV, SYSTEM_USER_NAME);
+    System.setProperty(SYSTEM_USER_PASSWORD_ENV, SYSTEM_USER_PASSWORD);
     deployVerticle(context);
   }
 
@@ -119,13 +126,15 @@ public abstract class AbstractRestTest {
               String error = res3.bodyAsJson(TenantJob.class).getError();
               // it would be better if this would actually succeed.. But we'll accept this error for now
               if (error != null) {
-                context.assertEquals("Failed to create pub-sub user. Received status code 400", error);
+                context.assertEquals(format("Failed to create %s user. Received status code 400",
+                  SYSTEM_USER_NAME), error);
               }
             }));
           } else {
             // if we get here and error is immediately returned from tenant init
             // it would be better if this would actually succeed.. But we'll accept this error for now
-            context.assertEquals("Failed to create pub-sub user. Received status code 400", res2.bodyAsString());
+            context.assertEquals(format("Failed to create %s user. Received status code 400",
+              SYSTEM_USER_NAME), res2.bodyAsString());
           }
         }));
       } catch (Exception e) {

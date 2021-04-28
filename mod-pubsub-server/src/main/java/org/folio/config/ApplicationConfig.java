@@ -17,7 +17,8 @@ import java.util.Map;
   "org.folio.dao",
   "org.folio.services",
   "org.folio.rest",
-  "org.folio.kafka"})
+  "org.folio.kafka",
+  "org.folio.config.user"})
 public class ApplicationConfig {
 
   @Bean

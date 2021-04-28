@@ -140,6 +140,21 @@ This variable is used as a prefix to avoid any confusion with Kafka topics and c
  ```
 If this variable is not set, default "folio" prefix will be used in topic names, which is acceptable only if a separate Kafka installation is used on the environment.
 
+****System user credentials**** 
+
+`mod-pubsub` requires these credentials to be able to deliver events to subscribers.
+ ```
+      {
+        "name": "SYSTEM_USER_NAME",
+        "value": "pub-sub"
+      },
+      {
+        "name": "SYSTEM_USER_PASSWORD",
+        "value": "pubsub"
+      }
+ ```
+Default username is `pub-sub`, password is `pubsub`.
+
 ## Verifying the module can connect and work with kafka
 
 To verify that pubsub can successfully connect and work with kafka send the following requests:
@@ -546,16 +561,16 @@ As a result, we can send an event from the publisher module to "mod-pubsub" and 
 
 #### Permissions
 ##### "mod-pubsub" permissions workflow:
-At first "mod-pubsub" checks whether "pub-sub" user exists in the system. If user exists, then:
-- adds permissions from the file "pubsub-user-permissions.csv" for the "pub-sub" user.
+At first "mod-pubsub" checks whether the system user (default username is "pub-sub", see **System user credentials** for more details) user exists in the system. If user exists, then:
+- adds permissions from the file "pubsub-user-permissions.csv" to the system user.
 
  ##### Otherwise:
  If user does not exist in the system, then:
- - "pub-sub" user is created;
- - "pub-sub" user credentials are created;
- - permissions are assigned for "pub-sub" user (new record added with "pub-sub" user and specific permissions for it to the "user_permissions" table). 
+ - system user is created;
+ - system user credentials are created;
+ - permissions are assigned to the system user (new record with specific permissions added to the "user_permissions" table). 
 
-##### After the "pub-sub" user is logged in, it`s token is used for delivering events to subscriber module.
+##### When system user is logged in, its token is used for delivering events to subscriber module.
 
 - In "mod-pubsub" user permissions are declared in "mod-pubsub-server/src/main/resources/permissions/pubsub-user-permissions.csv"
 
