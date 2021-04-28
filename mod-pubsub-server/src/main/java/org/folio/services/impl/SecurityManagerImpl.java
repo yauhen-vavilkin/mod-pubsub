@@ -1,7 +1,7 @@
 package org.folio.services.impl;
 
 import com.google.common.io.Resources;
-import io.vertx.core.CompositeFuture;
+
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -14,11 +14,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
-import org.folio.dao.PubSubUserDao;
+import org.folio.config.user.SystemUserConfig;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.representation.User;
 import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.rest.util.RestUtil;
 import org.folio.services.SecurityManager;
 import org.folio.services.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,17 +49,18 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String CREDENTIALS_URL = "/authn/credentials";
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
-  private static final String PUB_SUB_USERNAME = "pub-sub";
   private static final String USER_LAST_NAME = "System";
 
-  private PubSubUserDao pubSubUserDao;
   private Vertx vertx;
   private Cache cache;
+  private SystemUserConfig systemUserConfig;
 
-  public SecurityManagerImpl(@Autowired PubSubUserDao pubSubUserDao, @Autowired Vertx vertx, @Autowired Cache cache) {
-    this.pubSubUserDao = pubSubUserDao;
+  public SecurityManagerImpl(@Autowired Vertx vertx, @Autowired Cache cache,
+    @Autowired SystemUserConfig systemUserConfig) {
+
     this.vertx = vertx;
     this.cache = cache;
+    this.systemUserConfig = systemUserConfig;
   }
 
   @Override
@@ -72,15 +72,16 @@ public class SecurityManagerImpl implements SecurityManager {
       return Future.succeededFuture(true);
     }
 
-    return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
+    return Future.succeededFuture(systemUserConfig.getUserCredentialsJson())
       .compose(userCredentials -> doRequest(params, LOGIN_URL, HttpMethod.POST, userCredentials.encode()))
       .compose(response -> {
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Logged in pub-sub user");
+          LOGGER.info("Logged in {} user", systemUserConfig.getName());
           cache.addToken(params.getTenantId(), response.getResponse().getHeader(OKAPI_TOKEN_HEADER));
           return Future.succeededFuture(true);
         }
-        LOGGER.error("pub-sub user was not logged in, received status {}", response.getCode());
+        LOGGER.error("{} user was not logged in, received status {}", systemUserConfig.getName(),
+          response.getCode());
         return Future.succeededFuture(false);
       });
   }
@@ -93,7 +94,7 @@ public class SecurityManagerImpl implements SecurityManager {
         if (BooleanUtils.isTrue(isLoggedIn)) {
           return Future.succeededFuture(cache.getToken(params.getTenantId()));
         }
-        return Future.failedFuture("Failed pub-sub user log in");
+        return Future.failedFuture(format("Failed %s user log in", systemUserConfig.getName()));
       });
     }
     return Future.succeededFuture(token);
@@ -115,7 +116,7 @@ public class SecurityManagerImpl implements SecurityManager {
   }
 
   private Future<User> existsPubSubUser(OkapiConnectionParams params) {
-    String query = "?query=username=" + PUB_SUB_USERNAME;
+    String query = "?query=username=" + systemUserConfig.getName();
     return doRequest(params, USERS_URL + query, HttpMethod.GET, null)
       .compose(response -> {
         Promise<User> promise = Promise.promise();
@@ -143,10 +144,11 @@ public class SecurityManagerImpl implements SecurityManager {
       .compose(response -> {
         Promise<String> promise = Promise.promise();
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Created pub-sub user");
+          LOGGER.info("Created {} user", systemUserConfig.getName());
           promise.complete(id);
         } else {
-          String errorMessage = format("Failed to create pub-sub user. Received status code %s", response.getCode());
+          String errorMessage = format("Failed to create %s user. Received status code %s",
+            systemUserConfig.getName(), response.getCode());
           LOGGER.error(errorMessage);
           promise.fail(errorMessage);
         }
@@ -156,11 +158,13 @@ public class SecurityManagerImpl implements SecurityManager {
 
   private Future<User> updateUser(User existingUser, OkapiConnectionParams params) {
     if (existingUserUpToDate(existingUser)) {
-      LOGGER.info("The pub-sub user [{}] is up to date", existingUser.getId());
+      LOGGER.info("The {} user [{}] is up to date", systemUserConfig.getName(),
+        existingUser.getId());
       return Future.succeededFuture(existingUser);
     }
 
-    LOGGER.info("Have to update the pub-sub user [{}]", existingUser.getId());
+    LOGGER.info("Have to update the {} user [{}]", systemUserConfig.getName(),
+      existingUser.getId());
 
     final User updatedUser = populateMissingUserProperties(existingUser);
     final String url = updateUserUrl(updatedUser.getId());
@@ -168,28 +172,32 @@ public class SecurityManagerImpl implements SecurityManager {
       .compose(response -> {
         Promise<User> promise = Promise.promise();
         if (response.getCode() == HTTP_NO_CONTENT.toInt()) {
-          LOGGER.info("The pub-sub user [{}] has been updated", updatedUser.getId());
+          LOGGER.info("The {} user [{}] has been updated", systemUserConfig.getName(),
+            updatedUser.getId());
           promise.complete(updatedUser);
         } else {
-          LOGGER.error("Unable to update the pub-sub user [{}]", response.getBody());
-          promise.fail("Unable to update the pub-sub user: " + response.getBody());
+          LOGGER.error("Unable to update the {} user [{}]", systemUserConfig.getName(),
+            response.getBody());
+          promise.fail(format("Unable to update the %s user: %s", systemUserConfig.getName(),
+            response.getBody()));
         }
         return promise.future();
       });
   }
 
   private Future<String> saveCredentials(String userId, OkapiConnectionParams params) {
-    return pubSubUserDao.getPubSubUserCredentials(params.getTenantId())
+    return Future.succeededFuture(systemUserConfig.getUserCredentialsJson())
       .compose(credentials -> {
         credentials.put("userId", userId);
         return doRequest(params, CREDENTIALS_URL, HttpMethod.POST, credentials.encode())
           .compose(response -> {
             Promise<String> promise = Promise.promise();
             if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-              LOGGER.info("Saved pub-sub user credentials");
+              LOGGER.info("Saved {} user credentials", systemUserConfig.getName());
               promise.complete(userId);
             } else {
-              String errorMessage = format("Failed to save pub-sub user credentials. Received status code %s", response.getCode());
+              String errorMessage = format("Failed to save %s user credentials. Received status code %s",
+                systemUserConfig.getName(), response.getCode());
               LOGGER.error(errorMessage);
               promise.fail(errorMessage);
             }
@@ -201,7 +209,7 @@ public class SecurityManagerImpl implements SecurityManager {
   private Future<Boolean> assignPermissions(String userId, OkapiConnectionParams params) {
     List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
     if (CollectionUtils.isEmpty(permissions)) {
-      LOGGER.info("No permissions found to assign to pub-sub user");
+      LOGGER.info("No permissions found to assign to {} user", systemUserConfig.getName());
       return Future.succeededFuture(false);
     }
     JsonObject requestBody = new JsonObject()
@@ -212,10 +220,12 @@ public class SecurityManagerImpl implements SecurityManager {
       .compose(response -> {
         Promise<Boolean> promise = Promise.promise();
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Added permissions [{}] for pub-sub user", StringUtils.join(permissions, ","));
+          LOGGER.info("Added permissions [{}] for {} user", StringUtils.join(permissions, ","),
+            systemUserConfig.getName());
           promise.complete(true);
         } else {
-          String errorMessage = format("Failed to add permissions for pub-sub user. Received status code %s", response.getCode());
+          String errorMessage = format("Failed to add permissions for %s user. Received status code %s",
+            systemUserConfig.getName(), response.getCode());
           LOGGER.error(errorMessage);
           promise.complete(false);
         }
@@ -226,7 +236,7 @@ public class SecurityManagerImpl implements SecurityManager {
   private Future<Boolean> addPermissions(String userId, OkapiConnectionParams params) {
     List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
     if (CollectionUtils.isEmpty(permissions)) {
-      LOGGER.info("No permissions found to add for pub-sub user");
+      LOGGER.info("No permissions found to add for {} user", systemUserConfig.getName());
       return Future.succeededFuture(false);
     }
     List<Future<?>> futures = new ArrayList<>();
@@ -238,10 +248,11 @@ public class SecurityManagerImpl implements SecurityManager {
         .compose(response -> {
           Promise<Boolean> promise = Promise.promise();
           if (response.getCode() == HttpStatus.HTTP_OK.toInt()) {
-            LOGGER.info("Added permission {} for pub-sub user", permission);
+            LOGGER.info("Added permission {} for {} user", permission, systemUserConfig.getName());
             promise.complete(true);
           } else {
-            String errorMessage = format("Failed to add permission %s for pub-sub user. Received status code %s", permission, response.getCode());
+            String errorMessage = format("Failed to add permission %s for %s user. Received status code %s",
+              permission, systemUserConfig.getName(), response.getCode());
             LOGGER.error(errorMessage);
             promise.complete(false);
           }
@@ -267,7 +278,7 @@ public class SecurityManagerImpl implements SecurityManager {
 
     user.setId(UUID.randomUUID().toString());
     user.setActive(true);
-    user.setUsername(PUB_SUB_USERNAME);
+    user.setUsername(systemUserConfig.getName());
 
     user.setPersonal(new User.Personal());
     user.getPersonal().setLastName(USER_LAST_NAME);

@@ -1,0 +1,12 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+  <!--There is no need to store username and password in the DB anymore. PubSub gets user credentials from environment variables now.-->
+  <changeSet id="2021-04-26--15-00-drop-user-table" author="AlexanderKurash">
+    <dropTable tableName="user" />
+  </changeSet>
+
+</databaseChangeLog>
