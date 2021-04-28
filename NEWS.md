@@ -1,3 +1,6 @@
+## 2021-04-28 v2.0.6
+* [MODPUBSUB-78](https://issues.folio.org/browse/MODPUBSUB-78) Get system user credentials from environment variables
+
 ## 2021-04-22 v2.0.5
 * [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
 
