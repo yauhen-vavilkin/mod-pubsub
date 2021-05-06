@@ -7,6 +7,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.tools.utils.VertxUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -17,6 +20,8 @@ import java.net.URLEncoder;
  * Auto-generated code - based on class org.folio.rest.jaxrs.resource.Pubsub
  */
 public class PubsubClient {
+
+  private static final Logger LOGGER = LogManager.getLogger();
 
   private final String tenantId;
   private final String token;
@@ -500,6 +505,18 @@ public class PubsubClient {
       request.putHeader("X-Okapi-Url", okapiUrl);
     }
     request.sendBuffer(buffer, responseHandler);
+  }
+
+  /**
+   * Close the client. Closing will close down any pooled connections.
+   * Clients should always be closed after use.
+   */
+  public void close() {
+    try {
+      httpClient.close();
+    } catch (Exception e) {
+      LOGGER.error("Error closing HTTP client", e);
+    }
   }
 
 }
