@@ -75,7 +75,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during sending event message to PubSub", e);
       result.completeExceptionally(e);
     }
-    return result;
+    return result.whenComplete((res, throwable) -> client.close());
   }
 
   /**
@@ -105,7 +105,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during registration module in PubSub", e);
       result = CompletableFuture.failedFuture(e);
     }
-    return result;
+    return result.whenComplete((res, throwable) -> client.close());
   }
 
   private static CompletableFuture<Void> registerEventTypes(PubsubClient client, List<EventDescriptor> events) {
@@ -186,7 +186,8 @@ public class PubSubClientUtils {
     String moduleId = constructModuleName();
 
     return unregisterModuleByIdAndRole(client, moduleId, PUBLISHER)
-      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER));
+      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER))
+      .whenComplete((ar, e) -> client.close());
   }
 
   private static CompletableFuture<Boolean> unregisterModuleByIdAndRole(PubsubClient client, String moduleId, MessagingModule.ModuleRole moduleRole) {
