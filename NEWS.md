@@ -1,3 +1,6 @@
+## 2021-05-17 v2.0.7
+* [MODPUBSUB-166](https://issues.folio.org/browse/MODPUBSUB-166) Fix memory leak in PubSubClientUtils
+
 ## 2021-04-28 v2.0.6
 * [MODPUBSUB-78](https://issues.folio.org/browse/MODPUBSUB-78) Get system user credentials from environment variables
 
