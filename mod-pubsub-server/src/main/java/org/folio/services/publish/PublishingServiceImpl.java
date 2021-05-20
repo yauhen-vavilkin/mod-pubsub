@@ -47,7 +47,10 @@ public class PublishingServiceImpl implements PublishingService {
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
     executor.executeBlocking(future -> {
         try {
-          KafkaProducer.<String, String>createShared(vertx, config.getTopicName() + "_Producer", kafkaConfig.getProducerProps()).write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
+          KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx,
+            config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
+
+          sharedProducer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
             if (done.succeeded()) {
               LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
@@ -58,6 +61,7 @@ public class PublishingServiceImpl implements PublishingService {
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
               future.fail(done.cause());
             }
+            sharedProducer.close();
           });
         } catch (Exception e) {
           String errorMessage = "Error publishing event";
