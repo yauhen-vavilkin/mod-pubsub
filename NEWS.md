@@ -1,4 +1,5 @@
 ## XXXX-XX-XX 2.1.0-SNAPSHOT
+* [MODPUBSUB-171](https://issues.folio.org/browse/MODPUBSUB-171) Provide properties for Kafka security in kafka-wrapper
 
 ## 2021-04-22 v2.0.5
 * [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
