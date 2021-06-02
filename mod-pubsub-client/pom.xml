@@ -10,11 +10,21 @@
   </parent>
 
   <properties>
+    <raml-module-builder.version>33.0.0</raml-module-builder.version>
+    <vertx.version>4.1.0.CR1</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <ramlfiles_path>${project.parent.basedir}/ramls</ramlfiles_path>
     <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
     <sonar.exclusions>**/PubsubClient.java</sonar.exclusions>
   </properties>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <dependencies>
     <dependency>
@@ -116,6 +126,11 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>3.3.9</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -127,6 +142,7 @@
     </resources>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
@@ -188,30 +204,15 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.6.0</version>
+        <groupId>org.folio</groupId>
+        <artifactId>domain-models-maven-plugin</artifactId>
+        <version>${raml-module-builder.version}</version>
         <executions>
           <execution>
             <id>generate_interfaces</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>java</goal>
             </goals>
-            <configuration>
-              <mainClass>org.folio.rest.tools.GenerateRunner</mainClass>
-              <cleanupDaemonThreads>false</cleanupDaemonThreads>
-              <systemProperties>
-                <systemProperty>
-                  <key>project.basedir</key>
-                  <value>${basedir}</value>
-                </systemProperty>
-                <systemProperty>
-                  <key>raml_files</key>
-                  <value>${ramlfiles_path}</value>
-                </systemProperty>
-              </systemProperties>
-            </configuration>
           </execution>
         </executions>
       </plugin>

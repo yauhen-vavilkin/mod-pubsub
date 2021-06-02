@@ -1,30 +1,14 @@
 package org.folio.util.pubsub;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Promise;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.HttpStatus;
-import org.folio.rest.client.PubsubClient;
-import org.folio.rest.jaxrs.model.Event;
-import org.folio.rest.jaxrs.model.EventDescriptor;
-import org.folio.rest.jaxrs.model.MessagingDescriptor;
-import org.folio.rest.jaxrs.model.MessagingModule;
-import org.folio.rest.jaxrs.model.PublisherDescriptor;
-import org.folio.rest.jaxrs.model.SubscriberDescriptor;
-import org.folio.rest.tools.PomReader;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.util.pubsub.exceptions.EventSendingException;
-import org.folio.util.pubsub.exceptions.MessagingDescriptorNotFoundException;
-import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
-import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
-import org.folio.util.pubsub.support.DescriptorHolder;
+import static java.lang.String.format;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
+import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -33,16 +17,39 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.String.format;
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
-import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.folio.HttpStatus;
+import org.folio.rest.client.PubsubClient;
+import org.folio.rest.jaxrs.model.Event;
+import org.folio.rest.jaxrs.model.EventDescriptor;
+import org.folio.rest.jaxrs.model.MessagingDescriptor;
+import org.folio.rest.jaxrs.model.MessagingModule;
+import org.folio.rest.jaxrs.model.PublisherDescriptor;
+import org.folio.rest.jaxrs.model.SubscriberDescriptor;
+import org.folio.rest.tools.utils.ModuleName;
+import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.util.pubsub.exceptions.EventSendingException;
+import org.folio.util.pubsub.exceptions.MessagingDescriptorNotFoundException;
+import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
+import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
+import org.folio.util.pubsub.support.DescriptorHolder;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.vertx.core.Promise;
 
 /**
  * Util class for reading module messaging descriptors, sending messages using PubSub and register module in PubSub
  */
 public class PubSubClientUtils {
 
+  public static final String PARENT_POM_PATH = "../pom.xml";
   public static final String MESSAGING_CONFIG_PATH_PROPERTY = "messaging_config_path";
   private static final String MESSAGING_CONFIG_FILE_NAME = "MessagingDescriptor.json";
 
@@ -183,7 +190,7 @@ public class PubSubClientUtils {
    */
   public static CompletableFuture<Boolean> unregisterModule(OkapiConnectionParams params) {
     PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
-    String moduleId = constructModuleName();
+    String moduleId = getModuleId();
 
     return unregisterModuleByIdAndRole(client, moduleId, PUBLISHER)
       .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER))
@@ -234,10 +241,10 @@ public class PubSubClientUtils {
 
       return new DescriptorHolder()
         .withPublisherDescriptor(new PublisherDescriptor()
-          .withModuleId(constructModuleName())
+          .withModuleId(getModuleId())
           .withEventDescriptors(messagingDescriptor.getPublications()))
         .withSubscriberDescriptor(new SubscriberDescriptor()
-          .withModuleId(constructModuleName())
+          .withModuleId(getModuleId())
           .withSubscriptionDefinitions(messagingDescriptor.getSubscriptions()));
     } catch (JsonParseException | JsonMappingException e) {
       String errorMessage = "Can not read messaging descriptor, cause: " + e.getMessage();
@@ -282,8 +289,21 @@ public class PubSubClientUtils {
     return Optional.of(fileStream);
   }
 
-  public static String constructModuleName() {
-    return PomReader.INSTANCE.getModuleName().replace("_", "-") + "-" + PomReader.INSTANCE.getVersion();
+  private static String getModuleId() {
+    try {
+      FileReader pomFileReader = new FileReader(PARENT_POM_PATH);
+      MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
+      Model model = mavenXpp3Reader.read(pomFileReader);
+
+      String moduleName = ModuleName.getModuleName();
+      String moduleVersion = model.getVersion();
+
+      return format("%s-%s", moduleName, moduleVersion);
+    }
+    catch (IOException | XmlPullParserException e) {
+      // Using module name without a version when unable to parse pom.xml
+      return ModuleName.getModuleName();
+    }
   }
 
 }
