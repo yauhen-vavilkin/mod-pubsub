@@ -1,5 +1,23 @@
-## XXXX-XX-XX 2.1.0-SNAPSHOT
+## 2021-06-02 v2.1.0
+* [MODPUBSUB-173](https://issues.folio.org/browse/MODPUBSUB-173) Upgrade pubsub client to RMB v33.0.0
 * [MODPUBSUB-171](https://issues.folio.org/browse/MODPUBSUB-171) Provide properties for Kafka security in kafka-wrapper
+* [MODPUBSUB-161](https://issues.folio.org/browse/MODPUBSUB-161) Explicitly close KafkaProducer after sending message
+* [MODPUBSUB-166](https://issues.folio.org/browse/MODPUBSUB-166) Fix memory leak in PubSubClientUtils
+* [MODPUBSUB-78](https://issues.folio.org/browse/MODPUBSUB-78) Get system user credentials from environment variables
+* [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
+* [MODPUBSUB-155](https://issues.folio.org/browse/MODPUBSUB-155) Fix intermittent module initialization failures
+* [MODPUBSUB-157](https://issues.folio.org/browse/MODPUBSUB-157) Fix query used to delete existing subscriber/publisher definitions
+* [MODPUBSUB-158](https://issues.folio.org/browse/MODPUBSUB-158) Fix registration of existing subscribers upon startup
+* [MODDATAIMP-372](https://issues.folio.org/browse/MODDATAIMP-372) Data Import job creates SRS records but not all expected Inventory records
+* [MODINV-373](https://issues.folio.org/browse/MODINV-373) Ensure exactly once processing for interaction via Kafka
+* [MODPUBSUB-152](https://issues.folio.org/browse/MODPUBSUB-152) Fix module registration failure when MessagingDescriptor contains no publications
+* [MODPUBSUB-150](https://issues.folio.org/browse/MODPUBSUB-150) Use "replaces" for deprecated permissions replaced by a new permission
+
+## 2021-05-17 v2.0.7
+* [MODPUBSUB-166](https://issues.folio.org/browse/MODPUBSUB-166) Fix memory leak in PubSubClientUtils
+
+## 2021-04-28 v2.0.6
+* [MODPUBSUB-78](https://issues.folio.org/browse/MODPUBSUB-78) Get system user credentials from environment variables
 
 ## 2021-04-22 v2.0.5
 * [MODPUBSUB-163](https://issues.folio.org/browse/MODPUBSUB-163) Kafka Thread Blocked Timeout (KCache)
