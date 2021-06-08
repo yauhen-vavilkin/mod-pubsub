@@ -1,3 +1,7 @@
+## 2021-06-08 v2.2.0
+* [MODPUBSUB-176](https://issues.folio.org/browse/MODPUBSUB-176) Remove everything after dash from the module ID
+* [MODPUBSUB-175](https://issues.folio.org/browse/MODPUBSUB-175) Fix method that builds module ID
+
 ## 2021-06-02 v2.1.0
 * [MODPUBSUB-173](https://issues.folio.org/browse/MODPUBSUB-173) Upgrade pubsub client to RMB v33.0.0
 * [MODPUBSUB-171](https://issues.folio.org/browse/MODPUBSUB-171) Provide properties for Kafka security in kafka-wrapper
