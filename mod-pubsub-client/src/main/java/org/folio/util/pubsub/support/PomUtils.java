@@ -26,7 +26,7 @@ public class PomUtils {
         return getVersionRecursively(parent.getRelativePath());
       }
       else {
-        return version;
+        return version.replaceAll("-.*", "");
       }
     }
     catch (IOException | XmlPullParserException e) {
