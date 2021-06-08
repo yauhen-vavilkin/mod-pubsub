@@ -8,7 +8,6 @@ import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -19,9 +18,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.folio.HttpStatus;
 import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.Event;
@@ -37,6 +33,7 @@ import org.folio.util.pubsub.exceptions.MessagingDescriptorNotFoundException;
 import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
 import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
 import org.folio.util.pubsub.support.DescriptorHolder;
+import org.folio.util.pubsub.support.PomUtils;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -49,7 +46,6 @@ import io.vertx.core.Promise;
  */
 public class PubSubClientUtils {
 
-  public static final String PARENT_POM_PATH = "../pom.xml";
   public static final String MESSAGING_CONFIG_PATH_PROPERTY = "messaging_config_path";
   private static final String MESSAGING_CONFIG_FILE_NAME = "MessagingDescriptor.json";
 
@@ -238,13 +234,14 @@ public class PubSubClientUtils {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       MessagingDescriptor messagingDescriptor = objectMapper.readValue(getMessagingDescriptorInputStream(), MessagingDescriptor.class);
+      String moduleId = getModuleId();
 
       return new DescriptorHolder()
         .withPublisherDescriptor(new PublisherDescriptor()
-          .withModuleId(getModuleId())
+          .withModuleId(moduleId)
           .withEventDescriptors(messagingDescriptor.getPublications()))
         .withSubscriberDescriptor(new SubscriberDescriptor()
-          .withModuleId(getModuleId())
+          .withModuleId(moduleId)
           .withSubscriptionDefinitions(messagingDescriptor.getSubscriptions()));
     } catch (JsonParseException | JsonMappingException e) {
       String errorMessage = "Can not read messaging descriptor, cause: " + e.getMessage();
@@ -289,21 +286,9 @@ public class PubSubClientUtils {
     return Optional.of(fileStream);
   }
 
-  private static String getModuleId() {
-    try {
-      FileReader pomFileReader = new FileReader(PARENT_POM_PATH);
-      MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
-      Model model = mavenXpp3Reader.read(pomFileReader);
-
-      String moduleName = ModuleName.getModuleName();
-      String moduleVersion = model.getVersion();
-
-      return format("%s-%s", moduleName, moduleVersion);
-    }
-    catch (IOException | XmlPullParserException e) {
-      // Using module name without a version when unable to parse pom.xml
-      return ModuleName.getModuleName();
-    }
+  public static String getModuleId() {
+    return format("%s-%s", ModuleName.getModuleName().replace("_", "-"),
+      PomUtils.getModuleVersion());
   }
 
 }
