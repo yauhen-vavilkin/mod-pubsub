@@ -26,14 +26,13 @@ import org.folio.rest.jaxrs.model.MessagingDescriptor;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
-import org.folio.rest.tools.utils.ModuleName;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.exceptions.EventSendingException;
 import org.folio.util.pubsub.exceptions.MessagingDescriptorNotFoundException;
 import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
 import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
 import org.folio.util.pubsub.support.DescriptorHolder;
-import org.folio.util.pubsub.support.PomUtils;
+import org.folio.util.pubsub.support.PomReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -236,6 +235,8 @@ public class PubSubClientUtils {
       MessagingDescriptor messagingDescriptor = objectMapper.readValue(getMessagingDescriptorInputStream(), MessagingDescriptor.class);
       String moduleId = getModuleId();
 
+      LOGGER.info("Reading messaging descriptor for module {}", moduleId);
+
       return new DescriptorHolder()
         .withPublisherDescriptor(new PublisherDescriptor()
           .withModuleId(moduleId)
@@ -287,8 +288,7 @@ public class PubSubClientUtils {
   }
 
   public static String getModuleId() {
-    return format("%s-%s", ModuleName.getModuleName().replace("_", "-"),
-      PomUtils.getModuleVersion());
+    return format("%s-%s", PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
   }
 
 }
