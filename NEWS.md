@@ -1,3 +1,6 @@
+## 2021-06-10 v2.3.0
+* [MODPUBSUB-179](https://issues.folio.org/browse/MODPUBSUB-179) Use local PomReader to retrieve module name and version
+
 ## 2021-06-08 v2.2.0
 * [MODPUBSUB-176](https://issues.folio.org/browse/MODPUBSUB-176) Remove everything after dash from the module ID
 * [MODPUBSUB-175](https://issues.folio.org/browse/MODPUBSUB-175) Fix method that builds module ID
