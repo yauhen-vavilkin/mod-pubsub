@@ -1,3 +1,6 @@
+## 2021-XX-XX v2.0.8-SNAPSHOT
+* [MODPUBSUB-181](https://issues.folio.org/browse/MODPUBSUB-181) mod-source-record-manager unable to create Kafka topics if tenant ID doesn't match \w{4,}
+
 ## 2021-05-17 v2.0.7
 * [MODPUBSUB-166](https://issues.folio.org/browse/MODPUBSUB-166) Fix memory leak in PubSubClientUtils
 
