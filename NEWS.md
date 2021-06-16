@@ -1,5 +1,6 @@
 ## 2021-XX-XX v2.4.0-SNAPSHOT
 * [MODPUBSUB-181](https://issues.folio.org/browse/MODPUBSUB-181) mod-source-record-manager unable to create Kafka topics if tenant ID doesn't match \w{4,}
+* [MODPUBSUB-182](https://issues.folio.org/browse/MODPUBSUB-182) Provide properties for Kafka security in mod-pubsub.
 
 ## 2021-06-10 v2.3.0
 * [MODPUBSUB-179](https://issues.folio.org/browse/MODPUBSUB-179) Use local PomReader to retrieve module name and version
