@@ -79,6 +79,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
       backPressureGauge :
       (g, l, t) -> l > 0 && l > t; // Just the simplest gauge - if the local load is greater than the threshold and above zero
     this.loadLimit = loadLimit;
+    this.loadBottomGreenLine = loadLimit / 2;
   }
 
   public Future<Void> start(AsyncRecordHandler<K, V> businessHandler, String moduleName) {
