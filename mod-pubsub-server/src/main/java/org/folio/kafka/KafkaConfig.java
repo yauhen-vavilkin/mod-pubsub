@@ -44,6 +44,8 @@ public class KafkaConfig {
   private String kafkaSslKeystorePasswordConfig;
   @Value("${ssl.keystore.type:}")
   private String kafkaSslKeystoreTypeConfig;
+  @Value("${ssl.endpoint.identification.algorithm:}")
+  private String kafkaSslEndpointIdentificationAlgorithm;
 
   public static final String KAFKA_SECURITY_PROTOCOL_DEFAULT = "PLAINTEXT";
   public static final String KAFKA_SSL_PROTOCOL_DEFAULT = "TLSv1.2";
@@ -118,5 +120,7 @@ public class KafkaConfig {
       kafkaSslKeystorePasswordConfig, SpringKafkaProperties.KAFKA_SSL_KEYSTORE_PASSWORD, null));
     clientProps.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, SimpleConfigurationReader.getValue(
       kafkaSslKeystoreTypeConfig, SpringKafkaProperties.KAFKA_SSL_KEYSTORE_TYPE, KAFKA_SSL_KEYSTORE_TYPE_DEFAULT));
+    clientProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, SimpleConfigurationReader.getValue(
+      kafkaSslEndpointIdentificationAlgorithm, SpringKafkaProperties.KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM, null));
   }
 }

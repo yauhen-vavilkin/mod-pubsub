@@ -1,6 +1,9 @@
 ## 2021-XX-XX v2.4.0-SNAPSHOT
+* [MODPUBSUB-186](https://issues.folio.org/browse/MODPUBSUB-186) Provide 'ssl.endpoint.identification.algorithm' property
+
+## 2021-06-17 v2.3.1
 * [MODPUBSUB-181](https://issues.folio.org/browse/MODPUBSUB-181) mod-source-record-manager unable to create Kafka topics if tenant ID doesn't match \w{4,}
-* [MODPUBSUB-182](https://issues.folio.org/browse/MODPUBSUB-182) Provide properties for Kafka security in mod-pubsub.
+* [MODPUBSUB-182](https://issues.folio.org/browse/MODPUBSUB-182) Provide properties for Kafka security in mod-pubsub
 
 ## 2021-06-10 v2.3.0
 * [MODPUBSUB-179](https://issues.folio.org/browse/MODPUBSUB-179) Use local PomReader to retrieve module name and version
@@ -23,6 +26,9 @@
 * [MODINV-373](https://issues.folio.org/browse/MODINV-373) Ensure exactly once processing for interaction via Kafka
 * [MODPUBSUB-152](https://issues.folio.org/browse/MODPUBSUB-152) Fix module registration failure when MessagingDescriptor contains no publications
 * [MODPUBSUB-150](https://issues.folio.org/browse/MODPUBSUB-150) Use "replaces" for deprecated permissions replaced by a new permission
+
+## 2021-06-17 v2.0.8
+* [MODPUBSUB-181](https://issues.folio.org/browse/MODPUBSUB-181) Allow creating Kafka topics if tenant ID doesn't match \w{4,}
 
 ## 2021-05-17 v2.0.7
 * [MODPUBSUB-166](https://issues.folio.org/browse/MODPUBSUB-166) Fix memory leak in PubSubClientUtils
