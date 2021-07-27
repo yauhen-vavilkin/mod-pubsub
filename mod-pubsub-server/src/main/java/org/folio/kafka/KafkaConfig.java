@@ -26,6 +26,8 @@ public class KafkaConfig {
   private int numberOfPartitions;
   @Value("${ENV:folio}")
   private String envId;
+  @Value("${MAX_REQUEST_SIZE:1048576}")
+  private int maxRequestSize;
   @Value("${security.protocol:}")
   private String kafkaSecurityProtocolConfig;
   @Value("${ssl.protocol:}")
@@ -70,6 +72,7 @@ public class KafkaConfig {
     producerProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
     producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
     producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+    producerProps.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, String.valueOf(getMaxRequestSize()));
     ensureSecurityProps(producerProps);
     return producerProps;
   }
@@ -99,6 +102,10 @@ public class KafkaConfig {
 
   public String getEnvId() {
     return envId;
+  }
+
+  public int getMaxRequestSize() {
+    return maxRequestSize;
   }
 
   private void ensureSecurityProps(Map<String, String> clientProps) {
