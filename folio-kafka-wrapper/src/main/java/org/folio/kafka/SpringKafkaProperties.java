@@ -28,6 +28,8 @@ public final class SpringKafkaProperties {
 
   public static final String KAFKA_SSL_KEYSTORE_TYPE = "spring.kafka.ssl.key-store-type";
 
+  public static final String KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM = "spring.kafka.properties.ssl.endpoint.identification.algorithm";
+
   private SpringKafkaProperties() {
     throw new UnsupportedOperationException();
   }

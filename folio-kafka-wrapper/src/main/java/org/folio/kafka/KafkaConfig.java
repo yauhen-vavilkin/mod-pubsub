@@ -57,6 +57,8 @@ public class KafkaConfig {
   public static final String KAFKA_SSL_KEYSTORE_TYPE_CONFIG = "ssl.keystore.type";
   public static final String KAFKA_SSL_KEYSTORE_TYPE_DEFAULT = "JKS";
 
+  public static final String KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG = "ssl.endpoint.identification.algorithm";
+
   private static final String KAFKA_CACHE_TOPIC_PROPERTY = "kafkacache.topic";
   private static final String KAFKA_CACHE_TOPIC_PROPERTY_DEFAULT = "events_cache";
 
@@ -130,6 +132,8 @@ public class KafkaConfig {
       List.of(KAFKA_SSL_KEYSTORE_PASSWORD_CONFIG, SpringKafkaProperties.KAFKA_SSL_KEYSTORE_PASSWORD), null));
     clientProps.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, SimpleConfigurationReader.getValue(
       List.of(KAFKA_SSL_KEYSTORE_TYPE_CONFIG, SpringKafkaProperties.KAFKA_SSL_KEYSTORE_TYPE), KAFKA_SSL_KEYSTORE_TYPE_DEFAULT));
+    clientProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, SimpleConfigurationReader.getValue(
+      List.of(KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, SpringKafkaProperties.KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM), null));
   }
 
 }
