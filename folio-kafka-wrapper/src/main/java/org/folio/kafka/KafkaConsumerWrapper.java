@@ -165,7 +165,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
     }
 
 
-    LOGGER.info("Consumer - id: " + id +
+    LOGGER.debug("Consumer - id: " + id +
       " subscriptionPattern: " + subscriptionDefinition +
       " a Record has been received. key: " + record.key() +
       " currentLoad: " + currentLoad +
@@ -176,7 +176,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
   }
 
   private Handler<AsyncResult<K>> businessHandlerCompletionHandler(KafkaConsumerRecord<K, V> record) {
-    LOGGER.info("Starting business completion handler, globalLoadSensor: {}", globalLoadSensor);
+    LOGGER.debug("Starting business completion handler, globalLoadSensor: {}", globalLoadSensor);
 
     return har -> {
       try {
@@ -185,10 +185,10 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
         TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
         OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset, null);
         offsets.put(topicPartition, offsetAndMetadata);
-        LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
+        LOGGER.debug("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
         kafkaConsumer.commit(offsets, ar -> {
           if (ar.succeeded()) {
-            LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
+            LOGGER.debug("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
           } else {
             LOGGER.error("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Error while commit offset: " + offset, ar.cause());
           }
@@ -200,9 +200,6 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
             processRecordErrorHandler.handle(har.cause(), record);
           }
         }
-      } catch (Exception e) {
-        LOGGER.error("Business completion handler finished with exception", e);
-        throw e;
       } finally {
         int actualCurrentLoad = localLoadSensor.decrementAndGet();
 
