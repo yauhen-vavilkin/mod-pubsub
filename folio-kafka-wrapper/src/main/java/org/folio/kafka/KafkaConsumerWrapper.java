@@ -83,6 +83,8 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
   }
 
   public Future<Void> start(AsyncRecordHandler<K, V> businessHandler, String moduleName) {
+    LOGGER.info("KafkaConsumerWrapper is starting for module: {}", moduleName);
+
     if (businessHandler == null) {
       String failureMessage = "businessHandler must be provided and can't be null.";
       LOGGER.error(failureMessage);
@@ -118,7 +120,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
         LOGGER.info("Consumer created - id: " + id + " subscriptionPattern: " + subscriptionDefinition);
         startPromise.complete();
       } else {
-        ar.cause().printStackTrace();
+        LOGGER.error("Consumer creation failed", ar.cause());
         startPromise.fail(ar.cause());
       }
     });
@@ -162,19 +164,20 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
       }
     }
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Consumer - id: " + id +
-        " subscriptionPattern: " + subscriptionDefinition +
-        " a Record has been received. key: " + record.key() +
-        " currentLoad: " + currentLoad +
-        " globalLoad: " + (globalLoadSensor != null ? String.valueOf(globalLoadSensor.current()) : "N/A"));
-    }
+
+    LOGGER.info("Consumer - id: " + id +
+      " subscriptionPattern: " + subscriptionDefinition +
+      " a Record has been received. key: " + record.key() +
+      " currentLoad: " + currentLoad +
+      " globalLoad: " + (globalLoadSensor != null ? String.valueOf(globalLoadSensor.current()) : "N/A"));
 
     businessHandler.handle(record).onComplete(businessHandlerCompletionHandler(record));
 
   }
 
   private Handler<AsyncResult<K>> businessHandlerCompletionHandler(KafkaConsumerRecord<K, V> record) {
+    LOGGER.info("Starting business handler, globalLoadSensor: {}", globalLoadSensor);
+
     return har -> {
       try {
         long offset = record.offset() + 1;
@@ -182,14 +185,10 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
         TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
         OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset, null);
         offsets.put(topicPartition, offsetAndMetadata);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
-        }
+        LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
         kafkaConsumer.commit(offsets, ar -> {
           if (ar.succeeded()) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
-            }
+              LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
           } else {
             LOGGER.error("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Error while commit offset: " + offset, ar.cause());
           }
@@ -201,6 +200,9 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
             processRecordErrorHandler.handle(har.cause(), record);
           }
         }
+      } catch (Exception e) {
+        LOGGER.error("Business completion handler finished with exception", e);
+        throw e;
       } finally {
         int actualCurrentLoad = localLoadSensor.decrementAndGet();
 
