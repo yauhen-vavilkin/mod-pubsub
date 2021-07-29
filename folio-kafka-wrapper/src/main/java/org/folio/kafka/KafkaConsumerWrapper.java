@@ -158,7 +158,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
 
     if (backPressureGauge.isThresholdExceeded(globalLoad, currentLoad, loadLimit)) {
       int requestNo = pauseRequests.getAndIncrement();
-      LOGGER.debug("Threshold is exceeded, globalLoad: {}, currentLoad: {}, requestNo: {}", globalLoad, currentLoad, requestNo);
+      LOGGER.debug("Threshold is exceeded, preparing to pause, globalLoad: {}, currentLoad: {}, requestNo: {}", globalLoad, currentLoad, requestNo);
       if (requestNo == 0) {
         kafkaConsumer.pause();
         LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " kafkaConsumer.pause() requested" + " currentLoad: " + currentLoad + " loadLimit: " + loadLimit);
@@ -208,6 +208,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
 
         if (!backPressureGauge.isThresholdExceeded(globalLoad, actualCurrentLoad, loadBottomGreenLine)) {
           int requestNo = pauseRequests.decrementAndGet();
+          LOGGER.debug("Threshold is exceeded, preparing to resume, globalLoad: {}, currentLoad: {}, requestNo: {}", globalLoad, actualCurrentLoad, requestNo);
           if (requestNo == 0) {
 //           synchronized (this) { all this is handled within the same verticle
             kafkaConsumer.resume();
