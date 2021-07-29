@@ -176,7 +176,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
   }
 
   private Handler<AsyncResult<K>> businessHandlerCompletionHandler(KafkaConsumerRecord<K, V> record) {
-    LOGGER.info("Starting business handler, globalLoadSensor: {}", globalLoadSensor);
+    LOGGER.info("Starting business completion handler, globalLoadSensor: {}", globalLoadSensor);
 
     return har -> {
       try {
