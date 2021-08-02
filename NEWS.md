@@ -1,3 +1,6 @@
+## 2021-08-02 v2.3.3
+* [MODPUBSUB-192](https://issues.folio.org/browse/MODPUBSUB-192) Add check for max.request.size setting before putting it ro Producer props
+
 ## 2021-07-29 v2.3.2
 * [MODPUBSUB-186](https://issues.folio.org/browse/MODPUBSUB-186) Provide 'ssl.endpoint.identification.algorithm' property
 * [MODPUBSUB-187](https://issues.folio.org/browse/MODPUBSUB-187) Add support for max.request.size configuration for Kafka messages
