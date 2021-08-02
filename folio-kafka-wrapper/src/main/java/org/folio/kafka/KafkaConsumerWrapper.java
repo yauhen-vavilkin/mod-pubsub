@@ -83,6 +83,8 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
   }
 
   public Future<Void> start(AsyncRecordHandler<K, V> businessHandler, String moduleName) {
+    LOGGER.info("KafkaConsumerWrapper is starting for module: {}", moduleName);
+
     if (businessHandler == null) {
       String failureMessage = "businessHandler must be provided and can't be null.";
       LOGGER.error(failureMessage);
@@ -118,7 +120,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
         LOGGER.info("Consumer created - id: " + id + " subscriptionPattern: " + subscriptionDefinition);
         startPromise.complete();
       } else {
-        ar.cause().printStackTrace();
+        LOGGER.error("Consumer creation failed", ar.cause());
         startPromise.fail(ar.cause());
       }
     });
@@ -156,25 +158,27 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
 
     if (backPressureGauge.isThresholdExceeded(globalLoad, currentLoad, loadLimit)) {
       int requestNo = pauseRequests.getAndIncrement();
+      LOGGER.debug("Threshold is exceeded, preparing to pause, globalLoad: {}, currentLoad: {}, requestNo: {}", globalLoad, currentLoad, requestNo);
       if (requestNo == 0) {
         kafkaConsumer.pause();
         LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " kafkaConsumer.pause() requested" + " currentLoad: " + currentLoad + " loadLimit: " + loadLimit);
       }
     }
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Consumer - id: " + id +
-        " subscriptionPattern: " + subscriptionDefinition +
-        " a Record has been received. key: " + record.key() +
-        " currentLoad: " + currentLoad +
-        " globalLoad: " + (globalLoadSensor != null ? String.valueOf(globalLoadSensor.current()) : "N/A"));
-    }
+
+    LOGGER.debug("Consumer - id: " + id +
+      " subscriptionPattern: " + subscriptionDefinition +
+      " a Record has been received. key: " + record.key() +
+      " currentLoad: " + currentLoad +
+      " globalLoad: " + (globalLoadSensor != null ? String.valueOf(globalLoadSensor.current()) : "N/A"));
 
     businessHandler.handle(record).onComplete(businessHandlerCompletionHandler(record));
 
   }
 
   private Handler<AsyncResult<K>> businessHandlerCompletionHandler(KafkaConsumerRecord<K, V> record) {
+    LOGGER.debug("Starting business completion handler, globalLoadSensor: {}", globalLoadSensor);
+
     return har -> {
       try {
         long offset = record.offset() + 1;
@@ -182,14 +186,10 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
         TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
         OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset, null);
         offsets.put(topicPartition, offsetAndMetadata);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
-        }
+        LOGGER.info("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committing offset: " + offset);
         kafkaConsumer.commit(offsets, ar -> {
           if (ar.succeeded()) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
-            }
+            LOGGER.debug("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Committed offset: " + offset);
           } else {
             LOGGER.error("Consumer - id: " + id + " subscriptionPattern: " + subscriptionDefinition + " Error while commit offset: " + offset, ar.cause());
           }
@@ -208,6 +208,7 @@ public class KafkaConsumerWrapper<K, V> implements Handler<KafkaConsumerRecord<K
 
         if (!backPressureGauge.isThresholdExceeded(globalLoad, actualCurrentLoad, loadBottomGreenLine)) {
           int requestNo = pauseRequests.decrementAndGet();
+          LOGGER.debug("Threshold is exceeded, preparing to resume, globalLoad: {}, currentLoad: {}, requestNo: {}", globalLoad, actualCurrentLoad, requestNo);
           if (requestNo == 0) {
 //           synchronized (this) { all this is handled within the same verticle
             kafkaConsumer.resume();
