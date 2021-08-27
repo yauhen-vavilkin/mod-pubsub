@@ -16,7 +16,6 @@
   <modules>
     <module>mod-pubsub-server</module>
     <module>mod-pubsub-client</module>
-    <module>folio-kafka-wrapper</module>
   </modules>
 
   <properties>
