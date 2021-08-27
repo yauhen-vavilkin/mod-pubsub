@@ -15,11 +15,11 @@
   </properties>
 
   <dependencies>
-    <dependency>
+<!--    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>42.2.18</version>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
@@ -124,6 +124,12 @@
       <artifactId>commons-lang</artifactId>
       <version>2.6</version>
     </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>data-import-processing-core</artifactId>
+      <version>3.2.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -177,7 +183,7 @@
           </execution>
         </executions>
       </plugin>-->
-      <plugin>
+<!--      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.2.0</version>
@@ -189,19 +195,19 @@
             </goals>
             <phase>initialize</phase>
             <configuration>
-<!--              <sources>
+&lt;!&ndash;              <sources>
                 <source>${project.build.directory}/generated-sources</source>
-              </sources>-->
+              </sources>&ndash;&gt;
               <sources>
-                <!-- Adds client classes generated in current client module-->
+                &lt;!&ndash; Adds client classes generated in current client module&ndash;&gt;
                 <source>${project.build.directory}/generated-sources/raml-jaxrs</source>
-                <!-- Adds model classes generated in server module -->
+                &lt;!&ndash; Adds model classes generated in server module &ndash;&gt;
                 <source>../mod-pubsub-server/target/generated-sources/raml-jaxrs</source>
               </sources>
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin>-->
       <plugin>
         <groupId>org.folio</groupId>
         <artifactId>domain-models-maven-plugin</artifactId>
@@ -213,10 +219,26 @@
             <version>${project.parent.version}</version>
             <exclusions>
               <!-- Exclude unnecessary clients in the final client jar -->
-<!--              <exclusion>
+              <exclusion>
+                <groupId>org.folio</groupId>
+                <artifactId>mod-configuration-client</artifactId>
+              </exclusion>
+              <exclusion>
                 <groupId>org.folio</groupId>
                 <artifactId>mod-pubsub-client</artifactId>
-              </exclusion>-->
+              </exclusion>
+              <exclusion>
+                <groupId>org.folio</groupId>
+                <artifactId>mod-source-record-manager-client</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.folio</groupId>
+                <artifactId>mod-data-import-converter-storage-client</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.folio</groupId>
+                <artifactId>mod-source-record-storage-client</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
         </dependencies>
@@ -226,10 +248,6 @@
             <goals>
               <goal>java</goal>
             </goals>
-            <configuration>
-              <generateInterfaces>false</generateInterfaces>
-              <generateClients>true</generateClients>
-            </configuration>
           </execution>
         </executions>
       </plugin>

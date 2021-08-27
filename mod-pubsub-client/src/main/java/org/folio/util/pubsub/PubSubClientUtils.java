@@ -4,6 +4,12 @@ import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
+import static org.folio.util.pubsub.PubSubClientUtils.constructModuleName;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
+import org.folio.processing.events.utils.PomReaderUtil;
 import org.folio.rest.client.PubsubClient;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -26,13 +33,13 @@ import org.folio.rest.jaxrs.model.MessagingDescriptor;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
+import org.folio.rest.tools.utils.ModuleName;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.util.pubsub.exceptions.EventSendingException;
 import org.folio.util.pubsub.exceptions.MessagingDescriptorNotFoundException;
 import org.folio.util.pubsub.exceptions.ModuleRegistrationException;
 import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
 import org.folio.util.pubsub.support.DescriptorHolder;
-import org.folio.util.pubsub.support.PomReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -77,7 +84,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during sending event message to PubSub", e);
       result.completeExceptionally(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   /**
@@ -107,7 +114,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during registration module in PubSub", e);
       result = CompletableFuture.failedFuture(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   private static CompletableFuture<Void> registerEventTypes(PubsubClient client, List<EventDescriptor> events) {
@@ -188,8 +195,7 @@ public class PubSubClientUtils {
     String moduleId = getModuleId();
 
     return unregisterModuleByIdAndRole(client, moduleId, PUBLISHER)
-      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER))
-      .whenComplete((ar, e) -> client.close());
+      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER));
   }
 
   private static CompletableFuture<Boolean> unregisterModuleByIdAndRole(PubsubClient client, String moduleId, MessagingModule.ModuleRole moduleRole) {
@@ -288,7 +294,11 @@ public class PubSubClientUtils {
   }
 
   public static String getModuleId() {
-    return format("%s-%s", PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
+    return constructModuleName();
   }
 
+  public static String constructModuleName() {
+    return PomReaderUtil.INSTANCE.constructModuleVersionAndVersion(ModuleName.getModuleName(),
+      ModuleName.getModuleVersion());
+  }
 }
