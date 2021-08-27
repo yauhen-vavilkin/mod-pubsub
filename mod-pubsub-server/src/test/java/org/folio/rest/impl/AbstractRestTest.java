@@ -10,13 +10,14 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.Tuple;
 import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.jaxrs.model.TenantJob;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.PomReader;
+import org.folio.rest.tools.utils.ModuleName;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -94,8 +95,7 @@ public abstract class AbstractRestTest {
         PostgresClient.setConfigFilePath(postgresConfigPath);
         break;
       case "embedded":
-        PostgresClient.setIsEmbedded(true);
-        PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+        PostgresClient.setPostgresTester(new PostgresTesterContainer());
         break;
       default:
         String message = "No understood database choice made." +
@@ -114,7 +114,7 @@ public abstract class AbstractRestTest {
       try {
         TenantClient tenantClient = new TenantClient(OKAPI_URL, TENANT_ID, TOKEN);
         TenantAttributes tenantAttributes = new TenantAttributes();
-        tenantAttributes.setModuleTo(PomReader.INSTANCE.getModuleName());
+        tenantAttributes.setModuleTo(ModuleName.getModuleName());
 
         tenantClient.postTenant(tenantAttributes, context.asyncAssertSuccess(res2 -> {
           if (res2.statusCode() == 204) {
@@ -148,7 +148,7 @@ public abstract class AbstractRestTest {
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
       if (useExternalDatabase.equals("embedded")) {
-        PostgresClient.stopEmbeddedPostgres();
+        PostgresClient.stopPostgresTester();
       }
       System.clearProperty(KAFKA_HOST);
       System.clearProperty(KAFKA_PORT);

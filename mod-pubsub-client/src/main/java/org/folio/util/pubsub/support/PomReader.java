@@ -23,6 +23,8 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
  * @author shale
  *
  */
+
+/*
 public enum PomReader {
 
   INSTANCE;
@@ -38,10 +40,12 @@ public enum PomReader {
     init("pom.xml");
   }
 
-  /**
+  */
+/**
    * Read from pomFile if this is RMB itself; otherwise read JAR
    * @param pomFilename
-   */
+   *//*
+
   void init(String pomFilename) {
     try {
       String currentRunningJar =
@@ -54,11 +58,13 @@ public enum PomReader {
     }
   }
 
-  /**
+  */
+/**
    * Read from pomFile if not null; otherwise read JAR
    * @param pomFilename POM filename; null for search in JAR
    * @param directoryName directory prefix for search of pom.xml in JAR
-   */
+   *//*
+
   void readIt(String pomFilename, String directoryName) throws IOException, XmlPullParserException {
     Model model;
     if (pomFilename != null) {
@@ -145,3 +151,4 @@ public enum PomReader {
   }
 
 }
+*/

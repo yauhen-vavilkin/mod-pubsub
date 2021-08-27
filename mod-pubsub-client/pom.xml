@@ -10,22 +10,9 @@
   </parent>
 
   <properties>
-    <raml-module-builder.version>33.0.0</raml-module-builder.version>
-    <vertx.version>4.1.0.CR1</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <ramlfiles_path>${project.parent.basedir}/ramls</ramlfiles_path>
-    <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
-    <sonar.exclusions>**/PubsubClient.java</sonar.exclusions>
-    <sonar.exclusions>**/PomReader.java</sonar.exclusions>
   </properties>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>folio-nexus</id>
-      <name>FOLIO Maven repository</name>
-      <url>https://repository.folio.org/repository/maven-folio</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <dependencies>
     <dependency>
@@ -132,6 +119,11 @@
       <artifactId>maven-model</artifactId>
       <version>3.3.9</version>
     </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.6</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -142,7 +134,7 @@
       </resource>
     </resources>
     <plugins>
-      <plugin>
+      <!--<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
@@ -163,8 +155,8 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
+      </plugin>-->
+<!--      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
         <version>1.0.0</version>
@@ -184,7 +176,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin>-->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -197,8 +189,14 @@
             </goals>
             <phase>initialize</phase>
             <configuration>
-              <sources>
+<!--              <sources>
                 <source>${project.build.directory}/generated-sources</source>
+              </sources>-->
+              <sources>
+                <!-- Adds client classes generated in current client module-->
+                <source>${project.build.directory}/generated-sources/raml-jaxrs</source>
+                <!-- Adds model classes generated in server module -->
+                <source>../mod-pubsub-server/target/generated-sources/raml-jaxrs</source>
               </sources>
             </configuration>
           </execution>
@@ -208,12 +206,30 @@
         <groupId>org.folio</groupId>
         <artifactId>domain-models-maven-plugin</artifactId>
         <version>${raml-module-builder.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.folio</groupId>
+            <artifactId>mod-pubsub-server</artifactId>
+            <version>${project.parent.version}</version>
+            <exclusions>
+              <!-- Exclude unnecessary clients in the final client jar -->
+<!--              <exclusion>
+                <groupId>org.folio</groupId>
+                <artifactId>mod-pubsub-client</artifactId>
+              </exclusion>-->
+            </exclusions>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <id>generate_interfaces</id>
             <goals>
               <goal>java</goal>
             </goals>
+            <configuration>
+              <generateInterfaces>false</generateInterfaces>
+              <generateClients>true</generateClients>
+            </configuration>
           </execution>
         </executions>
       </plugin>
