@@ -13,6 +13,7 @@ import java.io.IOException;
 
 import org.folio.util.pubsub.support.DescriptorHolder;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -84,6 +85,6 @@ public class PubSubClientUtilsTest {
 
   @Test
   public void shouldBuildCorrectModuleId() {
-    assertThat(PubSubClientUtils.getModuleId(), matchesPattern("mod-pubsub-[0-9]+\\.[0-9]+\\.[0-9]+"));
+    assertThat(PubSubClientUtils.getModuleId(), matchesPattern("mod-pubsub-[0-9]+\\.[0-9]+\\.[0-9]+\\-SNAPSHOT"));
   }
 }
