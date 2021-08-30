@@ -16,8 +16,6 @@
     <sonar.exclusions>**/PomReader.java</sonar.exclusions>
   </properties>
 
-
-
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
