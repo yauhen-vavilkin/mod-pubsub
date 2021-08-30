@@ -85,6 +85,6 @@ public class PubSubClientUtilsTest {
 
   @Test
   public void shouldBuildCorrectModuleId() {
-    assertThat(PubSubClientUtils.getModuleId(), matchesPattern("mod-pubsub-[0-9]+\\.[0-9]+\\.[0-9]+\\-SNAPSHOT"));
+    assertThat(PubSubClientUtils.getModuleId(), matchesPattern("mod-pubsub-[0-9]+\\.[0-9]+\\.[0-9]+"));
   }
 }
