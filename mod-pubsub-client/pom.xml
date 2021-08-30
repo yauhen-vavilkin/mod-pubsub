@@ -219,7 +219,7 @@
             <version>${project.parent.version}</version>
             <exclusions>
               <!-- Exclude unnecessary clients in the final client jar -->
-              <exclusion>
+              <!--<exclusion>
                 <groupId>org.folio</groupId>
                 <artifactId>mod-configuration-client</artifactId>
               </exclusion>
@@ -238,7 +238,7 @@
               <exclusion>
                 <groupId>org.folio</groupId>
                 <artifactId>mod-source-record-storage-client</artifactId>
-              </exclusion>
+              </exclusion>-->
             </exclusions>
           </dependency>
         </dependencies>
@@ -248,6 +248,10 @@
             <goals>
               <goal>java</goal>
             </goals>
+<!--            <configuration>
+              <generateInterfaces>false</generateInterfaces>
+              <generateClients>true</generateClients>
+            </configuration>-->
           </execution>
         </executions>
       </plugin>
