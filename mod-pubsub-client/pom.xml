@@ -12,14 +12,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <ramlfiles_path>${project.parent.basedir}/ramls</ramlfiles_path>
+    <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
+    <sonar.exclusions>**/PubsubClient.java</sonar.exclusions>
+    <sonar.exclusions>**/PomReader.java</sonar.exclusions>
   </properties>
 
   <dependencies>
-<!--    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.2.18</version>
-    </dependency>-->
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
@@ -151,7 +149,7 @@
           </execution>
         </executions>
       </plugin>
-<!--      <plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
         <version>1.0.0</version>
@@ -171,8 +169,8 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>-->
-<!--      <plugin>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.2.0</version>
@@ -184,19 +182,16 @@
             </goals>
             <phase>initialize</phase>
             <configuration>
-&lt;!&ndash;              <sources>
-                <source>${project.build.directory}/generated-sources</source>
-              </sources>&ndash;&gt;
               <sources>
-                &lt;!&ndash; Adds client classes generated in current client module&ndash;&gt;
+                <!-- Adds client classes generated in current client module-->
                 <source>${project.build.directory}/generated-sources/raml-jaxrs</source>
-                &lt;!&ndash; Adds model classes generated in server module &ndash;&gt;
+                <!-- Adds model classes generated in server module -->
                 <source>../mod-pubsub-server/target/generated-sources/raml-jaxrs</source>
               </sources>
             </configuration>
           </execution>
         </executions>
-      </plugin>-->
+      </plugin>
       <plugin>
         <groupId>org.folio</groupId>
         <artifactId>domain-models-maven-plugin</artifactId>
@@ -237,10 +232,10 @@
             <goals>
               <goal>java</goal>
             </goals>
-<!--            <configuration>
+            <configuration>
               <generateInterfaces>false</generateInterfaces>
-              <generateClients>true</generateClients>
-            </configuration>-->
+              <generateClients>false</generateClients>
+            </configuration>
           </execution>
         </executions>
       </plugin>
