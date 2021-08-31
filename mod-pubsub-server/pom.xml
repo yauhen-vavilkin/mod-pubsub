@@ -61,6 +61,11 @@
       <type>jar</type>
     </dependency>
     <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.18</version>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-jaxb-annotations</artifactId>
       <version>${jackson.jaxb.version}</version>
@@ -133,12 +138,6 @@
       <artifactId>scala-library</artifactId>
       <version>2.13.1</version>
     </dependency>
-<!--    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      &lt;!&ndash; matching RMB guava dependency version, otherwise RMB code generation fails &ndash;&gt;
-      <version>21.0</version>
-    </dependency>-->
     <dependency>
       <groupId>com.github.tomakehurst</groupId>
       <artifactId>wiremock</artifactId>
