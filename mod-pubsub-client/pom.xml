@@ -10,8 +10,6 @@
   </parent>
 
   <properties>
-    <raml-module-builder.version>33.0.0</raml-module-builder.version>
-    <vertx.version>4.1.0.CR1</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <ramlfiles_path>${project.parent.basedir}/ramls</ramlfiles_path>
     <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
@@ -19,20 +17,7 @@
     <sonar.exclusions>**/PomReader.java</sonar.exclusions>
   </properties>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>folio-nexus</id>
-      <name>FOLIO Maven repository</name>
-      <url>https://repository.folio.org/repository/maven-folio</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <dependencies>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.2.18</version>
-    </dependency>
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
@@ -198,22 +183,10 @@
             <phase>initialize</phase>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-sources</source>
+                <!-- Adds model classes generated in server module -->
+                <source>../mod-pubsub-server/target/generated-sources/raml-jaxrs</source>
               </sources>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.folio</groupId>
-        <artifactId>domain-models-maven-plugin</artifactId>
-        <version>${raml-module-builder.version}</version>
-        <executions>
-          <execution>
-            <id>generate_interfaces</id>
-            <goals>
-              <goal>java</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

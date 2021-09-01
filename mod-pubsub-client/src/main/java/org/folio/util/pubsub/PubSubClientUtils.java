@@ -1,21 +1,9 @@
 package org.folio.util.pubsub;
 
-import static java.lang.String.format;
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
-import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Promise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
@@ -34,11 +22,21 @@ import org.folio.util.pubsub.exceptions.ModuleUnregistrationException;
 import org.folio.util.pubsub.support.DescriptorHolder;
 import org.folio.util.pubsub.support.PomReader;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.Promise;
+import static java.lang.String.format;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
+import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 
 /**
  * Util class for reading module messaging descriptors, sending messages using PubSub and register module in PubSub
@@ -290,5 +288,4 @@ public class PubSubClientUtils {
   public static String getModuleId() {
     return format("%s-%s", PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
   }
-
 }

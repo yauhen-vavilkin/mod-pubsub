@@ -1,6 +1,6 @@
 package org.folio.kafka;
 
-import org.folio.rest.tools.PomReader;
+import org.folio.rest.tools.utils.ModuleName;
 
 import static java.lang.String.join;
 
@@ -16,7 +16,7 @@ public class PubSubConfig {
     this.eventType = eventType;
     /* moduleNameWithVersion variable need for unique topic and group names for different pub-sub versions.
     It was encapsulated here, in constructor, for better creating/subscribing/sending events.*/
-    String moduleNameWithVersion = PomReader.INSTANCE.getModuleName().replace("_", "-") + "-" + PomReader.INSTANCE.getVersion();
+    String moduleNameWithVersion = ModuleName.getModuleName().replace("_", "-") + "-" + ModuleName.getModuleVersion();
     this.groupId = join(".", env, PUB_SUB_PREFIX, tenant, eventType, moduleNameWithVersion);
     this.topicName = join(".", env, PUB_SUB_PREFIX, tenant, eventType, moduleNameWithVersion);
   }
