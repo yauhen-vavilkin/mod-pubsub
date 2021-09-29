@@ -1,8 +1,11 @@
-## 2021-XX-XX v2.4.0-SNAPSHOT
+## 2021-09-29 v2.4.0
+* [MODPUBSUB-185](https://issues.folio.org/browse/MODPUBSUB-185) Adjust the threshold at which the consumer can be resumed according to the load limit
 * [MODPUBSUB-186](https://issues.folio.org/browse/MODPUBSUB-186) Provide 'ssl.endpoint.identification.algorithm' property
 * [MODPUBSUB-187](https://issues.folio.org/browse/MODPUBSUB-187) Add support for max.request.size configuration for Kafka messages
 * [KAFKAWRAP-2](https://issues.folio.org/browse/KAFKAWRAP-2) Take folio-kafka-wrapper lib out of mod-pubsub repository
+* [MODDATAIMP-453](https://issues.folio.org/browse/MODDATAIMP-453) Extends logs   
 * [MODPUBSUB-189](https://issues.folio.org/browse/MODPUBSUB-189) Upgrade to RAML Module Builder 33.0.2
+* [MODPUBSUB-192](https://issues.folio.org/browse/MODPUBSUB-192) Check if max.request.size is set before putting it as producer props
 * [MODPUBSUB-193](https://issues.folio.org/browse/MODPUBSUB-193) Fix tests after RMB update
 
 ## 2021-06-17 v2.3.1
