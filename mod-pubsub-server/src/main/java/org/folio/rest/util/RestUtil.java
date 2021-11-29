@@ -7,16 +7,16 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
@@ -82,7 +82,7 @@ public final class RestUtil {
     try {
       Map<String, String> headers = params.getHeaders();
       String requestUrl = params.getOkapiUrl() + url;
-      WebClient client = WebClient.wrap(getHttpClient(params));
+      WebClient client = getWebClient(params);
 
       HttpRequest<Buffer> request = client.requestAbs(method, requestUrl);
       if (headers != null) {
@@ -122,16 +122,24 @@ public final class RestUtil {
     };
   }
 
+  private static final Map<Vertx, WebClient> clients = new HashMap<>();
+
   /**
-   * Prepare HttpClient from OkapiConnection params
+   * Prepare WebClient from OkapiConnection params
    *
    * @param params - Okapi connection params
-   * @return - Vertx Http Client
+   * @return - Vertx WebClient
    */
-  private static HttpClient getHttpClient(OkapiConnectionParams params) {
-    HttpClientOptions options = new HttpClientOptions();
+  private static synchronized WebClient getWebClient(OkapiConnectionParams params) {
+    Vertx vertx  =  params.getVertx() != null ? params.getVertx() : Vertx.currentContext().owner();
+    if (clients.containsKey(vertx)) {
+      return clients.get(vertx);
+    }
+    WebClientOptions options = new WebClientOptions();
     options.setConnectTimeout(params.getTimeout());
     options.setIdleTimeout(params.getTimeout());
-    return params.getVertx() != null ? params.getVertx().createHttpClient(options) : Vertx.currentContext().owner().createHttpClient(options);
+    WebClient webClient = WebClient.create(vertx, options);
+    clients.put(vertx, webClient);
+    return webClient;
   }
 }
