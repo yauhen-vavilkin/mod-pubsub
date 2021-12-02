@@ -1,3 +1,6 @@
+## 2021-12-02 v2.3.4
+* [MODPUBSUB-201](https://issues.folio.org/browse/MODPUBSUB-201) Socket leak
+
 ## 2021-08-02 v2.3.3
 * [MODPUBSUB-192](https://issues.folio.org/browse/MODPUBSUB-192) Add check for max.request.size setting before putting it ro Producer props
 
