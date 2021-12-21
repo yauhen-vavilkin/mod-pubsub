@@ -1,3 +1,6 @@
+## 2021-12-21 v2.3.5
+* [MODPUBSUB-205](https://issues.folio.org/browse/MODPUBSUB-205) Upgrade to Log4j 2.16.0
+
 ## 2021-12-02 v2.3.4
 * [MODPUBSUB-201](https://issues.folio.org/browse/MODPUBSUB-201) Socket leak
 
