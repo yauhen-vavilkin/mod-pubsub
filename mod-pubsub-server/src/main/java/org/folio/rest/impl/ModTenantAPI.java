@@ -30,7 +30,7 @@ public class ModTenantAPI extends TenantAPI {
         LiquibaseUtil.initializeSchemaForTenant(vertx, tenantId);
         OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
         return securityManager.createPubSubUser(params)
-          .compose(ar -> securityManager.loginPubSubUser(params)).map(num);
+          .compose(ar -> securityManager.getJWTToken(params)).map(num);
       });
   }
 }

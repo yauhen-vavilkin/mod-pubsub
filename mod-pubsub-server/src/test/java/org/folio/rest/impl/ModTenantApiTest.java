@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -60,7 +61,9 @@ public class ModTenantApiTest extends AbstractRestTest {
     wireMockRule.stubFor(get(GET_PUBSUB_USER_URL)
       .willReturn(okJson(userCollection.toString())));
     wireMockRule.stubFor(put(userByIdUrl(user.getId()))
-      .willReturn(aResponse().withStatus(204)));
+        .willReturn(aResponse().withStatus(204)));
+    wireMockRule.stubFor(post(permissionsUrl(user.getId()))
+        .willReturn(aResponse().withStatus(200)));
 
     getTenant();
 
@@ -123,6 +126,10 @@ public class ModTenantApiTest extends AbstractRestTest {
 
   private String userByIdUrl(String id) {
     return USERS_URL + "/" + id;
+  }
+
+  private String permissionsUrl(String id) {
+    return "/perms/users/" + id + "/permissions?indexField=userId";
   }
 
   private String mockOkapiUrl() {
