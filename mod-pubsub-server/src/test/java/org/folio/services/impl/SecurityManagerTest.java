@@ -2,6 +2,7 @@ package org.folio.services.impl;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.created;
 import static com.github.tomakehurst.wiremock.client.WireMock.findAll;
+import static com.github.tomakehurst.wiremock.client.WireMock.forbidden;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
@@ -307,6 +308,28 @@ public class SecurityManagerTest {
 
       return null;
     }).onComplete(context.asyncAssertSuccess());
+  }
+
+
+  @Test
+  public void shouldFailPubSubUser(TestContext context) {
+    String userId = UUID.randomUUID().toString();
+    String userCollection = new JsonObject()
+      .put("users", new JsonArray().add(existingUser(userId)))
+      .put("totalRecords", 1).encode();
+
+    stubFor(get(USERS_URL_WITH_QUERY)
+      .willReturn(ok().withBody(emptyUsersResponse().encode())));
+    stubFor(post(USERS_URL).willReturn(created().withBody(userCollection)));
+    stubFor(post(CREDENTIALS_URL).willReturn(created()));
+    stubFor(post(PERMISSIONS_URL).willReturn(forbidden()));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    securityManager.createPubSubUser(params).onComplete(context.asyncAssertFailure(x ->
+      assertEquals("Failed to add permissions for test-pubsub-username user. Received status code 403",
+        x.getMessage())
+    ));
   }
 
   private void verifyUser(LoggedRequest loggedRequest) {

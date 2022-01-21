@@ -227,7 +227,7 @@ public class SecurityManagerImpl implements SecurityManager {
           String errorMessage = format("Failed to add permissions for %s user. Received status code %s",
             systemUserConfig.getName(), response.getCode());
           LOGGER.error(errorMessage);
-          promise.complete(false);
+          promise.fail(errorMessage);
         }
         return promise.future();
       });
