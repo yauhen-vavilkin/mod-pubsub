@@ -218,18 +218,20 @@ public class SecurityManagerImpl implements SecurityManager {
       .put("permissions", new JsonArray(permissions));
     return doRequest(params, PERMISSIONS_URL, HttpMethod.POST, requestBody.encode())
       .compose(response -> {
-        Promise<Boolean> promise = Promise.promise();
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
           LOGGER.info("Added permissions [{}] for {} user", StringUtils.join(permissions, ","),
             systemUserConfig.getName());
-          promise.complete(true);
-        } else {
-          String errorMessage = format("Failed to add permissions for %s user. Received status code %s",
-            systemUserConfig.getName(), response.getCode());
-          LOGGER.error(errorMessage);
-          promise.fail(errorMessage);
+          return Future.succeededFuture(true);
         }
-        return promise.future();
+        String errorMessage = format("Failed to add permissions for %s user. Received status code %s",
+          systemUserConfig.getName(), response.getCode());
+        if (response.getCode() == HttpStatus.HTTP_BAD_REQUEST.toInt()) {
+          LOGGER.warn(errorMessage);
+          return Future.succeededFuture(false);
+        } else {
+          LOGGER.error(errorMessage);
+          return Future.failedFuture(errorMessage);
+        }
       });
   }
 

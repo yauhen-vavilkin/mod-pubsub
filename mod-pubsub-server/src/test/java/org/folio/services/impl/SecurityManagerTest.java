@@ -1,18 +1,6 @@
 package org.folio.services.impl;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.created;
-import static com.github.tomakehurst.wiremock.client.WireMock.findAll;
-import static com.github.tomakehurst.wiremock.client.WireMock.forbidden;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.put;
-import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.http.RequestMethod.POST;
 import static io.vertx.core.json.Json.decodeValue;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
@@ -308,6 +296,23 @@ public class SecurityManagerTest {
 
       return null;
     }).onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void shouldWarnPubSubUser(TestContext context) {
+    String userId = UUID.randomUUID().toString();
+    String userCollection = new JsonObject()
+      .put("users", new JsonArray().add(existingUser(userId)))
+      .put("totalRecords", 1).encode();
+
+    stubFor(get(USERS_URL_WITH_QUERY)
+      .willReturn(ok().withBody(emptyUsersResponse().encode())));
+    stubFor(post(USERS_URL).willReturn(created().withBody(userCollection)));
+    stubFor(post(CREDENTIALS_URL).willReturn(created()));
+    stubFor(post(PERMISSIONS_URL).willReturn(badRequest()));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+    securityManager.createPubSubUser(params).onComplete(context.asyncAssertSuccess());
   }
 
 
