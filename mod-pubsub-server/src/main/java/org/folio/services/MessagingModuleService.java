@@ -56,9 +56,8 @@ public interface MessagingModuleService {
    * Deletes module matching filter criteria
    *
    * @param filter MessagingModule filter
-   * @return future with true if succeeded
    */
-  Future<Boolean> delete(MessagingModuleFilter filter);
+  Future<Void> delete(MessagingModuleFilter filter);
 
   /**
    * Searches for MessagingModules matching filter criteria

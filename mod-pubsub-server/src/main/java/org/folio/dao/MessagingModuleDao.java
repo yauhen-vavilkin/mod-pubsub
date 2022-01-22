@@ -29,20 +29,12 @@ public interface MessagingModuleDao {
   Future<List<MessagingModule>> save(List<MessagingModule> messagingModules);
 
   /**
-   * Deletes {@link MessagingModule} by id
-   *
-   * @param id messagingModule id
-   * @return future with true if succeeded
-   */
-  Future<Boolean> delete(String id);
-
-  /**
    * Deletes {@link MessagingModule} matching filter criteria
    *
    * @param filter messagingModule filter
-   * @return future with true if succeeded
+   * @return succeeded Future if deleted or not found
    */
-  Future<Boolean> delete(MessagingModuleFilter filter);
+  Future<Void> delete(MessagingModuleFilter filter);
 
   /**
    * Gets all registered {@link MessagingModule}
