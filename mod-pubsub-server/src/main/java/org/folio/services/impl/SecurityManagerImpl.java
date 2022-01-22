@@ -23,10 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import static io.vertx.core.http.HttpMethod.PUT;
@@ -49,6 +51,7 @@ public class SecurityManagerImpl implements SecurityManager {
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String USER_LAST_NAME = "System";
+  private static final List<String> PERMISSIONS = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
 
   private Vertx vertx;
   private Cache cache;
@@ -194,20 +197,14 @@ public class SecurityManagerImpl implements SecurityManager {
   }
 
   private Future<Void> assignPermissions(String userId, OkapiConnectionParams params) {
-    List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
-    if (CollectionUtils.isEmpty(permissions)) {
-      String message = String.format("No permissions found to assign to %s user", systemUserConfig.getName());
-      LOGGER.info(message);
-      return Future.failedFuture(message);
-    }
     JsonObject requestBody = new JsonObject()
       .put("id", UUID.randomUUID().toString())
       .put("userId", userId)
-      .put("permissions", new JsonArray(permissions));
+      .put("permissions", new JsonArray(PERMISSIONS));
     return doRequest(params, PERMISSIONS_URL, HttpMethod.POST, requestBody.encode())
       .compose(response -> {
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Added permissions [{}] for {} user", StringUtils.join(permissions, ","),
+          LOGGER.info("Added permissions [{}] for {} user", StringUtils.join(PERMISSIONS, ","),
             systemUserConfig.getName());
           return Future.succeededFuture();
         } else {
@@ -220,15 +217,9 @@ public class SecurityManagerImpl implements SecurityManager {
   }
 
   private Future<Void> addPermissions(String userId, OkapiConnectionParams params) {
-    List<String> permissions = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
-    if (CollectionUtils.isEmpty(permissions)) {
-      String message = String.format("No permissions found to add for %s user", systemUserConfig.getName());
-      LOGGER.info(message);
-      return Future.failedFuture(message);
-    }
     List<Future<Void>> futures = new ArrayList<>();
     String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
-    permissions.forEach(permission -> {
+    PERMISSIONS.forEach(permission -> {
       JsonObject requestBody = new JsonObject()
         .put("permissionName", permission);
       futures.add(doRequest(params, permUrl, HttpMethod.POST, requestBody.encode())
@@ -247,15 +238,18 @@ public class SecurityManagerImpl implements SecurityManager {
     return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
-  private List<String> readPermissionsFromResource(String path) {
-    List<String> permissions = new ArrayList<>();
-    URL url = Resources.getResource(path);
+  static List<String> readPermissionsFromResource(String path) {
     try {
-      permissions = Resources.readLines(url, StandardCharsets.UTF_8);
+      URL url = Resources.getResource(path);
+      List<String> permissions = Resources.readLines(url, StandardCharsets.UTF_8);
+      if (CollectionUtils.isEmpty(permissions)) {
+        throw new NoSuchElementException("No permission found in " + path);
+      }
+      return permissions;
     } catch (IOException e) {
-      LOGGER.error("Error reading permissions from {}", path, e);
+      // can never happen because Resources.getResource throws IllegalArgumentException if not exists
+      throw new UncheckedIOException("Error reading permissions from " + path, e);
     }
-    return permissions;
   }
 
   private User createUserObject() {

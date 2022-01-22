@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.folio.dao.MessagingModuleDao;
@@ -321,6 +322,11 @@ public class SecurityManagerTest {
       assertEquals("Failed to add permissions for test-pubsub-username user. Received status code 403",
         x.getMessage())
     ));
+  }
+
+  @Test(expected = NoSuchElementException.class)
+  public void shouldFailReadingPermissionsOnEmptyPermissionsFile() {
+    SecurityManagerImpl.readPermissionsFromResource("permissions/emptyFile");
   }
 
   private void verifyUser(LoggedRequest loggedRequest) {
