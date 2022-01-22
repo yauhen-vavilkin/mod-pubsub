@@ -135,11 +135,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(2, requests.size());
 
@@ -171,11 +169,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(4, requests.size());
 
@@ -246,11 +242,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(3, requests.size());
 
@@ -280,10 +274,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
 
       final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(2, requests.size());

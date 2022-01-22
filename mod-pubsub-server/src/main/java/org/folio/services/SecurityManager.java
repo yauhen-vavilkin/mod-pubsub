@@ -31,5 +31,5 @@ public interface SecurityManager {
    * @param params okapi connection params
    * @return future with true if succeeded
    */
-  Future<Boolean> createPubSubUser(OkapiConnectionParams params);
+  Future<Void> createPubSubUser(OkapiConnectionParams params);
 }
