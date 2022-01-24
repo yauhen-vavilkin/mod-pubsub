@@ -560,15 +560,11 @@ Keep in mind, that subscriber module should return response to the "mod-pubsub" 
 As a result, we can send an event from the publisher module to "mod-pubsub" and "mod-pubsub" will deliver it to the subscriber module.
 
 #### Permissions
-##### "mod-pubsub" permissions workflow:
-At first "mod-pubsub" checks whether the system user (default username is "pub-sub", see **System user credentials** for more details) user exists in the system. If user exists, then:
-- adds permissions from the file "pubsub-user-permissions.csv" to the system user.
 
- ##### Otherwise:
- If user does not exist in the system, then:
- - system user is created;
- - system user credentials are created;
- - permissions are assigned to the system user (new record with specific permissions added to the "user_permissions" table). 
+During tenant init (upgrade, enable), mod-pubsub checks whether the system user
+(default username is "pub-sub", see **System user credentials** for more details) user exists in the system.
+If the user does not exist, it is created and actived. In any case, permissions
+from the file `pubsub-user-permissions.csv` are assigned to the system user.
 
 ##### When system user is logged in, its token is used for delivering events to subscriber module.
 

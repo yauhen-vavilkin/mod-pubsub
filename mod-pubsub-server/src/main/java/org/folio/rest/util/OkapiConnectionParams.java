@@ -26,7 +26,7 @@ public final class OkapiConnectionParams {
   public OkapiConnectionParams(Map<String, String> okapiHeaders, Vertx vertx) {
     this.okapiUrl = okapiHeaders.getOrDefault(OKAPI_URL_HEADER, "localhost");
     this.tenantId = okapiHeaders.getOrDefault(OKAPI_TENANT_HEADER, "");
-    this.token = okapiHeaders.getOrDefault(OKAPI_TOKEN_HEADER, "dummy");
+    this.token = okapiHeaders.get(OKAPI_TOKEN_HEADER);
     this.headers = okapiHeaders;
     this.vertx = vertx;
   }

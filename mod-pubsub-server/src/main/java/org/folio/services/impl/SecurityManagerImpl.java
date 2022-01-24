@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
 import org.folio.config.user.SystemUserConfig;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.representation.User;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.SecurityManager;
@@ -26,7 +25,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -96,11 +94,11 @@ public class SecurityManagerImpl implements SecurityManager {
       .compose(user -> {
         if (user != null) {
           return updateUser(user, params)
-            .compose(updatedUser -> addPermissions(user.getId(), params));
+            .compose(updatedUser -> establishPermissionsUser(user.getId(), params));
         } else {
           return createUser(params)
             .compose(userId -> saveCredentials(userId, params))
-            .compose(userId -> assignPermissions(userId, params));
+            .compose(userId -> establishPermissionsUser(userId, params));
         }
       });
   }
@@ -196,47 +194,61 @@ public class SecurityManagerImpl implements SecurityManager {
       });
   }
 
-  private Future<Void> assignPermissions(String userId, OkapiConnectionParams params) {
-    JsonObject requestBody = new JsonObject()
-      .put("id", UUID.randomUUID().toString())
-      .put("userId", userId)
-      .put("permissions", new JsonArray(PERMISSIONS));
-    return doRequest(params, PERMISSIONS_URL, HttpMethod.POST, requestBody.encode())
-      .compose(response -> {
-        if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Added permissions [{}] for {} user", StringUtils.join(PERMISSIONS, ","),
-            systemUserConfig.getName());
+  /**
+   * Create or Update permission user.
+   * @param userId user ID as known from mod-users
+   * @param params connection params.
+   * @return async result.
+   */
+  private Future<Void> establishPermissionsUser(String userId, OkapiConnectionParams params) {
+    // have to do a GET first as PUT does not allow indexField=userId.. If that was available, the
+    // GET would not be necessary.
+    return doRequest(params, PERMISSIONS_URL + "/" + userId + "?indexField=userId", HttpMethod.GET,
+      null).compose(res1 -> {
+      if (res1.getCode() == HttpStatus.HTTP_OK.toInt()) {
+        if (res1.getJson().getJsonArray("permissions").equals(new JsonArray(PERMISSIONS))) {
           return Future.succeededFuture();
-        } else {
-          String errorMessage = format("Failed to add permissions %s for %s user. Received status code %s: %s",
-            StringUtils.join(PERMISSIONS, ","), systemUserConfig.getName(), response.getCode(),
-            response.getBody());
-          LOGGER.error(errorMessage);
-          return Future.failedFuture(errorMessage);
         }
-      });
-  }
-
-  private Future<Void> addPermissions(String userId, OkapiConnectionParams params) {
-    List<Future<Void>> futures = new ArrayList<>();
-    String permUrl = PERMISSIONS_URL + "/" + userId + "/permissions?indexField=userId";
-    PERMISSIONS.forEach(permission -> {
-      JsonObject requestBody = new JsonObject()
-        .put("permissionName", permission);
-      futures.add(doRequest(params, permUrl, HttpMethod.POST, requestBody.encode())
-        .compose(response -> {
-          if (response.getCode() == HttpStatus.HTTP_OK.toInt()) {
-            LOGGER.info("Added permission {} for {} user", permission, systemUserConfig.getName());
-            return Future.succeededFuture();
-          } else {
-            String errorMessage = format("Failed to add permission %s for %s user. Received status code %s",
-              permission, systemUserConfig.getName(), response.getCode());
+        JsonObject requestBody = res1.getJson()
+          .put("permissions", new JsonArray(PERMISSIONS));
+        return doRequest(params, PERMISSIONS_URL + "/" + requestBody.getString("id"), HttpMethod.PUT,
+          requestBody.encode())
+          .compose(res2 -> {
+            if (res2.getCode() == HttpStatus.HTTP_OK.toInt()) {
+              LOGGER.info("Updated user {} with permissions [{}]", systemUserConfig.getName(),
+                StringUtils.join(PERMISSIONS, ","));
+              return Future.succeededFuture();
+            }
+            String errorMessage = format("Failed to update permissions %s for %s user. Received status code %s: %s",
+              StringUtils.join(PERMISSIONS, ","), systemUserConfig.getName(), res2.getCode(),
+              res2.getBody());
             LOGGER.error(errorMessage);
             return Future.failedFuture(errorMessage);
-          }
-        }));
+          });
+      } else if (res1.getCode() == HttpStatus.HTTP_NOT_FOUND.toInt()) {
+        JsonObject requestBody = new JsonObject()
+          .put("id", UUID.randomUUID().toString())
+          .put("userId", userId)
+          .put("permissions", new JsonArray(PERMISSIONS));
+        return doRequest(params, PERMISSIONS_URL, HttpMethod.POST, requestBody.encode())
+          .compose(res2 -> {
+            if (res2.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
+              LOGGER.info("Created user {} with permissions [{}]", systemUserConfig.getName(),
+                StringUtils.join(PERMISSIONS, ","));
+              return Future.succeededFuture();
+            }
+            String errorMessage = format("Failed to add permissions %s for %s user. Received status code %s: %s",
+              StringUtils.join(PERMISSIONS, ","), systemUserConfig.getName(), res2.getCode(),
+              res2.getBody());
+            LOGGER.error(errorMessage);
+            return Future.failedFuture(errorMessage);
+          });
+      }
+      String errorMessage = format("Failed to get permissions for %s user. Received status code %s: %s",
+        systemUserConfig.getName(), res1.getCode(), res1.getBody());
+      LOGGER.error(errorMessage);
+      return Future.failedFuture(errorMessage);
     });
-    return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
   static List<String> readPermissionsFromResource(String path) {
