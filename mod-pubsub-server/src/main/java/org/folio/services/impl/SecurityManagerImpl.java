@@ -209,7 +209,7 @@ public class SecurityManagerImpl implements SecurityManager {
           return Future.succeededFuture();
         } else {
           String errorMessage = format("Failed to add permissions %s for %s user. Received status code %s: %s",
-            StringUtils.join(permissions, ","), systemUserConfig.getName(), response.getCode(),
+            StringUtils.join(PERMISSIONS, ","), systemUserConfig.getName(), response.getCode(),
             response.getBody());
           LOGGER.error(errorMessage);
           return Future.failedFuture(errorMessage);
