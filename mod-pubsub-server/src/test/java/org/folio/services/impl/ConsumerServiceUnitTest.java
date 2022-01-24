@@ -78,7 +78,6 @@ public class ConsumerServiceUnitTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     when(securityManager.getJWTToken(any(OkapiConnectionParams.class))).thenReturn(Future.succeededFuture(TOKEN));
-    when(securityManager.loginPubSubUser(any(OkapiConnectionParams.class))).thenReturn(Future.succeededFuture(true));
 
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
     headers.put(OKAPI_TENANT_HEADER, TENANT);

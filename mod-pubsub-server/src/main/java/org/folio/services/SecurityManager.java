@@ -10,15 +10,7 @@ import org.folio.rest.util.OkapiConnectionParams;
 public interface SecurityManager {
 
   /**
-   * Log in system user and save obtained token in the vertx context
-   *
-   * @param params okapi connection params
-   * @return future with true if succeeded
-   */
-  Future<Boolean> loginPubSubUser(OkapiConnectionParams params);
-
-  /**
-   * Get JWT token for system user
+   * Get JWT token, log in system user if needed
    *
    * @param params okapi connection params
    * @return future with token
@@ -29,7 +21,6 @@ public interface SecurityManager {
    * Creates new system user if it doesn't exist and assigns all necessary permissions
    *
    * @param params okapi connection params
-   * @return future with true if succeeded
    */
-  Future<Boolean> createPubSubUser(OkapiConnectionParams params);
+  Future<Void> createPubSubUser(OkapiConnectionParams params);
 }

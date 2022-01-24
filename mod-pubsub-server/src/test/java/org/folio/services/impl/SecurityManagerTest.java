@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.folio.dao.MessagingModuleDao;
@@ -119,8 +120,7 @@ public class SecurityManagerTest {
     params.setTenantId(TENANT);
     params.setToken(TOKEN);
 
-    Future<String> future = securityManager.loginPubSubUser(params)
-      .compose(ar -> securityManager.getJWTToken(params));
+    Future<String> future = securityManager.getJWTToken(params);
 
     future.onComplete(ar -> {
       context.assertTrue(ar.succeeded());
@@ -147,11 +147,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(2, requests.size());
 
@@ -183,11 +181,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(4, requests.size());
 
@@ -258,11 +254,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(3, requests.size());
 
@@ -292,11 +286,9 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<Boolean> future = securityManager.createPubSubUser(params);
+    Future<Void> future = securityManager.createPubSubUser(params);
 
     future.map(ar -> {
-      assertTrue(ar);
-
       final List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       assertEquals(2, requests.size());
 
@@ -330,6 +322,11 @@ public class SecurityManagerTest {
       assertEquals("Failed to add permissions inventory.all for test-pubsub-username user."
           + " Received status code 403: null", x.getMessage())
     ));
+  }
+
+  @Test(expected = NoSuchElementException.class)
+  public void shouldFailReadingPermissionsOnEmptyPermissionsFile() {
+    SecurityManagerImpl.readPermissionsFromResource("permissions/emptyFile");
   }
 
   private void verifyUser(LoggedRequest loggedRequest) {
