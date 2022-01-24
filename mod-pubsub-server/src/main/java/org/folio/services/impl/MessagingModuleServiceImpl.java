@@ -143,7 +143,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Boolean> delete(MessagingModuleFilter filter) {
+  public Future<Void> delete(MessagingModuleFilter filter) {
     return messagingModuleDao.delete(filter)
       .onSuccess(ar -> cache.invalidate());
   }

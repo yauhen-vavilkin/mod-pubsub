@@ -104,19 +104,9 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   }
 
   @Override
-  public Future<Boolean> delete(String id) {
-    Promise<RowSet<Row>> promise = Promise.promise();
-    String query = format(DELETE_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().execute(query, Tuple.of(UUID.fromString(id)), promise);
-    return promise.future().map(updateResult -> updateResult.rowCount() == 1);
-  }
-
-  @Override
-  public Future<Boolean> delete(MessagingModuleFilter filter) {
-    Promise<RowSet<Row>> promise = Promise.promise();
+  public Future<Void> delete(MessagingModuleFilter filter) {
     String query = format(DELETE_BY_SQL, MODULE_SCHEMA, TABLE_NAME, buildWhereClause(filter));
-    pgClientFactory.getInstance().execute(query, promise);
-    return promise.future().map(updateResult -> updateResult.rowCount() == 1);
+    return pgClientFactory.getInstance().execute(query).mapEmpty();
   }
 
   @Override
