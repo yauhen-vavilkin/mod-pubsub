@@ -327,8 +327,8 @@ public class SecurityManagerTest {
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
     securityManager.createPubSubUser(params).onComplete(context.asyncAssertFailure(x ->
-      assertEquals("Failed to add permissions for test-pubsub-username user. Received status code 403",
-        x.getMessage())
+      assertEquals("Failed to add permissions inventory.all for test-pubsub-username user."
+          + " Received status code 403: null", x.getMessage())
     ));
   }
 
