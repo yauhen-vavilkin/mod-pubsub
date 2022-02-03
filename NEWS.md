@@ -1,3 +1,6 @@
+## 2021-12-18 v2.4.2
+* [MODPUBSUB-204](https://issues.folio.org/browse/MODPUBSUB-204) Upgrade to RMB 33.0.4 and Log4j 2.16.0
+
 ## 2021-12-09 v2.4.1
 * [MODPUBSUB-201](https://issues.folio.org/browse/MODPUBSUB-201) Socket leak for outgoing HTTP requests
 
