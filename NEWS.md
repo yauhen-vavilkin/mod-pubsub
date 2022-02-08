@@ -1,3 +1,6 @@
+## 2022-02-08 v 2.4.3
+* [MODPUBSUB-224](https://issues.folio.org/browse/MODPUBSUB-224) Update folio-liquibase-util to v1.2.1
+
 ## 2021-09-29 v2.4.0
 * [MODPUBSUB-185](https://issues.folio.org/browse/MODPUBSUB-185) Adjust the threshold at which the consumer can be resumed according to the load limit
 * [MODPUBSUB-186](https://issues.folio.org/browse/MODPUBSUB-186) Provide 'ssl.endpoint.identification.algorithm' property
