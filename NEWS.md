@@ -1,3 +1,6 @@
+## 2022-02-08 v2.4.3
+* [MODPUBSUB-224](https://issues.folio.org/browse/MODPUBSUB-224) Update folio-liquibase-util to v1.2.1
+
 ## 2021-12-18 v2.4.2
 * [MODPUBSUB-204](https://issues.folio.org/browse/MODPUBSUB-204) Upgrade to RMB 33.0.4 and Log4j 2.16.0
 
