@@ -5,7 +5,7 @@
   <parent>
     <artifactId>mod-pubsub</artifactId>
     <groupId>org.folio</groupId>
-    <version>2.4.3-SNAPSHOT</version>
+    <version>2.4.4-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -84,7 +84,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-liquibase-util</artifactId>
-      <version>1.2.0</version>
+      <version>1.2.1</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
