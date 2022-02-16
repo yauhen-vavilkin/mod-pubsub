@@ -28,6 +28,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.RegexPattern;
 import com.github.tomakehurst.wiremock.matching.UrlPathPattern;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
@@ -37,7 +38,7 @@ public class PubSubClientTest {
   private static final String TOKEN = "token";
   private static final int PORT = NetworkUtils.nextFreePort();
 
-  private static OkapiConnectionParams params = new OkapiConnectionParams();
+  private static final OkapiConnectionParams params = new OkapiConnectionParams(Vertx.vertx());
   private static final JsonObject EVENT = new JsonObject()
     .put("id", UUID.randomUUID().toString())
     .put("eventType", "record_created")

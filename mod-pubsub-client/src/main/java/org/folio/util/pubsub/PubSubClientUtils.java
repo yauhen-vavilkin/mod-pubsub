@@ -3,11 +3,14 @@ package org.folio.util.pubsub;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.vertx.core.Promise;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.HttpStatus;
 import org.folio.rest.client.PubsubClient;
+import org.folio.rest.client.WebClientProvider;
 import org.folio.rest.jaxrs.model.Event;
 import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.MessagingDescriptor;
@@ -60,9 +63,8 @@ public class PubSubClientUtils {
    */
   public static CompletableFuture<Boolean> sendEventMessage(Event eventMessage, OkapiConnectionParams params) {
     CompletableFuture<Boolean> result = new CompletableFuture<>();
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     try {
-      client.postPubsubPublish(eventMessage, ar -> {
+      createPubSubClient(params).postPubsubPublish(eventMessage, ar -> {
         if (ar.result().statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           result.complete(true);
         } else {
@@ -75,7 +77,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during sending event message to PubSub", e);
       result.completeExceptionally(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   /**
@@ -86,8 +88,8 @@ public class PubSubClientUtils {
    */
   public static CompletableFuture<Boolean> registerModule(OkapiConnectionParams params) {
     CompletableFuture<Boolean> result = CompletableFuture.completedFuture(false);
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     try {
+      PubsubClient client = createPubSubClient(params);
       LOGGER.info("Reading MessagingDescriptor.json");
       DescriptorHolder descriptorHolder = readMessagingDescriptor();
       if (descriptorHolder.getPublisherDescriptor() != null &&
@@ -105,7 +107,7 @@ public class PubSubClientUtils {
       LOGGER.error("Error during registration module in PubSub", e);
       result = CompletableFuture.failedFuture(e);
     }
-    return result.whenComplete((res, throwable) -> client.close());
+    return result;
   }
 
   private static CompletableFuture<Void> registerEventTypes(PubsubClient client, List<EventDescriptor> events) {
@@ -182,20 +184,20 @@ public class PubSubClientUtils {
    * @return future with true if module was unregistered successfully
    */
   public static CompletableFuture<Boolean> unregisterModule(OkapiConnectionParams params) {
-    PubsubClient client = new PubsubClient(params.getOkapiUrl(), params.getTenantId(), params.getToken());
     String moduleId = getModuleId();
 
-    return unregisterModuleByIdAndRole(client, moduleId, PUBLISHER)
-      .thenCompose(ar -> unregisterModuleByIdAndRole(client, moduleId, SUBSCRIBER))
-      .whenComplete((ar, e) -> client.close());
+    return unregisterModuleByIdAndRole(moduleId, PUBLISHER, params)
+      .thenCompose(unused -> unregisterModuleByIdAndRole(moduleId, SUBSCRIBER, params));
   }
 
-  private static CompletableFuture<Boolean> unregisterModuleByIdAndRole(PubsubClient client, String moduleId, MessagingModule.ModuleRole moduleRole) {
+  private static CompletableFuture<Boolean> unregisterModuleByIdAndRole(String moduleId,
+    MessagingModule.ModuleRole moduleRole, OkapiConnectionParams params) {
+
     Promise<Boolean> promise = Promise.promise();
     CompletableFuture<Boolean> future = new CompletableFuture<>();
     try {
       LOGGER.info("Trying to unregister module with name '{}' as {}", moduleId, moduleRole);
-      client.deletePubsubMessagingModules(moduleId, moduleRole.value(), response -> {
+      createPubSubClient(params).deletePubsubMessagingModules(moduleId, moduleRole.value(), response -> {
         if (response.result().statusCode() == HttpStatus.HTTP_NO_CONTENT.toInt()) {
           LOGGER.info("Module {} was successfully unregistered as '{}'", moduleId, moduleRole);
           future.complete(true);
@@ -252,10 +254,7 @@ public class PubSubClientUtils {
   private static InputStream getMessagingDescriptorInputStream() throws MessagingDescriptorNotFoundException {
     return Optional.ofNullable(System.getProperty(MESSAGING_CONFIG_PATH_PROPERTY))
       .flatMap(PubSubClientUtils::getFileInputStreamByParentPath)
-      // returns empty Optional when file not found or Optional<Optional<InputStream>> with input stream of found file in otherwise
-      .map(Optional::of)
-      // looking for a file in class path when file was not found by parent path
-      .orElseGet(() -> getFileInputStreamFromClassPath(MESSAGING_CONFIG_FILE_NAME))
+      .or(() -> getFileInputStreamFromClassPath(MESSAGING_CONFIG_FILE_NAME))
       .orElseThrow(() -> new MessagingDescriptorNotFoundException("Messaging descriptor file 'MessagingDescriptor.json' not found"));
   }
 
@@ -263,7 +262,7 @@ public class PubSubClientUtils {
     if (Paths.get(parentPath).isAbsolute()) {
       return getFileInputStreamByAbsoluteParentPath(parentPath);
     }
-    String fullRelativeFilePath = new StringBuilder().append(parentPath).append(File.separatorChar).append(MESSAGING_CONFIG_FILE_NAME).toString();
+    String fullRelativeFilePath = parentPath + File.separatorChar + MESSAGING_CONFIG_FILE_NAME;
     return getFileInputStreamFromClassPath(fullRelativeFilePath);
   }
 
@@ -287,5 +286,10 @@ public class PubSubClientUtils {
 
   public static String getModuleId() {
     return format("%s-%s", PomReader.INSTANCE.getModuleName(), PomReader.INSTANCE.getVersion());
+  }
+
+  private static PubsubClient createPubSubClient(OkapiConnectionParams params) {
+    return new PubsubClient(params.getOkapiUrl(), params.getTenantId(),
+      params.getToken(), WebClientProvider.getWebClient(params.getVertx()));
   }
 }

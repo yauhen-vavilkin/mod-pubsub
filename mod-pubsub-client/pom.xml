@@ -15,9 +15,16 @@
     <sonar.exclusions>**/OkapiConnectionParams.java</sonar.exclusions>
     <sonar.exclusions>**/PubsubClient.java</sonar.exclusions>
     <sonar.exclusions>**/PomReader.java</sonar.exclusions>
+    <sonar.exclusions>**/WebClientProvider.java</sonar.exclusions>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
@@ -128,6 +135,30 @@
     </resources>
     <plugins>
       <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>domain-models-maven-plugin</artifactId>
+        <version>${raml-module-builder.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.folio</groupId>
+            <artifactId>mod-pubsub-server</artifactId>
+            <version>${project.parent.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>generate_interfaces</id>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <generateClients>true</generateClients>
+              <generateInterfaces>false</generateInterfaces>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
@@ -183,6 +214,8 @@
             <phase>initialize</phase>
             <configuration>
               <sources>
+                <!-- Adds client classes generated in current client module-->
+                <source>${project.build.directory}/generated-sources/raml-jaxrs</source>
                 <!-- Adds model classes generated in server module -->
                 <source>../mod-pubsub-server/target/generated-sources/raml-jaxrs</source>
               </sources>
