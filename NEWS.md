@@ -1,3 +1,23 @@
+## 2022-02-22 v2.5.0
+* [MODPUBSUB-209](https://issues.folio.org/browse/MODPUBSUB-209) Add pubsub-user permission to post events
+* [MODPUBSUB-210](https://issues.folio.org/browse/MODPUBSUB-210) Fix incorrect status for tenant init
+* [MODPUBSUB-212](https://issues.folio.org/browse/MODPUBSUB-212) Rely on Future status instead of Boolean in SecurityManager
+* [MODPUBSUB-213](https://issues.folio.org/browse/MODPUBSUB-213) Rely on Future status instead of Boolean in MessagingModuleDao
+* [MODPUBSUB-221](https://issues.folio.org/browse/MODPUBSUB-221) Fix create/update pubsub user
+* [MODPUBSUB-222](https://issues.folio.org/browse/MODPUBSUB-222) Update RMB version to 33.2.4
+* [MODPUBSUB-223](https://issues.folio.org/browse/MODPUBSUB-223) Update folio-liquibase-util to v1.3.0
+* [MODPUBSUB-202](https://issues.folio.org/browse/MODPUBSUB-202) Bad HTTP client pool utilization in mod-pubsub-client
+* Bump postgresql from 42.2.25 to 42.3.3 in /mod-pubsub-server
+* OkapiConnectionParams takes vertx parameter
+* Extend diagnostics for failed pubsub user creation
+* Bump postgresql from 42.2.18 to 42.2.25 in /mod-pubsub-server
+
+## 2022-02-08 v2.4.3
+* [MODPUBSUB-224](https://issues.folio.org/browse/MODPUBSUB-224) Update folio-liquibase-util to v1.2.1
+
+## 2021-12-18 v2.4.2
+* [MODPUBSUB-204](https://issues.folio.org/browse/MODPUBSUB-204) Upgrade to RMB 33.0.4 and Log4j 2.16.0
+
 ## 2021-12-09 v2.4.1
 * [MODPUBSUB-201](https://issues.folio.org/browse/MODPUBSUB-201) Socket leak for outgoing HTTP requests
 
