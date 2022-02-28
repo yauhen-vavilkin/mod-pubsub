@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,6 @@ import org.folio.config.user.SystemUserConfig;
 import org.folio.representation.User;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.cache.Cache;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -429,16 +428,16 @@ public class SecurityManagerTest {
 
   private JsonObject existingUser(String id) {
     final JsonObject metadata = new JsonObject()
-      .put("createdDate", DateTime.now(DateTimeZone.UTC).toString())
-      .put("updatedDate", DateTime.now(DateTimeZone.UTC).toString());
+      .put("createdDate", Instant.now())
+      .put("updatedDate", Instant.now());
 
     return new JsonObject()
       .put("id", id)
       .put("username", SYSTEM_USER_NAME)
       .put("active", "true")
       .put("proxyFor", new JsonArray())
-      .put("createdDate", DateTime.now(DateTimeZone.UTC).toString())
-      .put("updatedDate", DateTime.now(DateTimeZone.UTC).toString())
+      .put("createdDate", Instant.now())
+      .put("updatedDate", Instant.now())
       .put("metadata", metadata);
   }
 
