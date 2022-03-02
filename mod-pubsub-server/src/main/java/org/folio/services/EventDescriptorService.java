@@ -46,7 +46,7 @@ public interface EventDescriptorService {
    * Deletes {@link EventDescriptor} by event type
    *
    * @param eventType eventDescriptor eventType
-   * @return future with true if succeeded
+   * @return succeeded future if exactly one row was updated, failed future otherwise
    */
-  Future<Boolean> delete(String eventType);
+  Future<Void> delete(String eventType);
 }
