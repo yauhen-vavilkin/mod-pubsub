@@ -33,6 +33,7 @@
 
   <dependencyManagement>
     <dependencies>
+
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-bom</artifactId>
@@ -40,6 +41,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
@@ -47,6 +49,19 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.mguenther.kafka</groupId>
+        <artifactId>kafka-junit</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

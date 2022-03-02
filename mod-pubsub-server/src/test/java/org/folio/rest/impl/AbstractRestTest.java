@@ -22,11 +22,9 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
-
 import static java.lang.String.format;
 import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.useDefaults;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
@@ -62,12 +60,12 @@ public abstract class AbstractRestTest {
   static RequestSpecification spec;
   private static String useExternalDatabase;
   protected static Vertx vertx;
-
-  @ClassRule
-  public static EmbeddedKafkaCluster cluster = provisionWith(useDefaults());
+  public static EmbeddedKafkaCluster cluster;
 
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
+    cluster = provisionWith(defaultClusterConfig());
+    cluster.start();
     vertx = Vertx.vertx();
     runDatabase();
     String[] hostAndPort = cluster.getBrokerList().split(":");
@@ -77,6 +75,12 @@ public abstract class AbstractRestTest {
     System.setProperty(SYSTEM_USER_NAME_ENV, SYSTEM_USER_NAME);
     System.setProperty(SYSTEM_USER_PASSWORD_ENV, SYSTEM_USER_PASSWORD);
     deployVerticle(context);
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    cluster.stop();
+    cluster = null;
   }
 
   private static void runDatabase() throws Exception {
