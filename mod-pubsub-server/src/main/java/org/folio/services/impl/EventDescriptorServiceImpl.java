@@ -83,7 +83,7 @@ public class EventDescriptorServiceImpl implements EventDescriptorService {
   }
 
   @Override
-  public Future<Boolean> delete(String eventType) {
+  public Future<Void> delete(String eventType) {
     return eventDescriptorDao.getByEventType(eventType)
       .compose(eventDescriptorOptional -> eventDescriptorOptional
         .map(eventDescriptor -> messagingModuleService.get(new MessagingModuleFilter().withEventType(eventType))
