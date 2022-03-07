@@ -69,40 +69,28 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   @Override
-  public Future<Boolean> subscribe(List<String> eventTypes, OkapiConnectionParams params) {
-    Promise<Boolean> result = Promise.promise();
+  public Future<Void> subscribe(List<String> eventTypes, OkapiConnectionParams params) {
     Set<String> topics = eventTypes.stream()
-      .map(eventType -> new PubSubConfig(kafkaConfig.getEnvId(), params.getTenantId(), eventType).getTopicName())
+      .map(eventType -> new PubSubConfig(kafkaConfig.getEnvId(),
+        params.getTenantId(), eventType).getTopicName())
       .collect(Collectors.toSet());
     Map<String, String> consumerProps = kafkaConfig.getConsumerProps();
-    List<Future<Boolean>> list = new ArrayList<>();
-    for (String topic : topics) {
-      if (!cache.containsSubscription(topic)) {
+    List<Future<Void>> futures = topics.stream()
+      .filter(topic -> !cache.containsSubscription(topic))
+      .map(topic -> {
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, topic);
-        Promise<Boolean> promise = Promise.promise();
-        KafkaConsumer.<String, String>create(vertx, consumerProps)
-          .subscribe(topic, ar -> {
-            if (ar.succeeded()) {
-              cache.addSubscription(topic);
-              LOGGER.info(format("Subscribed to topic {%s}", topic));
-              promise.complete(true);
-            } else {
-              LOGGER.error(format("Could not subscribe to some of the topic {%s}", topic), ar.cause());
-              promise.fail(ar.cause());
-            }
-          }).handler(getEventReceivedHandler(params));
-        list.add(promise.future());
-      }
-    }
-    GenericCompositeFuture.all(list)
-      .onComplete(ar -> {
-        if (ar.succeeded()) {
-          result.complete(true);
-        } else {
-          result.fail(ar.cause());
-        }
-      });
-    return result.future();
+        return KafkaConsumer.<String, String>create(vertx, consumerProps)
+          .handler(getEventReceivedHandler(params))
+          .subscribe(topic)
+          .onSuccess(result -> {
+            cache.addSubscription(topic);
+            LOGGER.info(format("Subscribed to topic {%s}", topic));
+          })
+          .onFailure(e ->
+            LOGGER.error(format("Could not subscribe to some of the topic {%s}", topic), e));
+      })
+      .collect(Collectors.toList());
+    return GenericCompositeFuture.all(futures).mapEmpty();
   }
 
   private Handler<KafkaConsumerRecord<String, String>> getEventReceivedHandler(OkapiConnectionParams params) {

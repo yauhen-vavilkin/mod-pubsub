@@ -122,14 +122,14 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, OkapiConnectionParams params) {
+  public Future<Void> saveSubscriber(SubscriberDescriptor subscriberDescriptor, OkapiConnectionParams params) {
     List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(subscriberDescriptor.getModuleId(), eventTypes, SUBSCRIBER, params.getTenantId());
     if (messagingModules.isEmpty()) {
       LOGGER.info("List of Subscribers is empty");
-      return Future.succeededFuture(true);
+      return Future.succeededFuture();
     }
 
     Map<String, String> subscriberCallbacksMap = subscriberDescriptor.getSubscriptionDefinitions().stream()

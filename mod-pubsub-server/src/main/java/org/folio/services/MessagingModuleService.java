@@ -48,9 +48,9 @@ public interface MessagingModuleService {
    *
    * @param subscriberDescriptor subscriber descriptor
    * @param params               Okapi connection params
-   * @return future with boolean
+   * @return succeeded future if saved subscriber, failed future otherwise
    */
-  Future<Boolean> saveSubscriber(SubscriberDescriptor subscriberDescriptor, OkapiConnectionParams params);
+  Future<Void> saveSubscriber(SubscriberDescriptor subscriberDescriptor, OkapiConnectionParams params);
 
   /**
    * Deletes module matching filter criteria
