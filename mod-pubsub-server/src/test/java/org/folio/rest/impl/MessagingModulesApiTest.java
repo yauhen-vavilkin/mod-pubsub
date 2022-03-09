@@ -12,20 +12,19 @@ import org.folio.rest.jaxrs.model.SubscriptionDefinition;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.PUBLISHER;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+
+import java.util.List;
 
 @RunWith(VertxUnitRunner.class)
 public class MessagingModulesApiTest extends AbstractRestTest {
 
   public static final String MESSAGING_MODULES_PATH = "/pubsub/messaging-modules";
 
-  private EventDescriptor eventDescriptor = new EventDescriptor()
+  private final EventDescriptor eventDescriptor = new EventDescriptor()
     .withEventType("DI_SRS_MARC_BIB_RECORD_CREATED")
     .withDescription("Created SRS Marc Bibliographic")
     .withEventTTL(1)
@@ -37,7 +36,7 @@ public class MessagingModulesApiTest extends AbstractRestTest {
 
     String moduleId = "test-module-1.0.0";
     PublisherDescriptor publisherDescriptor = new PublisherDescriptor()
-      .withEventDescriptors(Collections.singletonList(createdEventDescriptor))
+      .withEventDescriptors(List.of(createdEventDescriptor))
       .withModuleId(moduleId);
 
     RestAssured.given()
@@ -74,7 +73,7 @@ public class MessagingModulesApiTest extends AbstractRestTest {
       .withCallbackAddress("/callback-path");
 
     SubscriberDescriptor subscriberDescriptor = new SubscriberDescriptor()
-      .withSubscriptionDefinitions(Arrays.asList(subscriptionDefinition))
+      .withSubscriptionDefinitions(List.of(subscriptionDefinition))
       .withModuleId(moduleId);
 
     RestAssured.given()

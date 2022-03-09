@@ -96,12 +96,13 @@ public class PublishTest extends AbstractRestTest {
       .withEventDescriptors(Collections.singletonList(eventDescriptor))
       .withModuleId("mod-very-important-1.0.0");
 
-    Response postResponse = RestAssured.given()
+    RestAssured.given()
       .spec(spec)
       .body(JsonObject.mapFrom(publisherDescriptor).encode())
       .when()
-      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH);
-    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+      .post(EVENT_TYPES_PATH + DECLARE_PUBLISHER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
   }
 
   private EventDescriptor postEventDescriptor(EventDescriptor eventDescriptor) {
@@ -122,12 +123,13 @@ public class PublishTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
       .withModuleId("mod-important-1.0.0");
 
-    Response postResponse = RestAssured.given()
+    RestAssured.given()
       .spec(spec)
       .body(JsonObject.mapFrom(subscriberDescriptor).encode())
       .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH);
-    assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
+      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
   }
 
   @After

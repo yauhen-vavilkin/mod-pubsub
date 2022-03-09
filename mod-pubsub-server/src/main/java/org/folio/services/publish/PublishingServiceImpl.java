@@ -1,7 +1,6 @@
 package org.folio.services.publish;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.Json;
@@ -42,10 +41,9 @@ public class PublishingServiceImpl implements PublishingService {
   }
 
   @Override
-  public Future<Boolean> sendEvent(Event event, String tenantId) {
-    Promise<Boolean> promise = Promise.promise();
+  public Future<Void> sendEvent(Event event, String tenantId) {
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
-    executor.executeBlocking(future -> {
+    return executor.executeBlocking(promise -> {
         try {
           KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx,
             config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
@@ -54,12 +52,12 @@ public class PublishingServiceImpl implements PublishingService {
             if (done.succeeded()) {
               LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
-              future.complete(true);
+              promise.complete();
             } else {
               String errorMessage = "Event was not sent";
               LOGGER.error(errorMessage, done.cause());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
-              future.fail(done.cause());
+              promise.fail(done.cause());
             }
             sharedProducer.close();
           });
@@ -67,10 +65,8 @@ public class PublishingServiceImpl implements PublishingService {
           String errorMessage = "Error publishing event";
           LOGGER.error(errorMessage, e);
           auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
+          promise.fail(e);
         }
-      }
-      , promise);
-
-    return promise.future();
+      });
   }
 }

@@ -13,8 +13,8 @@ public interface PublishingService { //NOSONAR
    *
    * @param event    {@link Event} to send
    * @param tenantId tenant id
-   * @return future with true if succeeded
+   * @return succeeded future if event is published, failed future otherwise
    */
-  Future<Boolean> sendEvent(Event event, String tenantId);
+  Future<Void> sendEvent(Event event, String tenantId);
 
 }
