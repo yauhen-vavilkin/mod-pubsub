@@ -48,6 +48,7 @@ public abstract class AbstractRestTest {
   private static final String KAFKA_HOST = "KAFKA_HOST";
   private static final String KAFKA_PORT = "KAFKA_PORT";
   private static final String OKAPI_URL_ENV = "OKAPI_URL";
+  private static final String CACHE_EXPIRATION_TIMING = "CACHE_EXPIRATION_TIMING";
 
   private static final int PORT = NetworkUtils.nextFreePort();
   protected static final String OKAPI_URL = "http://localhost:" + PORT;
@@ -74,6 +75,7 @@ public abstract class AbstractRestTest {
     System.setProperty(OKAPI_URL_ENV, OKAPI_URL);
     System.setProperty(SYSTEM_USER_NAME_ENV, SYSTEM_USER_NAME);
     System.setProperty(SYSTEM_USER_PASSWORD_ENV, SYSTEM_USER_PASSWORD);
+    System.setProperty(CACHE_EXPIRATION_TIMING, String.valueOf(1L));
     deployVerticle(context);
   }
 

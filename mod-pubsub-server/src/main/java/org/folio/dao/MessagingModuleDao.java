@@ -5,6 +5,7 @@ import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.MessagingModuleFilter;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Messaging module data access object
@@ -41,5 +42,5 @@ public interface MessagingModuleDao {
    *
    * @return list of Messaging Modules
    */
-  Future<List<MessagingModule>> getAll();
+  Future<Set<MessagingModule>> getAll();
 }

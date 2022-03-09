@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -110,11 +111,11 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   }
 
   @Override
-  public Future<List<MessagingModule>> getAll() {
+  public Future<Set<MessagingModule>> getAll() {
     Promise<RowSet<Row>> promise = Promise.promise();
     String preparedQuery = format(GET_ALL_SQL, MODULE_SCHEMA, TABLE_NAME);
     pgClientFactory.getInstance().select(preparedQuery, promise);
-    return promise.future().map(this::mapResultSetToMessagingModuleList);
+    return promise.future().map(this::mapResultSetToMessagingModuleSet);
   }
 
   private Future<Boolean> delete(MessagingModuleFilter filter, AsyncResult<SQLConnection> sqlConnection) {
@@ -141,6 +142,14 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
       .map(this::mapRowJsonToMessagingModule)
       .collect(Collectors.toList());
   }
+
+  private Set<MessagingModule> mapResultSetToMessagingModuleSet(RowSet<Row> resultSet) {
+    return Stream.generate(resultSet.iterator()::next)
+      .limit(resultSet.size())
+      .map(this::mapRowJsonToMessagingModule)
+      .collect(Collectors.toSet());
+  }
+
 
   private String buildWhereClause(MessagingModuleFilter filter) {
     StringBuilder conditionBuilder = new StringBuilder("WHERE TRUE");

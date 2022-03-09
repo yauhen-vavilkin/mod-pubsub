@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -23,6 +24,8 @@ public class Cache {
   private static final String MESSAGING_MODULES_CACHE_KEY = "messaging_modules";
 
   private AsyncLoadingCache<String, Set<MessagingModule>> loadingCache;
+  @Value("${CACHE_EXPIRATION_TIMING}")
+  private long cacheExpirationTiming;
   private com.github.benmanes.caffeine.cache.Cache<String, String> subscriptions;
   private com.github.benmanes.caffeine.cache.Cache<String, String> tenantToken;
   private MessagingModuleDao messagingModuleDao;
@@ -30,8 +33,11 @@ public class Cache {
   public Cache(@Autowired Vertx vertx, @Autowired MessagingModuleDao messagingModuleDao) {
     this.messagingModuleDao = messagingModuleDao;
     this.loadingCache = Caffeine.newBuilder()
+      /*.scheduler(Scheduler.systemScheduler())
+      .expireAfterWrite(cacheExpirationTiming, TimeUnit.SECONDS)*/
       .executor(serviceExecutor -> vertx.runOnContext(ar -> serviceExecutor.run()))
       .buildAsync(k -> new HashSet<>());
+     // .buildAsync(k -> messagingModuleDao.getAll().result());
     this.subscriptions = Caffeine.newBuilder().build();
     this.tenantToken = Caffeine.newBuilder().build();
   }
@@ -42,13 +48,7 @@ public class Cache {
       .get(MESSAGING_MODULES_CACHE_KEY)
       .whenComplete((messagingModules, throwable) -> {
         if (throwable == null) {
-          if (isEmpty(messagingModules)) {
-            messagingModuleDao.getAll()
-              .map(messagingModules::addAll)
-              .onComplete(ar -> promise.complete(messagingModules));
-          } else {
-            promise.complete(messagingModules);
-          }
+          promise.complete(messagingModules);
         } else {
           promise.fail(throwable);
         }
