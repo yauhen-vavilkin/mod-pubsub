@@ -74,7 +74,7 @@ resourceTypes:
             200:
               body:
                 application/json:
-                  schema: messagingModuleCollection
+                  type: messagingModuleCollection
         delete:
           description: Remove publisher declaration for certain event type
           queryParameters:
@@ -94,7 +94,7 @@ resourceTypes:
             200:
               body:
                 application/json:
-                  schema: messagingModuleCollection
+                  type: messagingModuleCollection
         delete:
           description:  API to remove Subscriber declaration for certain event type
           queryParameters:
@@ -113,13 +113,13 @@ resourceTypes:
           description: Declare a publisher for a set of event types
           body:
             application/json:
-              schema: publisherDescriptor
+              type: publisherDescriptor
           responses:
             201:
             400:
               body:
                 application/json:
-                  schema: errors
+                  type: errors
             500:
               description: "Internal server error"
               body:
@@ -131,13 +131,13 @@ resourceTypes:
         post:
           body:
             application/json:
-              schema: subscriberDescriptor
+              type: subscriberDescriptor
           responses:
             201:
             400:
               body:
                 application/json:
-                  schema: errors
+                  type: errors
             500:
               description: "Internal server error"
               body:
@@ -177,7 +177,7 @@ resourceTypes:
         200:
           body:
             application/json:
-              schema: auditMessageCollection
+              type: auditMessageCollection
         400:
           description: "Bad request"
           body:
@@ -197,7 +197,7 @@ resourceTypes:
         200:
           body:
             application/json:
-              schema: auditMessagePayload
+              type: auditMessagePayload
         404:
           description: "Not found"
           body:
@@ -214,13 +214,13 @@ resourceTypes:
     post:
       body:
         application/json:
-          schema: event
+          type: event
       responses:
         204:
         400:
           body:
             application/json:
-              schema: errors
+              type: errors
         500:
           description: "Internal server error"
           body:
