@@ -9,14 +9,22 @@ import org.folio.rest.jaxrs.model.EventDescriptor;
 import org.folio.rest.jaxrs.model.PublisherDescriptor;
 import org.folio.rest.jaxrs.model.SubscriberDescriptor;
 import org.folio.rest.jaxrs.model.SubscriptionDefinition;
+import org.folio.services.util.ClockUtil;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.is;
 
 @RunWith(VertxUnitRunner.class)
@@ -81,6 +89,37 @@ public class PublishTest extends AbstractRestTest {
     EventDescriptor eventDescriptor = postEventDescriptor(EVENT_DESCRIPTOR);
     registerPublisher(eventDescriptor);
     registerSubscriber(eventDescriptor);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(EVENT.put("eventPayload", "something very important").encode())
+      .when()
+      .post(PUBLISH_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_NO_CONTENT);
+  }
+
+  @Test
+  public void shouldSuccessfullyReloadCache() {
+    Instant instant = Instant.parse("2022-08-19T16:02:42.00Z");
+
+    ZoneId zoneId = ZoneId.of("Europe/Paris");
+
+    ClockUtil.setClock(Clock.fixed(instant, zoneId));
+    EventDescriptor eventDescriptor = postEventDescriptor(EVENT_DESCRIPTOR);
+    registerPublisher(eventDescriptor);
+    registerSubscriber(eventDescriptor);
+
+    RestAssured.given()
+      .spec(spec)
+      .body(EVENT.put("eventPayload", "something very important").encode())
+      .when()
+      .post(PUBLISH_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_NO_CONTENT);
+
+    ClockUtil.setClock(Clock.fixed(Instant.ofEpochMilli(ClockUtil.getClock().instant().toEpochMilli()
+      + Long.parseLong(System.getProperty(CACHE_EXPIRATION_TIMING))), zoneId));
 
     RestAssured.given()
       .spec(spec)
