@@ -47,7 +47,7 @@ public class KafkaPublisherServiceImpl implements PublisherService {
   }
 
   @Override
-  public Future<Boolean> publishEvent(Event event, String tenantId) {
+  public Future<Void> publishEvent(Event event, String tenantId) {
     if (EVENT_PAYLOAD_AUDIT_ENABLED) {
       saveAuditMessagePayload(event, tenantId);
     }
@@ -61,9 +61,9 @@ public class KafkaPublisherServiceImpl implements PublisherService {
    *
    * @param event    event to publish
    * @param tenantId tenant id
-   * @return future with true if succeeded
+   * @return succeeded future if publisher verified, failed future otherwise
    */
-  private Future<Boolean> verifyPublisher(Event event, String tenantId) {
+  private Future<Void> verifyPublisher(Event event, String tenantId) {
     return cache.getMessagingModules()
       .map(messagingModules -> new ArrayList<>(filter(messagingModules,
         new MessagingModuleFilter()
@@ -83,7 +83,7 @@ public class KafkaPublisherServiceImpl implements PublisherService {
           auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
           return Future.failedFuture(new BadRequestException(error));
         }
-        return Future.succeededFuture(true);
+        return Future.succeededFuture();
       });
   }
 

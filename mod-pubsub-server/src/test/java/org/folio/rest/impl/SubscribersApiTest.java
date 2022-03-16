@@ -22,14 +22,14 @@ import static org.hamcrest.Matchers.is;
 @RunWith(VertxUnitRunner.class)
 public class SubscribersApiTest extends AbstractRestTest {
 
-  private EventDescriptor eventDescriptor = new EventDescriptor()
+  private final EventDescriptor eventDescriptor = new EventDescriptor()
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with order data in 9xx fields")
     .withEventTTL(1)
     .withSigned(false)
     .withTmp(false);
 
-  private EventDescriptor eventDescriptor2 = new EventDescriptor()
+  private final EventDescriptor eventDescriptor2 = new EventDescriptor()
     .withEventType("CREATED_SRS_MARC_BIB_RECORD_WITH_INVOICE_DATA")
     .withDescription("Created SRS Marc Bibliographic Record with incoice data in 9xx fields")
     .withEventTTL(1)
@@ -62,13 +62,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
       .withModuleId("test-module-14.0.0");
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor);
     async.complete();
 
     async = context.async();
@@ -78,13 +72,7 @@ public class SubscribersApiTest extends AbstractRestTest {
           .withCallbackAddress("/callback-path2")))
       .withModuleId("another-test-module-1.10.0");
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor2).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor2);
     async.complete();
 
     async = context.async();
@@ -113,13 +101,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
       .withModuleId("test-module-1.0.0");
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor);
     async.complete();
 
     async = context.async();
@@ -149,13 +131,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition1))
       .withModuleId(moduleName);
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor1).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor1);
     async.complete();
 
     async = context.async();
@@ -167,13 +143,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition2))
       .withModuleId(moduleName);
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor2).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor2);
     async.complete();
 
     async = context.async();
@@ -233,13 +203,7 @@ public class SubscribersApiTest extends AbstractRestTest {
       .withSubscriptionDefinitions(Collections.singletonList(subscriptionDefinition))
       .withModuleId("test-module-1.0.0-SNAPSHOT");
 
-    RestAssured.given()
-      .spec(spec)
-      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
-      .when()
-      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
-      .then()
-      .statusCode(HttpStatus.SC_CREATED);
+    postDeclareSubscriber(subscriberDescriptor);
     async.complete();
 
     async = context.async();
@@ -287,5 +251,15 @@ public class SubscribersApiTest extends AbstractRestTest {
       .post(EVENT_TYPES_PATH);
     assertThat(postResponse.statusCode(), is(HttpStatus.SC_CREATED));
     return new JsonObject(postResponse.body().asString()).mapTo(EventDescriptor.class);
+  }
+
+  private void postDeclareSubscriber(SubscriberDescriptor subscriberDescriptor) {
+    RestAssured.given()
+      .spec(spec)
+      .body(JsonObject.mapFrom(subscriberDescriptor).encode())
+      .when()
+      .post(EVENT_TYPES_PATH + DECLARE_SUBSCRIBER_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
   }
 }

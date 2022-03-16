@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,9 +95,9 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   }
 
   private Handler<KafkaConsumerRecord<String, String>> getEventReceivedHandler(OkapiConnectionParams params) {
-    return record -> {
+    return consumerRecord -> {
       try {
-        String value = record.value();
+        String value = consumerRecord.value();
         Event event = new JsonObject(value).mapTo(Event.class);
         LOGGER.info("Received {} event with id '{}'", event.getEventType(), event.getId());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.RECEIVED));

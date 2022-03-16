@@ -82,7 +82,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
   }
 
   @Override
-  public Future<Boolean> createMissingEventTypes(SubscriberDescriptor subscriberDescriptor) {
+  public Future<Void> createMissingEventTypes(SubscriberDescriptor subscriberDescriptor) {
     List<String> eventTypes = subscriberDescriptor.getSubscriptionDefinitions().stream()
       .map(SubscriptionDefinition::getEventType)
       .collect(Collectors.toList());
@@ -91,7 +91,7 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
       .compose(existingDescriptorList -> {
         Map<String, EventDescriptor> descriptorsMap = existingDescriptorList.stream()
           .collect(Collectors.toMap(EventDescriptor::getEventType, descriptor -> descriptor));
-        List<Future> futures = new ArrayList<>();
+        List<Future<String>> futures = new ArrayList<>();
         for (String eventType : eventTypes) {
           if (descriptorsMap.get(eventType) == null) {
             LOGGER.info("Event type {} does not exist, creating a temporary definition", eventType);
@@ -103,17 +103,17 @@ public class MessagingModuleServiceImpl implements MessagingModuleService {
           }
         }
         return GenericCompositeFuture.join(futures);
-      }).map(true);
+      }).mapEmpty();
   }
 
   @Override
-  public Future<Boolean> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId) {
+  public Future<Void> savePublisher(PublisherDescriptor publisherDescriptor, String tenantId) {
     List<String> eventTypes = publisherDescriptor.getEventDescriptors().stream()
       .map(EventDescriptor::getEventType).collect(Collectors.toList());
     List<MessagingModule> messagingModules = createMessagingModules(publisherDescriptor.getModuleId(), eventTypes, PUBLISHER, tenantId);
     if (messagingModules.isEmpty()) {
       LOGGER.info("List of Publishers is empty");
-      return Future.succeededFuture(true);
+      return Future.succeededFuture();
     }
 
     return messagingModuleDao.save(messagingModules)
