@@ -1,9 +1,9 @@
 package org.folio.services.impl;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.NewTopic;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,20 +30,14 @@ public class KafkaTopicServiceImpl implements KafkaTopicService {
   }
 
   @Override
-  public Future<Boolean> createTopics(List<String> eventTypes, String tenantId) {
-    Promise<Boolean> promise = Promise.promise();
+  public Future<Void> createTopics(List<String> eventTypes, String tenantId) {
     List<NewTopic> topics = eventTypes.stream()
       .map(eventType -> new NewTopic(new PubSubConfig(kafkaConfig.getEnvId(), tenantId, eventType).getTopicName(), kafkaConfig.getNumberOfPartitions(), (short) kafkaConfig.getReplicationFactor()))
       .collect(Collectors.toList());
-    kafkaAdminClient.createTopics(topics, ar -> {
-      if (ar.succeeded()) {
-        LOGGER.info("Created topics: [{}]", StringUtils.join(eventTypes, ","));
-        promise.complete(true);
-      } else {
-        LOGGER.info("Some of the topics [{}] were not created. Cause: {}", StringUtils.join(eventTypes, ","), ar.cause().getMessage());
-        promise.complete(false);
-      }
-    });
-    return promise.future();
+    return kafkaAdminClient.createTopics(topics)
+      .onSuccess(r -> LOGGER.info("Created topics: [{}]", StringUtils.join(eventTypes, ",")))
+      .onFailure(e -> LOGGER.error("Some of the topics [{}] were not created. Cause: {}",
+        StringUtils.join(eventTypes, ","), e.getMessage(), e))
+      .recover(e -> Future.succeededFuture());
   }
 }
