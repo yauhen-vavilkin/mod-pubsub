@@ -19,13 +19,12 @@
   </modules>
 
   <properties>
-    <raml-module-builder.version>33.2.4</raml-module-builder.version>
-    <vertx.version>4.2.4</vertx.version>
+    <raml-module-builder.version>33.2.8</raml-module-builder.version>
+    <vertx.version>4.2.6</vertx.version>
     <lombok.version>1.18.16</lombok.version>
     <wiremock.version>2.27.2</wiremock.version>
     <junit.version>4.13.1</junit.version>
     <rest-assured.version>4.3.1</rest-assured.version>
-    <jackson.jaxb.version>2.10.0</jackson.jaxb.version>
     <main.basedir>${project.basedir}</main.basedir>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -54,6 +53,14 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-bom</artifactId>
         <version>4.3.1</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>1.17.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
