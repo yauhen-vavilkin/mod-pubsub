@@ -66,6 +66,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.folio</groupId>
+        <artifactId>folio-di-support</artifactId>
+        <version>1.5.1</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-clients</artifactId>
         <version>3.1.0</version>
