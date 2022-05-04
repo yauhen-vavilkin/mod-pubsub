@@ -1,3 +1,15 @@
+## 2022-05-04 v2.5.1
+* [MODPUBSUB-228](https://issues.folio.org/browse/MODPUBSUB-228) Update kafka-clients fixing timing attack (CVE-2021-38153)
+* [MODPUBSUB-229](MODPUBSUB-229) Remove jaxrs-code-generator (CVE-2019-10172)
+* [MODPUBSUB-214](MODPUBSUB-214) Replace Future<Boolean> by Future<Void> in EventDescriptorDao
+* [MODPUBSUB-215](MODPUBSUB-215) Replace Future<Boolean> by Future<Void> in ConsumerService
+* [MODPUBSUB-217](MODPUBSUB-217) Replace Future<Boolean> by Future<Void> in KafkaTopicService
+* [FOLIO-1021](FOLIO-1021) Update copyright year
+* [FOLIO-3231](FOLIO-3231) Use new api-lint. Use new api-doc. Replace deprecated 'schema' keyword, use 'type' for RAML 1.0.
+* [MODPUBSUB-231](MODPUBSUB-231) Update dependencies fixing CVE-2022-0839, CVE-2020-36518
+* [MODPUBSUB-232](MODPUBSUB-232) jackson-databind 2.13.2.1 (CVE-2020-36518)
+* [MODPUBSUB-233](MODPUBSUB-233) folio-di-support 1.5.1, spring-beans 5.3.19 (CVE-2022-22965)
+
 ## 2022-02-22 v2.5.0
 * [MODPUBSUB-209](https://issues.folio.org/browse/MODPUBSUB-209) Add pubsub-user permission to post events
 * [MODPUBSUB-210](https://issues.folio.org/browse/MODPUBSUB-210) Fix incorrect status for tenant init
