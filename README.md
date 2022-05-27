@@ -331,6 +331,17 @@ In the example above the module will be registered as a Publisher for `CREATED_S
 and as a Subscriber for `CREATED_MARCCAT_BIB_RECORD` and `CREATED_INVENTORY_INSTANCE` Events. In case either `CREATED_MARCCAT_BIB_RECORD` or `CREATED_INVENTORY_INSTANCE`
 event is published a _POST_ request will be sent to _/callback/address/example_ endpoint with body provided by the Publisher of such Event in EventPayload section.
 
+#### Subscriber’s callback API endpoint setup
+
+A callback endpoint should be able to handle a `POST` request with an event payload in the body. 
+An event is considered delivered when `mod-pubsub` receives a response with one of these status codes: `200`, `201`, 
+`204`. In such case, an `AuditMessage` is created with the state `DELIVERED` and the following message will be logged on 
+`mod-pubsub` side: "Delivered {eventType} event with id '{eventId}' to {callbackUrl}".
+Any other status code is considered a rejection and there will be 5 attempts to retry the delivery. In case of 
+a rejection an `AuditMessage` is created with the state `REJECTED` and the following message will be logged on 
+`mod-pubsub` side: "Error delivering {eventType} event with id '{eventId}' to {callbackUrl}, response status code is 
+{responseCode}, {responseStatusMessage}".
+
 #### Module registration in pub-sub
 
 The module should be registered in pub-sub at the time when it is being enabled for a tenant. To do so `PubSubClientUtils` class provides `registerModule` method, 
