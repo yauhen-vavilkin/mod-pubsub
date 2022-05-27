@@ -206,7 +206,7 @@ curl --location --request POST 'http://localhost:9130/pubsub/event-types/declare
     "subscriptionDefinitions": [
         {
           "eventType": "test-event",
-          "callbackAddress": "/test"
+          "callbackAddress": "/callback/address/example"
         }
     ]
 }'
@@ -318,18 +318,18 @@ MessagingDescriptor.json example:
   "subscriptions": [
     {
       "eventType": "CREATED_MARCCAT_BIB_RECORD",
-      "callbackAddress": "/source-storage/records"
+      "callbackAddress": "/callback/address/example"
     },
     {
       "eventType": "CREATED_INVENTORY_INSTANCE",
-      "callbackAddress": "/source-storage/records"
+      "callbackAddress": "/callback/address/example"
     }
   ]
 }
 ```
 In the example above the module will be registered as a Publisher for `CREATED_SRS_MARC_BIB_RECORD_WITH_ORDER_DATA` Events 
 and as a Subscriber for `CREATED_MARCCAT_BIB_RECORD` and `CREATED_INVENTORY_INSTANCE` Events. In case either `CREATED_MARCCAT_BIB_RECORD` or `CREATED_INVENTORY_INSTANCE`
-event is published a _POST_ request will be sent to _/source-storage/records_ endpoint with body provided by the Publisher of such Event in EventPayload section.
+event is published a _POST_ request will be sent to _/callback/address/example_ endpoint with body provided by the Publisher of such Event in EventPayload section.
 
 #### Module registration in pub-sub
 
@@ -509,19 +509,42 @@ public class ModTenantAPI extends TenantAPI {
   "subscriptions": [
     {
       "eventType": "CREATED_TEST_EVENT",
-      "callbackAddress": "/process/records"
+      "callbackAddress": "/callback/address/example"
     }
   ]
 }
 
 ```
-Endpoint, which will receive the event from the publisher module has address: "/process/records".
+Endpoint, which will receive the event from the publisher module has address: "/callback/address/example".
 
+- Subscriber module needs to provide endpoints for all subscriptions listed in the `subscriptions` block of its `MessagingDescriptor.json`. 
+Let's add an interface to the subscriber's `provides` block in the `ModuleDescriptor-template.json`. 
+Note that each handler should have `pubsub.events.post` permission in the `requiredPermissions` which would allow `mod-pubsub` to call this endpoint.
+```json
+{
+  "id": "{module-name}-event-handlers",
+  "version": "{version}",
+  "handlers": [
+    {
+      "methods": [
+        "POST"
+      ],
+      "pathPattern": "/callback/address/example",
+      "permissionsRequired": [
+        "pubsub.events.post"
+      ],
+      "modulePermissions": [
+        "required.permission.if.needed"
+      ]
+    }
+  ]
+}
+```
 - Register this subscriber module in the "mod-pubsub" the same way as first module via TenantAPI.
 
 - Create new endpoint which was declared as "callbackAddress" using raml:
 ```raml
-/process/records:
+/callback/address/example:
     displayName: Publish event
     description: API used by subscriber to catch events
     post:
