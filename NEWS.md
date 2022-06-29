@@ -1,3 +1,8 @@
+## 2022-06-29 v2.6.0
+* [MODPUBSUB-94](https://issues.folio.org/browse/MODPUBSUB-94) Document how to setup permissions for event callback API
+* [MODPUBSUB-91](https://issues.folio.org/browse/MODPUBSUB-91) Document requirements for an event callback API endpoint
+* [MODPUBSUB-235](https://issues.folio.org/browse/MODPUBSUB-235) Upgrade to RMB 34.0.0
+
 ## 2022-05-04 v2.5.1
 * [MODPUBSUB-228](https://issues.folio.org/browse/MODPUBSUB-228) Update kafka-clients fixing timing attack (CVE-2021-38153)
 * [MODPUBSUB-229](https://issues.folio.org/browse/MODPUBSUB-229) Remove jaxrs-code-generator (CVE-2019-10172)
