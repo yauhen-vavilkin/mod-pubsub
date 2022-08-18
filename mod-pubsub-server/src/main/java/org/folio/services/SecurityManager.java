@@ -23,4 +23,6 @@ public interface SecurityManager {
    * @param params okapi connection params
    */
   Future<Void> createPubSubUser(OkapiConnectionParams params);
+
+  void invalidateToken(String tenantId);
 }

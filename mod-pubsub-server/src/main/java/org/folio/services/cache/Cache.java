@@ -77,4 +77,7 @@ public class Cache {
     loadingCache.synchronous().invalidateAll();
   }
 
+  public void invalidateToken(String tenantId) {
+    tenantToken.invalidate(tenantId);
+  }
 }
