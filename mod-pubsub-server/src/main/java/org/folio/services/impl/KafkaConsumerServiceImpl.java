@@ -149,17 +149,25 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         LOGGER.error(errorMessage, ar.cause());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
         retryDelivery(event, subscriber, params, retry);
-      } else if (ar.result().getCode() != HttpStatus.HTTP_OK.toInt()
-        && ar.result().getCode() != HttpStatus.HTTP_CREATED.toInt()
-        && ar.result().getCode() != HttpStatus.HTTP_NO_CONTENT.toInt()) {
-        String error = format("Error delivering %s event with id '%s' to %s, response status code is %s, %s",
-          event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), ar.result().getCode(), ar.result().getResponse().statusMessage());
-        LOGGER.error(error);
-        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
-        retryDelivery(event, subscriber, params, retry);
       } else {
-        LOGGER.info("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
-        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));
+        int statusCode = ar.result().getCode();
+        if (statusCode != HttpStatus.HTTP_OK.toInt()
+          && statusCode != HttpStatus.HTTP_CREATED.toInt()
+          && statusCode != HttpStatus.HTTP_NO_CONTENT.toInt()) {
+
+          String error = format("Error delivering %s event with id '%s' to %s, response status code is %s, %s",
+            event.getEventType(), event.getId(), subscriber.getSubscriberCallback(), statusCode, ar.result().getResponse().statusMessage());
+          LOGGER.error(error);
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, error));
+          if (statusCode >= 400 && statusCode < 500) {
+            LOGGER.info("Invalidating token for tenant {}", tenantId);
+            securityManager.invalidateToken(tenantId);
+          }
+          retryDelivery(event, subscriber, params, retry);
+        } else {
+          LOGGER.info("Delivered {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
+          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.DELIVERED));
+        }
       }
     };
   }

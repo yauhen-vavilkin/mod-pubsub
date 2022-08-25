@@ -23,6 +23,7 @@ import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -413,6 +414,14 @@ public class SecurityManagerTest {
   @Test(expected = NoSuchElementException.class)
   public void shouldFailReadingPermissionsOnEmptyPermissionsFile() {
     SecurityManagerImpl.readPermissionsFromResource("permissions/emptyFile");
+  }
+
+  @Test
+  public void checkThatInvalidateTokenRemovesTokenForTenant() {
+    cache.addToken(TENANT, TOKEN);
+    assertEquals(TOKEN, cache.getToken(TENANT));
+    cache.invalidateToken(TENANT);
+    assertNull(cache.getToken(TENANT));
   }
 
   private void verifyUser(LoggedRequest loggedRequest) {

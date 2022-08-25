@@ -103,6 +103,11 @@ public class SecurityManagerImpl implements SecurityManager {
       });
   }
 
+  @Override
+  public void invalidateToken(String tenantId) {
+    cache.invalidateToken(tenantId);
+  }
+
   private Future<User> existsPubSubUser(OkapiConnectionParams params) {
     String query = "?query=username=" + systemUserConfig.getName();
     return doRequest(params, USERS_URL + query, HttpMethod.GET, null)
