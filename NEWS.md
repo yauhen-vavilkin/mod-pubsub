@@ -1,3 +1,7 @@
+## v2.7.0 IN-PROGRESS
+
+* [MODPUBSUB-241] (https://issues.folio.org/browse/MODPUBSUB-241) Supports users interface versions 15.1 16.0
+
 ## 2022-06-29 v2.6.0
 * [MODPUBSUB-94](https://issues.folio.org/browse/MODPUBSUB-94) Document how to setup permissions for event callback API
 * [MODPUBSUB-91](https://issues.folio.org/browse/MODPUBSUB-91) Document requirements for an event callback API endpoint
