@@ -1,3 +1,6 @@
+## 2022-09-06 v2.6.1
+* [MODPUBSUB-246](https://issues.folio.org/browse/MODPUBSUB-246) Upgrade dependencies fixing vulnerabilities
+
 ## 2022-06-29 v2.6.0
 * [MODPUBSUB-94](https://issues.folio.org/browse/MODPUBSUB-94) Document how to setup permissions for event callback API
 * [MODPUBSUB-91](https://issues.folio.org/browse/MODPUBSUB-91) Document requirements for an event callback API endpoint
