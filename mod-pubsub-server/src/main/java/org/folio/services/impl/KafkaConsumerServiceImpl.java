@@ -42,6 +42,7 @@ import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.jaxrs.model.MessagingModule.ModuleRole.SUBSCRIBER;
+import static org.folio.rest.util.OkapiConnectionParams.USER_ID;
 import static org.folio.rest.util.RestUtil.doRequest;
 import static org.folio.services.util.AuditUtil.constructJsonAuditMessage;
 import static org.folio.services.util.MessagingModulesUtil.filter;
@@ -162,6 +163,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
           if (statusCode >= 400 && statusCode < 500) {
             LOGGER.info("Invalidating token for tenant {}", tenantId);
             securityManager.invalidateToken(tenantId);
+            params.getHeaders().remove(USER_ID);
           }
           retryDelivery(event, subscriber, params, retry);
         } else {
