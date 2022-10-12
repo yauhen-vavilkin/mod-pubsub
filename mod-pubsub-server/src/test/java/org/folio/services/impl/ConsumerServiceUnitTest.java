@@ -2,15 +2,14 @@ package org.folio.services.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.internal.verification.VerificationModeFactory.atLeast;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +48,6 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
@@ -93,7 +91,7 @@ public class ConsumerServiceUnitTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     doReturn(Future.succeededFuture(TOKEN)).when(securityManager).getJWTToken(any(OkapiConnectionParams.class));
 
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
@@ -103,29 +101,23 @@ public class ConsumerServiceUnitTest {
 
   @Test
   public void shouldSendRequestWithoutPayloadToSubscriber(TestContext context) {
-    Async async = context.async();
-
     WireMock.stubFor(WireMock.post(CALLBACK_ADDRESS)
       .willReturn(WireMock.ok()));
 
     var event = buildEvent();
     var params = new OkapiConnectionParams(headers, vertx);
 
-    Future<RestUtil.WrappedResponse> future = RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload());
-
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload())
+    .onComplete(context.asyncAssertSuccess(x -> {
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       assertEquals(1, requests.size());
       assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
       assertEquals("POST", requests.get(0).getMethod().getName());
-      async.complete();
-    });
+    }));
   }
 
   @Test
   public void shouldSendRequestWithPayloadToSubscriber(TestContext context) {
-    Async async = context.async();
     WireMock.stubFor(WireMock.post(CALLBACK_ADDRESS)
       .willReturn(WireMock.created()));
 
@@ -138,39 +130,32 @@ public class ConsumerServiceUnitTest {
         .withPublishedBy("mod-very-important-1.0.0"))
       .withEventPayload("Very important");
     var params = new OkapiConnectionParams(headers, vertx);
-    Future<RestUtil.WrappedResponse> future = RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload());
 
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    RestUtil.doRequest(params, CALLBACK_ADDRESS, HttpMethod.POST, event.getEventPayload())
+    .onComplete(context.asyncAssertSuccess(x -> {
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       assertEquals(1, requests.size());
       assertEquals(CALLBACK_ADDRESS, requests.get(0).getUrl());
       assertEquals("POST", requests.get(0).getMethod().getName());
       assertEquals(event.getEventPayload(), requests.get(0).getBodyAsString());
-      async.complete();
-    });
+    }));
   }
 
   @Test
   public void shouldNotSendRequestIfNoSubscribersFound(TestContext context) {
-    Async async = context.async();
     var event = buildEvent();
     var params = new OkapiConnectionParams(headers, vertx);
     when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(new HashSet<>()));
 
-    Future<Void> future = consumerService.deliverEvent(event, params);
-
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    consumerService.deliverEvent(event, params)
+    .onComplete(context.asyncAssertSuccess(x -> {
       List<LoggedRequest> requests = WireMock.findAll(RequestPatternBuilder.allRequests());
       assertEquals(0, requests.size());
-      async.complete();
-    });
+    }));
   }
 
   @Test
   public void shouldSendRequestToFoundSubscribers(TestContext context) {
-    Async async = context.async();
     WireMock.stubFor(WireMock.post(CALLBACK_ADDRESS)
       .willReturn(WireMock.noContent()));
 
@@ -195,20 +180,15 @@ public class ConsumerServiceUnitTest {
       .withSubscriberCallback(CALLBACK_ADDRESS));
     when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(messagingModuleList));
 
-    Future<Void> future = consumerService.deliverEvent(event, params);
-
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    consumerService.deliverEvent(event, params)
+    .onComplete(context.asyncAssertSuccess(x -> {
       verify(consumerService, times(messagingModuleList.size())).getEventDeliveredHandler(any(Event.class), anyString(), any(MessagingModule.class), any(OkapiConnectionParams.class), any(Map.class));
       verify(securityManager, times(0)).invalidateToken(TENANT);
-      async.complete();
-    });
+    }));
   }
 
   @Test
   public void shouldSendRequestAndRetry(TestContext context) {
-    Async async = context.async();
-
     WireMock.stubFor(WireMock.post(CALLBACK_ADDRESS)
       .willReturn(WireMock.forbidden()));
 
@@ -233,13 +213,10 @@ public class ConsumerServiceUnitTest {
       .withSubscriberCallback(CALLBACK_ADDRESS));
     when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(messagingModuleList));
 
-    Future<Void> future = consumerService.deliverEvent(event, params);
-
-    future.onComplete(ar -> {
-      assertTrue(ar.succeeded());
-      verify(securityManager, times(messagingModuleList.size())).invalidateToken(TENANT);
-      async.complete();
-    });
+    consumerService.deliverEvent(event, params)
+    .onComplete(context.asyncAssertSuccess(x -> {
+      verify(securityManager, atLeast(messagingModuleList.size())).invalidateToken(TENANT);
+    }));
   }
 
   @Test
@@ -285,33 +262,29 @@ public class ConsumerServiceUnitTest {
   }
 
   private void checkThatInvalidateTokenWasInvoked(TestContext context) {
-    Async async = context.async();
     var event = buildEvent();
     headers.put(USER_ID, UUID.randomUUID().toString());
     var params = buildOkapiConnectionParams();
     when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(buildMessagingModules()));
 
-    consumerService.deliverEvent(event, params).onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    consumerService.deliverEvent(event, params)
+    .onComplete(context.asyncAssertSuccess(x -> {
       verify(securityManager, atLeast(1)).invalidateToken(TENANT);
       verify(cache, atLeast(1)).invalidateToken(TENANT);
       assertNull(headers.get(USER_ID));
-      async.complete();
-    });
+    }));
   }
 
   private void checkThatInvalidateTokenWasNotInvoked(TestContext context) {
-    Async async = context.async();
     var event = buildEvent();
     var params = buildOkapiConnectionParams();
     when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(buildMessagingModules()));
 
-    consumerService.deliverEvent(event, params).onComplete(ar -> {
-      assertTrue(ar.succeeded());
+    consumerService.deliverEvent(event, params)
+    .onComplete(context.asyncAssertSuccess(x -> {
       verify(securityManager, never()).invalidateToken(TENANT);
       verify(cache, never()).invalidateToken(TENANT);
-      async.complete();
-    });
+    }));
   }
 
   private Set<MessagingModule> buildMessagingModules() {

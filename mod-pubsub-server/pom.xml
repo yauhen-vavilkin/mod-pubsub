@@ -71,11 +71,11 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-liquibase-util</artifactId>
-      <version>1.5.1</version>
+      <version>1.5.2</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
-          <groupId> ch.qos.logback</groupId>
+          <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
         </exclusion>
       </exclusions>
