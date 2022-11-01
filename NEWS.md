@@ -1,6 +1,12 @@
-## v2.7.0 IN-PROGRESS
-
-* [MODPUBSUB-241] (https://issues.folio.org/browse/MODPUBSUB-241) Supports users interface versions 15.1 16.0
+## 2022-10-18 v2.7.0
+* [MODPUBSUB-254](https://issues.folio.org/browse/MODPUBSUB-254) Upgrade to snakeyaml 1.33, Vert.x 4.3.4, RMB 35.0.1
+* [MODPUBSUB-248](https://issues.folio.org/browse/MODPUBSUB-248) Remove invalid userId from headers for token invalidation
+* [MODPUBSUB-252](https://issues.folio.org/browse/MODPUBSUB-252) Upgrade to RMB 35.0.0
+* [MODPUBSUB-251](https://issues.folio.org/browse/MODPUBSUB-251) Upgrade kafka-clients to 3.2.3 to fix out-of-memory vulnerability
+* [MODPUBSUB-246](https://issues.folio.org/browse/MODFEE-246) Upgrade dependencies fixing vulnerabilities
+* [MODPUBSUB-243](https://issues.folio.org/browse/MODPUBSUB-243) Add cache tenantToken invalidation
+* [MODPUBSUB-242](https://issues.folio.org/browse/MODPUBSUB-242) Upgrade lombok to 1.18.24 for Java 17
+* [MODPUBSUB-241](https://issues.folio.org/browse/MODPUBSUB-241) Supports users interface versions 15.1 16.0
 
 ## 2022-06-29 v2.6.0
 * [MODPUBSUB-94](https://issues.folio.org/browse/MODPUBSUB-94) Document how to setup permissions for event callback API
