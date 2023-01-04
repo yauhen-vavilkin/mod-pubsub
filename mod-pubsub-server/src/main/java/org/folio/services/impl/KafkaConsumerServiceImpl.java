@@ -101,6 +101,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
         String value = consumerRecord.value();
         Event event = new JsonObject(value).mapTo(Event.class);
         LOGGER.info("Received {} event with id '{}'", event.getEventType(), event.getId());
+        LOGGER.info("getEventReceivedHandler :: payload:{}",event.getEventPayload());
         auditService.saveAuditMessage(constructJsonAuditMessage(event, params.getTenantId(), AuditMessage.State.RECEIVED));
         deliverEvent(event, params);
       } catch (Exception e) {
@@ -177,6 +178,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   private void retryDelivery(Event event, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
     if (retry.get(subscriber).get() <= RETRY_NUMBER) {
       LOGGER.info("Retry to deliver event {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
+      LOGGER.info("retry payload :{}",event.getEventPayload());
       securityManager.getJWTToken(params)
         .onSuccess(params::setToken)
         .compose(v -> doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
