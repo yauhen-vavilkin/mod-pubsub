@@ -1,3 +1,6 @@
+## 2023-02-15 v2.8.0
+* [MODPUBSUB-258](https://issues.folio.org/browse/MODPUBSUB-258) Add plugin for publishing javadoc and source code
+
 ## 2022-10-18 v2.7.0
 * [MODPUBSUB-254](https://issues.folio.org/browse/MODPUBSUB-254) Upgrade to snakeyaml 1.33, Vert.x 4.3.4, RMB 35.0.1
 * [MODPUBSUB-248](https://issues.folio.org/browse/MODPUBSUB-248) Remove invalid userId from headers for token invalidation
