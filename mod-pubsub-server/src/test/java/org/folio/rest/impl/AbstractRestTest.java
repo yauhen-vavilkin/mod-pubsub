@@ -9,7 +9,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.Tuple;
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -22,9 +21,10 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
+
 import static java.lang.String.format;
-import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
@@ -60,17 +60,16 @@ public abstract class AbstractRestTest {
   static RequestSpecification spec;
   private static String useExternalDatabase;
   protected static Vertx vertx;
-  public static EmbeddedKafkaCluster cluster;
+  private static final KafkaContainer kafkaContainer = new KafkaContainer(
+    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
-    cluster = provisionWith(defaultClusterConfig());
-    cluster.start();
     vertx = Vertx.vertx();
     runDatabase();
-    String[] hostAndPort = cluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    kafkaContainer.start();
+    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
+    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(OKAPI_URL_ENV, OKAPI_URL);
     System.setProperty(SYSTEM_USER_NAME_ENV, SYSTEM_USER_NAME);
     System.setProperty(SYSTEM_USER_PASSWORD_ENV, SYSTEM_USER_PASSWORD);
@@ -79,8 +78,7 @@ public abstract class AbstractRestTest {
 
   @AfterClass
   public static void tearDownClass() {
-    cluster.stop();
-    cluster = null;
+    kafkaContainer.stop();
   }
 
   private static void runDatabase() throws Exception {
