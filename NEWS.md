@@ -1,3 +1,6 @@
+## 2023-02-15 v2.9.0
+* [MODPUBSUB-245](https://issues.folio.org/browse/MODPUBSUB-245) Use testcontainers kafka instead of kafka-junit
+
 ## 2023-02-15 v2.8.0
 * [MODPUBSUB-258](https://issues.folio.org/browse/MODPUBSUB-258) Add plugin for publishing javadoc and source code
 
