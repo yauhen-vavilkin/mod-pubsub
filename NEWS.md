@@ -1,3 +1,6 @@
+## 2023-03-16 v2.9.1
+* [MODPUBSUB-264](https://issues.folio.org/browse/MODPUBSUB-264) postgresql 42.5.4, folio-liquibase-util 1.6.0, apk upgrade
+
 ## 2023-02-15 v2.9.0
 * [MODPUBSUB-245](https://issues.folio.org/browse/MODPUBSUB-245) Use testcontainers kafka instead of kafka-junit
 
