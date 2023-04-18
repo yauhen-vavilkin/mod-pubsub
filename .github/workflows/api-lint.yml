@@ -29,7 +29,7 @@ env:
 on:
   push:
     paths:
-      - "${{ env.API_DIRECTORIES }}/**"
+      - 'ramls/**'
   pull_request:
     paths:
       - 'ramls/**'
