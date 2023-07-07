@@ -21,7 +21,7 @@
   <properties>
     <raml-module-builder.version>35.0.1</raml-module-builder.version>
     <vertx.version>4.3.4</vertx.version>
-    <lombok.version>1.18.24</lombok.version>
+    <lombok.version>1.18.28</lombok.version>
     <wiremock.version>2.27.2</wiremock.version>
     <junit.version>4.13.2</junit.version>
     <rest-assured.version>5.1.1</rest-assured.version>
@@ -102,7 +102,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
