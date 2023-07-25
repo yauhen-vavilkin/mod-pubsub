@@ -1,5 +1,6 @@
 package org.folio.services.impl;
 
+import static io.vertx.core.Future.succeededFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.config.user.SystemUserConfig;
 import org.folio.kafka.KafkaConfig;
 import org.folio.rest.jaxrs.model.Event;
@@ -32,6 +35,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -45,11 +49,14 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
-import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.impl.KafkaConsumerRecordImpl;
 
 @RunWith(VertxUnitRunner.class)
 public class ConsumerServiceUnitTest {
@@ -74,7 +81,7 @@ public class ConsumerServiceUnitTest {
 
   @Spy
   @InjectMocks
-  private SecurityManager securityManager = Mockito.spy(new SecurityManagerImpl(vertx, cache, systemUserConfig));
+  private SecurityManager securityManager = spy(new SecurityManagerImpl(vertx, cache, systemUserConfig));
 
   @Spy
   @InjectMocks
@@ -92,7 +99,7 @@ public class ConsumerServiceUnitTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    doReturn(Future.succeededFuture(TOKEN)).when(securityManager).getJWTToken(any(OkapiConnectionParams.class));
+    doReturn(succeededFuture(TOKEN)).when(securityManager).getJWTToken(any(OkapiConnectionParams.class));
 
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
     headers.put(OKAPI_TENANT_HEADER, TENANT);
@@ -145,7 +152,7 @@ public class ConsumerServiceUnitTest {
   public void shouldNotSendRequestIfNoSubscribersFound(TestContext context) {
     var event = buildEvent();
     var params = new OkapiConnectionParams(headers, vertx);
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(new HashSet<>()));
+    when(cache.getMessagingModules()).thenReturn(succeededFuture(new HashSet<>()));
 
     consumerService.deliverEvent(event, params)
     .onComplete(context.asyncAssertSuccess(x -> {
@@ -178,7 +185,7 @@ public class ConsumerServiceUnitTest {
       .withModuleRole(MessagingModule.ModuleRole.SUBSCRIBER)
       .withActivated(true)
       .withSubscriberCallback(CALLBACK_ADDRESS));
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(messagingModuleList));
+    when(cache.getMessagingModules()).thenReturn(succeededFuture(messagingModuleList));
 
     consumerService.deliverEvent(event, params)
     .onComplete(context.asyncAssertSuccess(x -> {
@@ -211,7 +218,7 @@ public class ConsumerServiceUnitTest {
       .withModuleRole(MessagingModule.ModuleRole.SUBSCRIBER)
       .withActivated(true)
       .withSubscriberCallback(CALLBACK_ADDRESS));
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(messagingModuleList));
+    when(cache.getMessagingModules()).thenReturn(succeededFuture(messagingModuleList));
 
     consumerService.deliverEvent(event, params)
     .onComplete(context.asyncAssertSuccess(x -> {
@@ -261,11 +268,43 @@ public class ConsumerServiceUnitTest {
     checkThatInvalidateTokenWasNotInvoked(context);
   }
 
+  @Test
+  public void shouldCheckEventMetadataForTenantId() {
+    KafkaConsumer<String, String> consumer =
+      (KafkaConsumer<String, String>) spy(KafkaConsumer.class);
+
+    doReturn(consumer).when(consumer).handler(any());
+    ArgumentCaptor<Handler<KafkaConsumerRecord<String, String>>> captor =
+      ArgumentCaptor.forClass(Handler.class);
+
+    doReturn(succeededFuture()).when(consumer).subscribe(any(String.class));
+    doReturn(consumer).when(consumerService).createKafkaConsumer(any(), any());
+
+    OkapiConnectionParams okapiConnectionParams =
+      new OkapiConnectionParams(headers, vertx);
+    consumerService.subscribe(List.of("eventType1", "eventType2"),
+      okapiConnectionParams);
+
+    Mockito.verify(consumer, times(2)).handler(captor.capture());
+    captor.getValue().handle(new KafkaConsumerRecordImpl<>(
+      new ConsumerRecord<>("topic1", 1, 1, "key", "{\"eventMetadata\": {}}")));
+    captor.getValue().handle(new KafkaConsumerRecordImpl<>(
+      new ConsumerRecord<>("topic1", 1, 1, "key",
+        "{\"eventMetadata\": {\"tenantId\": \"tenant1\"}}")));
+    cache.setKnownOkapiParams(TENANT, okapiConnectionParams);
+    when(cache.getKnownOkapiParams(any())).thenReturn(okapiConnectionParams);
+    captor.getValue().handle(new KafkaConsumerRecordImpl<>(
+      new ConsumerRecord<>("topic1", 1, 1, "key",
+        "{\"eventMetadata\": {\"tenantId\": \"" + TENANT + "\"}}")));
+
+    verify(consumerService, times(1)).deliverEvent(any(), any());
+  }
+
   private void checkThatInvalidateTokenWasInvoked(TestContext context) {
     var event = buildEvent();
     headers.put(USER_ID, UUID.randomUUID().toString());
     var params = buildOkapiConnectionParams();
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(buildMessagingModules()));
+    when(cache.getMessagingModules()).thenReturn(succeededFuture(buildMessagingModules()));
 
     consumerService.deliverEvent(event, params)
     .onComplete(context.asyncAssertSuccess(x -> {
@@ -278,7 +317,7 @@ public class ConsumerServiceUnitTest {
   private void checkThatInvalidateTokenWasNotInvoked(TestContext context) {
     var event = buildEvent();
     var params = buildOkapiConnectionParams();
-    when(cache.getMessagingModules()).thenReturn(Future.succeededFuture(buildMessagingModules()));
+    when(cache.getMessagingModules()).thenReturn(succeededFuture(buildMessagingModules()));
 
     consumerService.deliverEvent(event, params)
     .onComplete(context.asyncAssertSuccess(x -> {

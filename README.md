@@ -128,7 +128,15 @@ The partition count controls how many logs the topic will be sharded into.
         "value": "1"
       }
  ```   
-If these values are not set then topics will be created with 1 partition and 1 replica. 
+If these values are not set then topics will be created with 1 partition and 1 replica.
+
+The optional `KAFKA_PRODUCER_TENANT_COLLECTION` must match the regex `[A-Z][A-Z0-9]{0,30}`, for details see [Kafka Tenant Collection Topics RFC](https://github.com/folio-org/rfcs/blob/master/text/0002-kafka-tenant-collection-topics.md).
+```
+      {
+        "name": "KAFKA_PRODUCER_TENANT_COLLECTION",
+        "value": "ALL"
+      }
+```
 
 ****In case a single Kafka installation is shared between multiple environments, make sure to set a customized prefix for kafka topics, specifying the environment in which pubsub is deployed****
 This variable is used as a prefix to avoid any confusion with Kafka topics and consumer groups and is ****REQUIRED**** to prevent the situation when events are exchanged between pubsub instances belonging to different environments.

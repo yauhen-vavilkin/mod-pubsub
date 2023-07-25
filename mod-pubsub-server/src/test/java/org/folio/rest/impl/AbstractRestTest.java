@@ -1,5 +1,31 @@
 package org.folio.rest.impl;
 
+import static java.lang.String.format;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.folio.postgres.testing.PostgresTesterContainer;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.jaxrs.model.TenantJob;
+import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.ModuleName;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
+
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -8,24 +34,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.sqlclient.Tuple;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.jaxrs.model.TenantJob;
-import org.folio.rest.persist.Criteria.Criterion;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.ModuleName;
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
-import static java.lang.String.format;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public abstract class AbstractRestTest {
   protected static final String TENANT_ID = "diku";
@@ -68,17 +78,17 @@ public abstract class AbstractRestTest {
     vertx = Vertx.vertx();
     runDatabase();
     kafkaContainer.start();
+
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(OKAPI_URL_ENV, OKAPI_URL);
     System.setProperty(SYSTEM_USER_NAME_ENV, SYSTEM_USER_NAME);
     System.setProperty(SYSTEM_USER_PASSWORD_ENV, SYSTEM_USER_PASSWORD);
-    deployVerticle(context);
-  }
 
-  @AfterClass
-  public static void tearDownClass() {
-    kafkaContainer.stop();
+    waitForPostgres();
+    waitForKafka();
+
+    deployVerticle(context);
   }
 
   private static void runDatabase() throws Exception {
@@ -154,6 +164,7 @@ public abstract class AbstractRestTest {
       }
       System.clearProperty(KAFKA_HOST);
       System.clearProperty(KAFKA_PORT);
+      kafkaContainer.stop();
       async.complete();
     }));
   }
@@ -165,7 +176,7 @@ public abstract class AbstractRestTest {
     spec = new RequestSpecBuilder()
       .setContentType(ContentType.JSON)
       .addHeader(OKAPI_HEADER_TENANT, TENANT_ID)
-      .setBaseUri("http://localhost:" + PORT)
+      .setBaseUri(OKAPI_URL)
       .addHeader("Accept", "text/plain, application/json")
       .build();
   }
@@ -193,5 +204,53 @@ public abstract class AbstractRestTest {
         async.complete();
       });
     });
+  }
+
+  private static void waitForPostgres() {
+    PostgresClient pgClient = PostgresClient.getInstance(vertx);
+    String query = "Select 1";
+    AtomicBoolean isReady = new AtomicBoolean();
+    await()
+      .atMost(15, TimeUnit.SECONDS)
+      .pollInterval(3, TimeUnit.SECONDS)
+      .alias("Is Postgres Up?")
+      .until(() -> {
+        System.out.println("checking to see if postgres is up");
+
+        vertx.runOnContext((at) -> pgClient.select(query)
+          .onSuccess(ar -> isReady.set(true)));
+
+        return isReady.get();
+      });
+
+    if (!isReady.get()) throw new RuntimeException("Could not connect to postgres");
+  }
+
+  private static void waitForKafka() {
+    Supplier<KafkaAdminClient> buildAdminClient = () -> {
+      Map<String, String> configs = new HashMap<>();
+      configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+      return KafkaAdminClient.create(vertx, configs);
+    };
+    AtomicBoolean isReady = new AtomicBoolean();
+
+    await()
+      .atMost(15, TimeUnit.SECONDS)
+      .pollDelay(3, TimeUnit.SECONDS)
+      .pollInterval(3, TimeUnit.SECONDS)
+      .alias("Is Kafka Up?")
+      .until(() -> {
+        System.out.println("listing topics to see if kafka is up");
+        KafkaAdminClient adminClient = buildAdminClient.get();
+        adminClient.listTopics()
+          .onComplete(ar -> {
+            if (ar.succeeded()) {
+              System.out.println("Kafka is up");
+              isReady.set(true);
+            }
+            adminClient.close(1000);
+          });
+        return isReady.get();
+      });
   }
 }

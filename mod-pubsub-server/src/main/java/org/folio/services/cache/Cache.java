@@ -7,6 +7,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.rest.jaxrs.model.MessagingModule;
+import org.folio.rest.util.OkapiConnectionParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class Cache {
   private AsyncLoadingCache<String, Set<MessagingModule>> loadingCache;
   private com.github.benmanes.caffeine.cache.Cache<String, String> subscriptions;
   private com.github.benmanes.caffeine.cache.Cache<String, String> tenantToken;
+  private com.github.benmanes.caffeine.cache.Cache<String, OkapiConnectionParams> knownOkapiParams;
   private MessagingModuleDao messagingModuleDao;
 
   public Cache(@Autowired Vertx vertx, @Autowired MessagingModuleDao messagingModuleDao) {
@@ -34,6 +36,7 @@ public class Cache {
       .buildAsync(k -> new HashSet<>());
     this.subscriptions = Caffeine.newBuilder().build();
     this.tenantToken = Caffeine.newBuilder().build();
+    this.knownOkapiParams = Caffeine.newBuilder().build();
   }
 
   public Future<Set<MessagingModule>> getMessagingModules() {
@@ -79,5 +82,13 @@ public class Cache {
 
   public void invalidateToken(String tenantId) {
     tenantToken.invalidate(tenantId);
+  }
+
+  public OkapiConnectionParams getKnownOkapiParams(String tenant) {
+    return knownOkapiParams.getIfPresent(tenant);
+  }
+
+  public void setKnownOkapiParams(String tenant, OkapiConnectionParams params) {
+    knownOkapiParams.put(tenant, params);
   }
 }
