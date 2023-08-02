@@ -48,7 +48,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
   public Future<List<EventDescriptor>> getAll() {
     Promise<RowSet<Row>> promise = Promise.promise();
     String preparedQuery = format(GET_ALL_SQL, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().select(preparedQuery, promise);
+    pgClientFactory.getInstance().selectRead(preparedQuery, 0, promise);
     return promise.future().map(this::mapResultSetToEventDescriptorList);
   }
 
@@ -57,7 +57,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     Promise<RowSet<Row>> promise = Promise.promise();
     try {
       String preparedQuery = format(GET_BY_ID_SQL, MODULE_SCHEMA, TABLE_NAME);
-      pgClientFactory.getInstance().select(preparedQuery, Tuple.of(eventType), promise);
+      pgClientFactory.getInstance().selectRead(preparedQuery, Tuple.of(eventType), promise);
     } catch (Exception e) {
       LOGGER.error("Error getting EventDescriptor by event type '{}'", eventType, e);
       promise.fail(e);
@@ -71,7 +71,7 @@ public class EventDescriptorDaoImpl implements EventDescriptorDao {
     Promise<RowSet<Row>> promise = Promise.promise();
     String query = getQueryByEventTypes(eventTypes);
     String preparedQuery = format(query, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().select(preparedQuery, promise);
+    pgClientFactory.getInstance().selectRead(preparedQuery, 0, promise);
     return promise.future().map(this::mapResultSetToEventDescriptorList);
   }
 

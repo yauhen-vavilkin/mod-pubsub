@@ -53,7 +53,7 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   public Future<List<MessagingModule>> get(MessagingModuleFilter filter) {
     Promise<RowSet<Row>> promise = Promise.promise();
     String preparedQuery = format(GET_BY_SQL, MODULE_SCHEMA, TABLE_NAME, buildWhereClause(filter));
-    pgClientFactory.getInstance().select(preparedQuery, promise);
+    pgClientFactory.getInstance().selectRead(preparedQuery, 0, promise);
     return promise.future().map(this::mapResultSetToMessagingModuleList);
   }
 
@@ -113,7 +113,7 @@ public class MessagingModuleDaoImpl implements MessagingModuleDao {
   public Future<List<MessagingModule>> getAll() {
     Promise<RowSet<Row>> promise = Promise.promise();
     String preparedQuery = format(GET_ALL_SQL, MODULE_SCHEMA, TABLE_NAME);
-    pgClientFactory.getInstance().select(preparedQuery, promise);
+    pgClientFactory.getInstance().selectRead(preparedQuery, 0, promise);
     return promise.future().map(this::mapResultSetToMessagingModuleList);
   }
 
