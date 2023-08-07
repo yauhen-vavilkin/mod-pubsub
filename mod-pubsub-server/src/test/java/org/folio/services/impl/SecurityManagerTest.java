@@ -17,7 +17,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.http.RequestMethod.POST;
 import static io.vertx.core.json.Json.decodeValue;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static java.lang.String.format;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
 import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -34,10 +35,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import org.awaitility.Awaitility;
+import org.folio.config.user.SystemUserConfig;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.dao.impl.MessagingModuleDaoImpl;
-import org.folio.config.user.SystemUserConfig;
 import org.folio.representation.User;
+import org.folio.rest.util.ExpiryAwareToken;
 import org.folio.rest.util.OkapiConnectionParams;
 import org.folio.services.cache.Cache;
 import org.junit.Before;
@@ -68,13 +71,30 @@ public class SecurityManagerTest {
   protected static final String SYSTEM_USER_NAME = "test-pubsub-username";
   protected static final String SYSTEM_USER_PASSWORD = "test-pubsub-password";
 
-  private static final String LOGIN_URL = "/authn/login";
+  private static final String LOGIN_URL = "/authn/login-with-expiry";
   private static final String USERS_URL = "/users";
   private static final String USERS_URL_WITH_QUERY = "/users?query=username=" + SYSTEM_USER_NAME;
   private static final String CREDENTIALS_URL = "/authn/credentials";
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String TENANT = "diku";
-  private static final String TOKEN = "token";
+
+//  private static final ExpiryAwareToken TOKEN = new ExpiryAwareToken("token", 600);
+
+  long TOKEN_MAX_AGE_SHORT = 2;
+  long TOKEN_MAX_AGE = 600;
+  long TOKEN_MAX_AGE_LONG = 604800;
+  String ACCESS_TOKEN = UUID.randomUUID().toString();
+  String REFRESH_TOKEN = UUID.randomUUID().toString();
+  String ACCESS_TOKEN_COOKIE = format("folioAccessToken=%s; Max-Age=%d; Expires=Thu, 03 Aug 2023" +
+    " 19:54:44 GMT; Path=/; Secure; HTTPOnly; SameSite=None", ACCESS_TOKEN, TOKEN_MAX_AGE);
+  String REFRESH_TOKEN_COOKIE = format("folioRefreshToken=%s; Max-Age=%d; Expires=Thu, 10 Aug" +
+      " 2023 19:44:44 GMT; Path=/authn; Secure; HTTPOnly; SameSite=None", REFRESH_TOKEN,
+    TOKEN_MAX_AGE_LONG);
+  String ACCESS_TOKEN_COOKIE_SHORT = format("folioAccessToken=%s; Max-Age=%d; Expires=Thu, 03 Aug" +
+    " 2023 19:54:44 GMT; Path=/; Secure; HTTPOnly; SameSite=None", ACCESS_TOKEN, TOKEN_MAX_AGE_SHORT);
+  String REFRESH_TOKEN_COOKIE_SHORT = format("folioRefreshToken=%s; Max-Age=%d; Expires=Thu, 10 A" +
+      "ug 2023 19:44:44 GMT; Path=/authn; Secure; HTTPOnly; SameSite=None", REFRESH_TOKEN,
+    TOKEN_MAX_AGE_SHORT);
 
   private final Map<String, String> headers = new HashMap<>();
 
@@ -86,8 +106,7 @@ public class SecurityManagerTest {
   private final SystemUserConfig systemUserConfig = new SystemUserConfig(SYSTEM_USER_NAME,
     SYSTEM_USER_PASSWORD);
   @Spy
-  private final SecurityManagerImpl securityManager = new SecurityManagerImpl(vertx, cache,
-    systemUserConfig);
+  private final SecurityManagerImpl securityManager = new SecurityManagerImpl(cache, systemUserConfig);
 
   private final Context vertxContext = vertx.getOrCreateContext();
 
@@ -104,35 +123,35 @@ public class SecurityManagerTest {
 
     headers.put(OKAPI_URL_HEADER, "http://localhost:" + mockServer.port());
     headers.put(OKAPI_TENANT_HEADER, TENANT);
-    headers.put(OKAPI_TOKEN_HEADER, TOKEN);
+    headers.put(OKAPI_TOKEN_HEADER, ACCESS_TOKEN);
   }
 
   @Test
   public void shouldLoginPubSubUser(TestContext context) {
     Async async = context.async();
 
-    String pubSubToken = UUID.randomUUID().toString();
-
     stubFor(post(LOGIN_URL)
-      .willReturn(created().withHeader(OKAPI_HEADER_TOKEN, pubSubToken)));
+      .willReturn(created()
+        .withHeader("Set-Cookie", ACCESS_TOKEN_COOKIE)
+        .withHeader("Set-Cookie", REFRESH_TOKEN_COOKIE)
+      ));
 
     OkapiConnectionParams params = new OkapiConnectionParams();
     params.setVertx(vertx);
     params.setOkapiUrl(headers.get(OKAPI_URL_HEADER));
     params.setTenantId(TENANT);
-    params.setToken(TOKEN);
 
-    Future<String> future = securityManager.getJWTToken(params);
+    Future<String> future = securityManager.getAccessToken(params);
 
     future.onComplete(ar -> {
       context.assertTrue(ar.succeeded());
-      context.assertEquals(pubSubToken, ar.result());
+      context.assertEquals(ACCESS_TOKEN, ar.result());
       List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
       context.assertEquals(1, requests.size());
       context.assertEquals(LOGIN_URL, requests.get(0).getUrl());
       context.assertEquals("POST", requests.get(0).getMethod().getName());
-      String actualToken = cache.getToken(params.getTenantId());
-      context.assertEquals(pubSubToken, actualToken);
+      String actualToken = cache.getAccessToken(params.getTenantId());
+      context.assertEquals(ACCESS_TOKEN, actualToken);
       async.complete();
     });
   }
@@ -265,18 +284,20 @@ public class SecurityManagerTest {
   @Test
   public void shouldLoginPubSubUserWhenContextHasNoToken(TestContext context) {
     Async async = context.async();
-    String expectedToken = UUID.randomUUID().toString();
 
     stubFor(post(LOGIN_URL)
-      .willReturn(created().withHeader(OKAPI_HEADER_TOKEN, expectedToken)));
+      .willReturn(created()
+        .withHeader("Set-Cookie", ACCESS_TOKEN_COOKIE)
+        .withHeader("Set-Cookie", REFRESH_TOKEN_COOKIE)
+      ));
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<String> future = securityManager.getJWTToken(params);
+    Future<String> future = securityManager.getAccessToken(params);
 
     future.onComplete(ar -> {
       context.assertTrue(ar.succeeded());
-      context.assertEquals(expectedToken, ar.result());
+      context.assertEquals(ACCESS_TOKEN, ar.result());
       verify(1, postRequestedFor(urlEqualTo(LOGIN_URL)));
       async.complete();
     });
@@ -289,7 +310,7 @@ public class SecurityManagerTest {
 
     OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
 
-    Future<String> future = securityManager.getJWTToken(params);
+    Future<String> future = securityManager.getAccessToken(params);
 
     future.onComplete(ar -> {
       context.assertTrue(ar.failed());
@@ -418,10 +439,43 @@ public class SecurityManagerTest {
 
   @Test
   public void checkThatInvalidateTokenRemovesTokenForTenant() {
-    cache.addToken(TENANT, TOKEN);
-    assertEquals(TOKEN, cache.getToken(TENANT));
-    cache.invalidateToken(TENANT);
-    assertNull(cache.getToken(TENANT));
+    cache.setAccessToken(TENANT, new ExpiryAwareToken(ACCESS_TOKEN, TOKEN_MAX_AGE, null));
+    assertEquals(ACCESS_TOKEN, cache.getAccessToken(TENANT));
+    cache.invalidateAccessToken(TENANT);
+    assertNull(cache.getAccessToken(TENANT));
+
+    cache.setRefreshToken(TENANT, new ExpiryAwareToken(REFRESH_TOKEN, TOKEN_MAX_AGE, null));
+    assertEquals(REFRESH_TOKEN, cache.getRefreshToken(TENANT));
+    cache.invalidateRefreshToken(TENANT);
+    assertNull(cache.getRefreshToken(TENANT));
+  }
+
+  @Test
+  public void checkCacheRefreshesAfterHalfOfMaxAge(TestContext context) {
+    Async async = context.async();
+
+    stubFor(post(LOGIN_URL)
+      .willReturn(created()
+        .withHeader("Set-Cookie", ACCESS_TOKEN_COOKIE_SHORT)
+        .withHeader("Set-Cookie", REFRESH_TOKEN_COOKIE_SHORT)
+      ));
+
+    OkapiConnectionParams params = new OkapiConnectionParams();
+    params.setVertx(vertx);
+    params.setOkapiUrl(headers.get(OKAPI_URL_HEADER));
+    params.setTenantId(TENANT);
+
+    Future<String> future = securityManager.getAccessToken(params);
+
+    future.onComplete(ar -> {
+      context.assertEquals(TOKEN_MAX_AGE_SHORT, cache.getAccessExpiryAwareToken(TENANT).getMaxAge());
+      var accessToken = cache.getAccessExpiryAwareToken(TENANT);
+      // Comparing links to make sure it expires
+      Awaitility.await()
+        .atMost(Duration.ofSeconds(3))
+        .until(() -> cache.getAccessExpiryAwareToken(TENANT) != accessToken);
+      async.complete();
+    });
   }
 
   private void verifyUser(LoggedRequest loggedRequest) {

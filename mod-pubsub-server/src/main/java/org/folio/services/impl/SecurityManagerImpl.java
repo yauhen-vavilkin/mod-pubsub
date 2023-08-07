@@ -1,5 +1,37 @@
 package org.folio.services.impl;
 
+import static io.vertx.core.http.HttpMethod.PUT;
+import static io.vertx.core.json.Json.encode;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.HttpStatus.HTTP_NO_CONTENT;
+import static org.folio.rest.util.RestUtil.doRequest;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.folio.HttpStatus;
+import org.folio.config.user.SystemUserConfig;
+import org.folio.representation.User;
+import org.folio.rest.util.ExpiryAwareToken;
+import org.folio.rest.util.OkapiConnectionParams;
+import org.folio.rest.util.RestUtil;
+import org.folio.services.SecurityManager;
+import org.folio.services.cache.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.google.common.io.Resources;
 
 import io.vertx.core.Future;
@@ -8,84 +40,130 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.folio.HttpStatus;
-import org.folio.config.user.SystemUserConfig;
-import org.folio.representation.User;
-import org.folio.rest.util.OkapiConnectionParams;
-import org.folio.services.SecurityManager;
-import org.folio.services.cache.Cache;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.UUID;
-
-import static io.vertx.core.http.HttpMethod.PUT;
-import static io.vertx.core.json.Json.encode;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.folio.HttpStatus.HTTP_NO_CONTENT;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.util.RestUtil.doRequest;
 
 @Component
 public class SecurityManagerImpl implements SecurityManager {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
-  private static final String LOGIN_URL = "/authn/login";
+  private static final String LOGIN_WITH_EXPIRY_URL = "/authn/login-with-expiry";
   private static final String USERS_URL = "/users";
   private static final String CREDENTIALS_URL = "/authn/credentials";
   private static final String PERMISSIONS_URL = "/perms/users";
   private static final String PERMISSIONS_FILE_PATH = "permissions/pubsub-user-permissions.csv";
   private static final String USER_LAST_NAME = "System";
   private static final List<String> PERMISSIONS = readPermissionsFromResource(PERMISSIONS_FILE_PATH);
+  private static final String ACCESS_TOKEN_NAME = "folioAccessToken";
+  private static final String REFRESH_TOKEN_NAME = "folioRefreshToken";
 
-  private Vertx vertx;
-  private Cache cache;
-  private SystemUserConfig systemUserConfig;
+  private final Cache cache;
+  private final SystemUserConfig systemUserConfig;
 
-  public SecurityManagerImpl(@Autowired Vertx vertx, @Autowired Cache cache,
+  public SecurityManagerImpl(@Autowired Cache cache,
     @Autowired SystemUserConfig systemUserConfig) {
 
-    this.vertx = vertx;
     this.cache = cache;
     this.systemUserConfig = systemUserConfig;
+
+    if (this.cache != null) {
+      // It's recommended that BE modules don't use /authn/refresh API because they always have
+      // credentials
+      this.cache.setTokensRefreshFunction(this::logInWithExpiry);
+    } else {
+      LOGGER.warn("SecurityManagerImpl:: Cache is null, failed to set refresh function");
+    }
   }
 
   @Override
-  public Future<String> getJWTToken(OkapiConnectionParams params) {
+  public Future<String> getAccessToken(OkapiConnectionParams params) {
     params.setToken(EMPTY);
+    final String tenantId = params.getTenantId();
 
-    String cachedToken = cache.getToken(params.getTenantId());
-    if (!StringUtils.isEmpty(cachedToken)) {
-      return Future.succeededFuture(cachedToken);
+    String cachedAccessToken = cache.getAccessToken(tenantId);
+    if (!StringUtils.isEmpty(cachedAccessToken)) {
+      LOGGER.debug("getAccessToken:: Using cached access token for tenant {}",
+        params.getTenantId());
+      return Future.succeededFuture(cachedAccessToken);
     }
 
+    return logInWithExpiry(params)
+      .map(v -> cache.getAccessToken(tenantId));
+  }
+
+  public Future<Void> logInWithExpiry(OkapiConnectionParams params) {
+    final String tenantId = params.getTenantId();
+    LOGGER.info("logInWithExpiry:: Logging in, tenantId={}", tenantId);
+
     return Future.succeededFuture(systemUserConfig.getUserCredentialsJson())
-      .compose(userCredentials -> doRequest(params, LOGIN_URL, HttpMethod.POST, userCredentials.encode()))
+      .compose(userCredentials -> doRequest(params, LOGIN_WITH_EXPIRY_URL,
+        HttpMethod.POST, userCredentials.encode()))
       .compose(response -> {
         if (response.getCode() == HttpStatus.HTTP_CREATED.toInt()) {
-          LOGGER.info("Logged in {} user", systemUserConfig.getName());
-          String token = response.getResponse().getHeader(OKAPI_TOKEN_HEADER);
-          cache.addToken(params.getTenantId(), token);
-          return Future.succeededFuture(token);
+          LOGGER.info("logInWithExpiry:: Logged in {} user", systemUserConfig.getName());
+
+          ExpiryAwareToken accessToken = fetchTokenFromCookies(response, ACCESS_TOKEN_NAME, params);
+          if (accessToken == null) {
+            return tokenFetchFailure(ACCESS_TOKEN_NAME);
+          }
+
+          ExpiryAwareToken refreshToken = fetchTokenFromCookies(response, REFRESH_TOKEN_NAME,
+            params);
+          if (refreshToken == null) {
+            return tokenFetchFailure(REFRESH_TOKEN_NAME);
+          }
+
+          LOGGER.info("logInWithExpiry:: Parsed 'access' and 'refresh' tokens, caching");
+          cache.setAccessToken(tenantId, accessToken);
+          cache.setRefreshToken(tenantId, refreshToken);
+          return Future.succeededFuture();
         }
         String message = String.format("%s user was not logged in, received status %d",
-            systemUserConfig.getName(), response.getCode());
-        LOGGER.error(message);
+          systemUserConfig.getName(), response.getCode());
+        LOGGER.warn("logInWithExpiry:: {}", message);
         return Future.failedFuture(message);
       });
+  }
+
+  public Future<Void> logInWithExpiry(ExpiryAwareToken token) {
+    return logInWithExpiry(token.getOkapiParams());
+  }
+
+  private ExpiryAwareToken fetchTokenFromCookies(RestUtil.WrappedResponse response,
+    String tokenName, OkapiConnectionParams params) {
+
+    String tokenCookie = response.getResponse().cookies().stream()
+      .filter(t -> t.contains(tokenName))
+      .findFirst()
+      .orElse(null);
+
+    if (tokenCookie != null) {
+      String token = Arrays.stream(tokenCookie.split(";"))
+        .map(String::trim)
+        .map(param -> param.split("="))
+        .filter(keyValuePair -> tokenName.equals(keyValuePair[0]))
+        .map(keyValuePair -> keyValuePair[1])
+        .findFirst()
+        .orElse(null);
+
+      long maxAge = Arrays.stream(tokenCookie.split(";"))
+        .map(String::trim)
+        .map(param -> param.split("="))
+        .filter(keyValuePair -> "Max-Age".equals(keyValuePair[0]))
+        .map(keyValuePair -> keyValuePair[1])
+        .mapToLong(Long::parseLong)
+        .findFirst()
+        .orElse(0L);
+
+      return new ExpiryAwareToken(token, maxAge, params);
+    }
+
+    return null;
+  }
+
+  private Future<Void> tokenFetchFailure(String tokenName) {
+    String logMessage = String.format("Failed to fetch %s from cookies", tokenName);
+    LOGGER.warn("tokenFetchFailure:: {}", logMessage);
+    return Future.failedFuture(logMessage);
   }
 
   @Override
@@ -105,7 +183,8 @@ public class SecurityManagerImpl implements SecurityManager {
 
   @Override
   public void invalidateToken(String tenantId) {
-    cache.invalidateToken(tenantId);
+    cache.invalidateAccessToken(tenantId);
+    cache.invalidateRefreshToken(tenantId);
   }
 
   private Future<User> existsPubSubUser(OkapiConnectionParams params) {

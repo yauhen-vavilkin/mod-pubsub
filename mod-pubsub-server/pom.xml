@@ -147,6 +147,12 @@
       <version>4.2.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -166,6 +172,7 @@
           <release>17</release>
           <encoding>UTF-8</encoding>
           <annotationProcessors>
+            <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
           <generatedSourcesDirectory>${project.build.directory}/generated-sources/services/audit</generatedSourcesDirectory>
@@ -216,6 +223,7 @@
           <aspectDirectory>src/main/java/org/folio/rest/annotations</aspectDirectory>
           <XaddSerialVersionUID>true</XaddSerialVersionUID>
           <showWeaveInfo>true</showWeaveInfo>
+          <sources/>
           <aspectLibraries>
             <aspectLibrary>
               <groupId>org.folio</groupId>

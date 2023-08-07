@@ -136,7 +136,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
     List<Future<RestUtil.WrappedResponse>> futureList = new ArrayList<>(); //NOSONAR
     Promise<Void> result = Promise.promise();
     Map<MessagingModule, AtomicInteger> retry = new ConcurrentHashMap<>();
-    return securityManager.getJWTToken(params)
+    return securityManager.getAccessToken(params)
       .onSuccess(params::setToken)
       .compose(ar -> cache.getMessagingModules())
       .map(messagingModules -> filter(messagingModules,
@@ -200,7 +200,7 @@ public class KafkaConsumerServiceImpl implements ConsumerService {
   private void retryDelivery(Event event, MessagingModule subscriber, OkapiConnectionParams params, Map<MessagingModule, AtomicInteger> retry) {
     if (retry.get(subscriber).get() <= RETRY_NUMBER) {
       LOGGER.info("Retry to deliver event {} event with id '{}' to {}", event.getEventType(), event.getId(), subscriber.getSubscriberCallback());
-      securityManager.getJWTToken(params)
+      securityManager.getAccessToken(params)
         .onSuccess(params::setToken)
         .compose(v -> doRequest(params, subscriber.getSubscriberCallback(), HttpMethod.POST, event.getEventPayload())
           .onComplete(getEventDeliveredHandler(event, params.getTenantId(), subscriber, params, retry)));

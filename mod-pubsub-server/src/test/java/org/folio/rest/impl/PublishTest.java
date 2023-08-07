@@ -1,11 +1,23 @@
 package org.folio.rest.impl;
 
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.created;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static java.lang.String.format;
+import static org.awaitility.Awaitility.await;
+import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.http.HttpStatus;
 import org.folio.kafka.PubSubConfig;
 import org.folio.rest.jaxrs.model.EventDescriptor;
@@ -18,21 +30,13 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static org.awaitility.Awaitility.await;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_TOKEN_HEADER;
-import static org.folio.rest.util.OkapiConnectionParams.OKAPI_URL_HEADER;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class PublishTest extends AbstractRestTest {
@@ -41,9 +45,18 @@ public class PublishTest extends AbstractRestTest {
     new WireMockConfiguration().dynamicPort());
   private static final String PUBLISH_PATH = "/pubsub/publish";
   private static final String CALLBACK_ADDRESS = "/call-me-maybe";
-  private static final String LOGIN_URL = "/authn/login";
+  private static final String LOGIN_URL = "/authn/login-with-expiry";
   private static final String USERS_URL = "/users";
   private static final String GET_PUBSUB_USER_URL = USERS_URL + "?query=username=" + SYSTEM_USER_NAME;
+  long TOKEN_MAX_AGE = 600;
+  long TOKEN_MAX_AGE_LONG = 604800;
+  String ACCESS_TOKEN = UUID.randomUUID().toString();
+  String REFRESH_TOKEN = UUID.randomUUID().toString();
+  String ACCESS_TOKEN_COOKIE = format("folioAccessToken=%s; Max-Age=%d; Expires=Thu, 03 Aug 2023" +
+    " 19:54:44 GMT; Path=/; Secure; HTTPOnly; SameSite=None", ACCESS_TOKEN, TOKEN_MAX_AGE);
+  String REFRESH_TOKEN_COOKIE = format("folioRefreshToken=%s; Max-Age=%d; Expires=Thu, 10 Aug" +
+      " 2023 19:44:44 GMT; Path=/authn; Secure; HTTPOnly; SameSite=None", REFRESH_TOKEN,
+    TOKEN_MAX_AGE_LONG);
   private static final EventDescriptor EVENT_DESCRIPTOR = new EventDescriptor()
     .withEventType("record_created")
     .withDescription("Created SRS Marc Bibliographic Record with order data in 9xx fields")
@@ -191,10 +204,11 @@ public class PublishTest extends AbstractRestTest {
           "    ],\n" +
           "    \"totalRecords\": 1\n" +
           "}")));
-    wireMockRule.stubFor(post(urlEqualTo(LOGIN_URL))
-      .willReturn(aResponse()
-        .withHeader(OKAPI_TOKEN_HEADER, "okapi_token")
-        .withStatus(201)));
+    stubFor(post(LOGIN_URL)
+      .willReturn(created()
+        .withHeader("Set-Cookie", ACCESS_TOKEN_COOKIE)
+        .withHeader("Set-Cookie", REFRESH_TOKEN_COOKIE)
+      ));
   }
 
   @After

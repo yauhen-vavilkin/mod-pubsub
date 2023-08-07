@@ -15,7 +15,7 @@ public interface SecurityManager {
    * @param params okapi connection params
    * @return future with token
    */
-  Future<String> getJWTToken(OkapiConnectionParams params);
+  Future<String> getAccessToken(OkapiConnectionParams params);
 
   /**
    * Creates new system user if it doesn't exist and assigns all necessary permissions

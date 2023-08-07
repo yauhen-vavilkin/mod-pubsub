@@ -12,7 +12,10 @@ public final class OkapiConnectionParams {
   public static final String USER_ID = "X-Okapi-User-Id";
   private String okapiUrl;
   private String tenantId;
+
+  // Access token
   private String token;
+
   private Map<String, String> headers;
   private Vertx vertx;
   private int timeout = 2000;
