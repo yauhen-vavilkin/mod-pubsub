@@ -9,10 +9,19 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 public class User {
   private String id;
   private String username;
+  private String type;
   private boolean active;
   private Personal personal;
   // Everything else that we're not expecting, just in case
   private final Map<String, Object> unmapped = new HashMap<>();
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
 
   public String getId() {
     return id;

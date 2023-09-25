@@ -66,6 +66,7 @@ public abstract class AbstractRestTest {
   protected static final String SYSTEM_USER_PASSWORD_ENV = "SYSTEM_USER_PASSWORD";
   protected static final String SYSTEM_USER_NAME = "test-pubsub-username";
   protected static final String SYSTEM_USER_PASSWORD = "test-pubsub-password";
+  protected static final String SYSTEM_USER_TYPE = "system";
 
   static RequestSpecification spec;
   private static String useExternalDatabase;

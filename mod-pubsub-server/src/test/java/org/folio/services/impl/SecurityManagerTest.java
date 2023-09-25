@@ -70,6 +70,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 public class SecurityManagerTest {
   protected static final String SYSTEM_USER_NAME = "test-pubsub-username";
   protected static final String SYSTEM_USER_PASSWORD = "test-pubsub-password";
+  protected static final String SYSTEM_USER_TYPE = "system";
 
   private static final String LOGIN_URL = "/authn/login-with-expiry";
   private static final String USERS_URL = "/users";
@@ -498,6 +499,7 @@ public class SecurityManagerTest {
       .put("id", id)
       .put("username", SYSTEM_USER_NAME)
       .put("active", "true")
+      .put("type", SYSTEM_USER_TYPE)
       .put("proxyFor", new JsonArray())
       .put("createdDate", Instant.now())
       .put("updatedDate", Instant.now())
@@ -509,7 +511,7 @@ public class SecurityManagerTest {
       .put("lastName", "System")
       .put("addresses", new JsonArray());
 
-    return existingUser(id).put("personal", personal);
+    return existingUser(id).put("type", SYSTEM_USER_TYPE).put("personal", personal);
   }
 
   private JsonObject emptyUsersResponse() {
