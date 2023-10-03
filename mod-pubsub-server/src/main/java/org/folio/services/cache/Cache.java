@@ -2,10 +2,13 @@ package org.folio.services.cache;
 
 import static org.apache.commons.collections4.IterableUtils.isEmpty;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,19 +81,28 @@ public class Cache {
   }
 
   public Future<Set<MessagingModule>> getMessagingModules() {
+    LOGGER.info("getMessagingModules() called");
     Promise<Set<MessagingModule>> promise = Promise.promise();
     loadingCache
       .get(MESSAGING_MODULES_CACHE_KEY)
       .whenComplete((messagingModules, throwable) -> {
+        LOGGER.info("messaging modules retrieved");
         if (throwable == null) {
+          LOGGER.info("throwable is null");
           if (isEmpty(messagingModules)) {
+            LOGGER.info("messagingModules is empty, fetching from DB");
             messagingModuleDao.getAll()
               .map(messagingModules::addAll)
-              .onComplete(ar -> promise.complete(messagingModules));
+              .onComplete(ar -> {
+                LOGGER.info("messaging modules fetched: {}", stringify(messagingModules));
+                promise.complete(messagingModules);
+              });
           } else {
+            LOGGER.info("cached messaging modules: {}", stringify(messagingModules));
             promise.complete(messagingModules);
           }
         } else {
+          LOGGER.error("failed to retrieve messaging modules", throwable);
           promise.fail(throwable);
         }
       });
@@ -159,5 +171,12 @@ public class Cache {
 
   public void setKnownOkapiParams(String tenant, OkapiConnectionParams params) {
     knownOkapiParams.put(tenant, params);
+  }
+
+  private static String stringify(Collection<MessagingModule> modules) {
+    return "Messaging modules:\n" + modules.stream()
+      .map(module -> String.format("Module: id=%s, moduleId=%s, tenantId=%s, moduleRole=%s, eventType=%s",
+        module.getId(), module.getModuleId(), module.getTenantId(), module.getModuleRole(), module.getEventType()))
+      .collect(Collectors.joining("\n"));
   }
 }
