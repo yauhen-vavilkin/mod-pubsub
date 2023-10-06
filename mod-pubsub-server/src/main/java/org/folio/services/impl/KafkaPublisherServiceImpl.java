@@ -64,6 +64,8 @@ public class KafkaPublisherServiceImpl implements PublisherService {
    * @return succeeded future if publisher verified, failed future otherwise
    */
   private Future<Void> verifyPublisher(Event event, String tenantId) {
+    LOGGER.info("verifyPublisher called with tenantId={}", tenantId);
+
     return cache.getMessagingModules()
       .map(messagingModules -> new ArrayList<>(filter(messagingModules,
         new MessagingModuleFilter()

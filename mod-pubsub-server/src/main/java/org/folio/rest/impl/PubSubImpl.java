@@ -60,6 +60,7 @@ public class PubSubImpl implements Pubsub {
   public PubSubImpl(Vertx vertx, String tenantId) {  //NOSONAR
     SpringContextUtil.autowireDependencies(this, Vertx.currentContext());
     this.tenantId = TenantTool.calculateTenantId(tenantId);
+    LOGGER.info("PubSubImpl constructor called with tenantId={}", tenantId);
   }
 
   @Override
