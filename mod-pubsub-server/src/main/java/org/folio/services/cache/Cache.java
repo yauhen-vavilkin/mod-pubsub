@@ -94,11 +94,11 @@ public class Cache {
             messagingModuleDao.getAll()
               .map(messagingModules::addAll)
               .onComplete(ar -> {
-                LOGGER.info("messaging modules fetched: {}", stringify(messagingModules));
+                LOGGER.info("messaging modules fetched:\n{}", stringify(messagingModules));
                 promise.complete(messagingModules);
               });
           } else {
-            LOGGER.info("cached messaging modules: {}", stringify(messagingModules));
+            LOGGER.info("cached messaging modules:\n{}", stringify(messagingModules));
             promise.complete(messagingModules);
           }
         } else {
@@ -174,9 +174,9 @@ public class Cache {
   }
 
   private static String stringify(Collection<MessagingModule> modules) {
-    return "Messaging modules:\n" + modules.stream()
-      .map(module -> String.format("Module: id=%s, moduleId=%s, tenantId=%s, moduleRole=%s, eventType=%s",
-        module.getId(), module.getModuleId(), module.getTenantId(), module.getModuleRole(), module.getEventType()))
+    return modules.stream()
+      .map(module -> String.format("%s   %s,   %s,   %s",
+        module.getModuleId(), module.getTenantId(), module.getModuleRole(), module.getEventType()))
       .collect(Collectors.joining("\n"));
   }
 }
