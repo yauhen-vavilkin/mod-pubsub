@@ -175,8 +175,8 @@ public class Cache {
 
   private static String stringify(Collection<MessagingModule> modules) {
     return modules.stream()
-      .map(module -> String.format("%s   %s,   %s,   %s",
-        module.getModuleId(), module.getTenantId(), module.getModuleRole(), module.getEventType()))
+      .map(module -> String.format("[%s] [%s] [%s] [%s]",
+        module.getTenantId(), module.getModuleId(), module.getModuleRole(), module.getEventType()))
       .collect(Collectors.joining("\n"));
   }
 }
