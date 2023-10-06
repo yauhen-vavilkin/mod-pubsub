@@ -3,7 +3,15 @@ package org.folio.rest.impl;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.created;
+import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
@@ -14,6 +22,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -30,11 +39,15 @@ public class PubSubIT {
   private static final Network network = Network.newNetwork();
 
   @ClassRule
+  public static final WireMockClassRule okapi = new WireMockClassRule();
+
+  @ClassRule
   public static final GenericContainer<?> module =
     new GenericContainer<>(
-      new ImageFromDockerfile("mod-pubsub").withFileFromPath("..", Path.of("..")))
+      new ImageFromDockerfile("mod-pubsub").withDockerfile(Path.of("../Dockerfile")))
     .withNetwork(network)
     .withExposedPorts(8081)
+    .withAccessToHost(true)
     .withEnv("DB_HOST", "postgres")
     .withEnv("DB_PORT", "5432")
     .withEnv("DB_USERNAME", "username")
@@ -53,11 +66,20 @@ public class PubSubIT {
 
   @BeforeClass
   public static void beforeClass() {
+    okapi.start();
+    Testcontainers.exposeHostPorts(okapi.port());
+    okapi.stubFor(get("/users?query=username=pub-sub").willReturn(okJson("{\"users\":[]}")));
+    okapi.stubFor(post("/users").willReturn(created()));
+    okapi.stubFor(post("/authn/credentials").willReturn(created()));
+    okapi.stubFor(get(urlPathMatching("/perms/users/.*")).willReturn(notFound()));
+    okapi.stubFor(post("/perms/users").willReturn(created()));
+
     RestAssured.reset();
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + module.getHost() + ":" + module.getFirstMappedPort();
     RestAssured.requestSpecification = new RequestSpecBuilder()
         .addHeader("X-Okapi-Tenant", "testtenant")
+        .addHeader("X-Okapi-Url", "http://host.testcontainers.internal:" + okapi.port())
         .setContentType(ContentType.JSON)
         .build();
 
@@ -87,8 +109,9 @@ public class PubSubIT {
     when().
       get(location + "?wait=30000").
     then().
-      statusCode(200).
-      body("complete", is(true));
+      statusCode(200).  // getting job record succeeds
+      body("complete", is(true)).  // job is complete
+      body("error", is(nullValue()));  // job has succeeded without error
   }
 
   @Test
