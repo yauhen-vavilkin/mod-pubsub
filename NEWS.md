@@ -1,3 +1,14 @@
+## 2023-10-12 v2.10.0
+* [FOLIO-3678](https://issues.folio.org/browse/FOLIO-3678) Use API-related Workflows
+* [FOLIO-1021](https://issues.folio.org/browse/FOLIO-1021) Update copyright year
+* [MODPUBSUB-264](https://issues.folio.org/browse/MODPUBSUB-264) postgresql 42.5.4, folio-liquibase-util 1.6.0, apk upgrade
+* [MODPUBSUB-268](https://issues.folio.org/browse/MODPUBSUB-268) Migrate to Java 17
+* [MODPUBSUB-270](https://issues.folio.org/browse/MODPUBSUB-270) Enable tenant collection topics
+* [MODPUBSUB-267](https://issues.folio.org/browse/MODPUBSUB-267) Use new RMB read-only APIs
+* [MODPUBSUB-272](https://issues.folio.org/browse/MODPUBSUB-272) Refresh token rotation
+* [MODPUBSUB-274](https://issues.folio.org/browse/MODPUBSUB-274) Populate pub-sub system user with `system` user type
+* [MODPUBSUB-277](https://issues.folio.org/browse/MODPUBSUB-277) Check error in `GET /_/tenant/<tenantid>` in `PubSubIT`
+
 ## 2023-02-15 v2.9.0
 * [MODPUBSUB-245](https://issues.folio.org/browse/MODPUBSUB-245) Use testcontainers kafka instead of kafka-junit
 
