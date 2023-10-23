@@ -45,14 +45,15 @@ public class PubSubIT {
   public static final GenericContainer<?> module =
     new GenericContainer<>(
       new ImageFromDockerfile("mod-pubsub").withDockerfile(Path.of("../Dockerfile")))
-    .withNetwork(network)
-    .withExposedPorts(8081)
-    .withAccessToHost(true)
-    .withEnv("DB_HOST", "postgres")
-    .withEnv("DB_PORT", "5432")
-    .withEnv("DB_USERNAME", "username")
-    .withEnv("DB_PASSWORD", "password")
-    .withEnv("DB_DATABASE", "postgres");
+      .withNetwork(network)
+      .withExposedPorts(8081)
+      .withAccessToHost(true)
+      .withEnv("DB_HOST", "postgres")
+      .withEnv("DB_PORT", "5432")
+      .withEnv("DB_USERNAME", "username")
+      .withEnv("DB_PASSWORD", "password")
+      .withEnv("DB_DATABASE", "postgres")
+      .withEnv("SYSTEM_USER_PASSWORD", "test_password");
 
   @ClassRule
   public static final PostgreSQLContainer<?> postgres =
@@ -66,7 +67,6 @@ public class PubSubIT {
 
   @BeforeClass
   public static void beforeClass() {
-    System.setProperty("SYSTEM_USER_PASSWORD", "test-password");
     okapi.start();
     Testcontainers.exposeHostPorts(okapi.port());
     okapi.stubFor(get("/users?query=username=pub-sub").willReturn(okJson("{\"users\":[]}")));
