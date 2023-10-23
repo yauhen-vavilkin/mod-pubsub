@@ -11,7 +11,12 @@ public class SystemUserConfig {
   private final String password;
 
   public SystemUserConfig(@Value("${SYSTEM_USER_NAME:pub-sub}") String name,
-    @Value("${SYSTEM_USER_PASSWORD:pubsub}") String password) {
+    @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password) {
+
+    if (password == null) {
+      throw new IllegalArgumentException(String.format(
+        "Please provide password for user '%s' using system variable SYSTEM_USER_PASSWORD", name));
+    }
 
     this.name = name;
     this.password = password;

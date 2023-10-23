@@ -158,10 +158,10 @@ If this variable is not set, default "folio" prefix will be used in topic names,
       },
       {
         "name": "SYSTEM_USER_PASSWORD",
-        "value": "pubsub"
+        "value": "YOUR_PASSWORD_HERE"
       }
  ```
-Default username is `pub-sub`, password is `pubsub`.
+Default username is `pub-sub`. Password must be provided via system variable `SYSTEM_USER_PASSWORD`, otherwise application will crash at startup.
 
 ## Verifying the module can connect and work with kafka
 

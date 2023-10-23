@@ -370,10 +370,6 @@
       {
         "name": "SYSTEM_USER_NAME",
         "value": "pub-sub"
-      },
-      {
-        "name": "SYSTEM_USER_PASSWORD",
-        "value": "pubsub"
       }
     ]
   }
