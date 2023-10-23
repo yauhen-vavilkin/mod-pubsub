@@ -66,6 +66,7 @@ public class PubSubIT {
 
   @BeforeClass
   public static void beforeClass() {
+    System.setProperty("SYSTEM_USER_PASSWORD", "test-password");
     okapi.start();
     Testcontainers.exposeHostPorts(okapi.port());
     okapi.stubFor(get("/users?query=username=pub-sub").willReturn(okJson("{\"users\":[]}")));
