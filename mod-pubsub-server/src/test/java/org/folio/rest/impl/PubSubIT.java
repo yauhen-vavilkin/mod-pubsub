@@ -53,6 +53,7 @@ public class PubSubIT {
       .withEnv("DB_USERNAME", "username")
       .withEnv("DB_PASSWORD", "password")
       .withEnv("DB_DATABASE", "postgres")
+      .withEnv("SYSTEM_USER_NAME", "test_user")
       .withEnv("SYSTEM_USER_PASSWORD", "test_password");
 
   @ClassRule

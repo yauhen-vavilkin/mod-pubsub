@@ -150,18 +150,17 @@ If this variable is not set, default "folio" prefix will be used in topic names,
 
 ****System user credentials**** 
 
-`mod-pubsub` requires these credentials to be able to deliver events to subscribers.
+`mod-pubsub` requires these credentials to be able to deliver events to subscribers. Username and password for system user must be provided using system variables `SYSTEM_USER_NAME` and `SYSTEM_USER_PASSWORD`, otherwise application will crash at startup.
  ```
       {
         "name": "SYSTEM_USER_NAME",
-        "value": "pub-sub"
+        "value": "USERNAME_HERE"
       },
       {
         "name": "SYSTEM_USER_PASSWORD",
-        "value": "YOUR_PASSWORD_HERE"
+        "value": "PASSWORD_HERE"
       }
  ```
-Default username is `pub-sub`. Password must be provided via system variable `SYSTEM_USER_PASSWORD`, otherwise application will crash at startup.
 
 ## Verifying the module can connect and work with kafka
 
