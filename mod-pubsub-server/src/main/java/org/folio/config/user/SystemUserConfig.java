@@ -7,22 +7,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.vertx.core.json.JsonObject;
+import lombok.Getter;
 
 @Component
 public class SystemUserConfig {
+  private static final String SYSTEM_USER_NAME_VAR = "SYSTEM_USER_NAME";
+  private static final String SYSTEM_USER_PASSWORD_VAR = "SYSTEM_USER_PASSWORD";
+
+  @Getter
   private final String name;
   private final String password;
 
   public SystemUserConfig(@Value("${SYSTEM_USER_NAME:#{null}}") String name,
     @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password) {
 
-    validateCredentials(name, password);
     this.name = name;
     this.password = password;
-  }
-
-  public String getName() {
-    return name;
+    validateCredentials();
   }
 
   public JsonObject getUserCredentialsJson() {
@@ -31,18 +32,18 @@ public class SystemUserConfig {
       .put("password", password);
   }
 
-  private static void validateCredentials(String username, String password) {
+  private void validateCredentials() {
     List<String> missingVariables = new ArrayList<>();
-    if (username == null) {
-      missingVariables.add("SYSTEM_USER_NAME");
+    if (name == null) {
+      missingVariables.add(SYSTEM_USER_NAME_VAR);
     }
     if (password == null) {
-      missingVariables.add("SYSTEM_USER_PASSWORD");
+      missingVariables.add(SYSTEM_USER_PASSWORD_VAR);
     }
-
     if (!missingVariables.isEmpty()) {
       throw new IllegalArgumentException("Failed to resolve credentials for system user. " +
         "Please provide missing system variables: " + missingVariables);
     }
   }
+
 }
