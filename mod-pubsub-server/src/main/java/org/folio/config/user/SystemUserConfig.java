@@ -21,9 +21,9 @@ public class SystemUserConfig {
   public SystemUserConfig(@Value("${SYSTEM_USER_NAME:#{null}}") String name,
     @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password) {
 
+    validateCredentials(name, password);
     this.name = name;
     this.password = password;
-    validateCredentials();
   }
 
   public JsonObject getUserCredentialsJson() {
@@ -32,7 +32,7 @@ public class SystemUserConfig {
       .put("password", password);
   }
 
-  private void validateCredentials() {
+  private static void validateCredentials(String name, String password) {
     List<String> missingVariables = new ArrayList<>();
     if (name == null) {
       missingVariables.add(SYSTEM_USER_NAME_VAR);
