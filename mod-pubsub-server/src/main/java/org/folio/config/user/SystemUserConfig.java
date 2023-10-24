@@ -39,9 +39,11 @@ public class SystemUserConfig {
     LOGGER.info("validateCredentials:: validating system user credentials");
     List<String> missingVariables = new ArrayList<>();
     if (name == null) {
+      LOGGER.error("validateCredentials:: username is null");
       missingVariables.add(SYSTEM_USER_NAME_VAR);
     }
     if (password == null) {
+      LOGGER.error("validateCredentials:: password is null");
       missingVariables.add(SYSTEM_USER_PASSWORD_VAR);
     }
     if (!missingVariables.isEmpty()) {
@@ -50,6 +52,7 @@ public class SystemUserConfig {
       LOGGER.error("validateCredentials:: {}", errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
+    LOGGER.info("validateCredentials:: system user credentials are valid");
   }
 
 }
