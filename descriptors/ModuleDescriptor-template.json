@@ -366,6 +366,14 @@
       {
         "name": "OKAPI_URL",
         "value": "http://10.0.2.15:9130"
+      },
+      {
+        "name": "SYSTEM_USER_NAME",
+        "value": "pub-sub"
+      },
+      {
+        "name": "SYSTEM_USER_PASSWORD",
+        "value": "pubsub"
       }
     ]
   }
