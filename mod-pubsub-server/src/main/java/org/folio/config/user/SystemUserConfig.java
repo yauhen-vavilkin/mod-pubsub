@@ -3,6 +3,8 @@ package org.folio.config.user;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,7 @@ import lombok.Getter;
 
 @Component
 public class SystemUserConfig {
+  private static final Logger LOGGER = LogManager.getLogger();
   private static final String SYSTEM_USER_NAME_VAR = "SYSTEM_USER_NAME";
   private static final String SYSTEM_USER_PASSWORD_VAR = "SYSTEM_USER_PASSWORD";
 
@@ -33,6 +36,7 @@ public class SystemUserConfig {
   }
 
   private static void validateCredentials(String name, String password) {
+    LOGGER.info("validateCredentials:: validating system user credentials");
     List<String> missingVariables = new ArrayList<>();
     if (name == null) {
       missingVariables.add(SYSTEM_USER_NAME_VAR);
@@ -41,8 +45,10 @@ public class SystemUserConfig {
       missingVariables.add(SYSTEM_USER_PASSWORD_VAR);
     }
     if (!missingVariables.isEmpty()) {
-      throw new IllegalArgumentException("Failed to resolve credentials for system user. " +
-        "Please provide missing system variables: " + missingVariables);
+      String errorMessage = "Failed to resolve credentials for system user. " +
+        "Please provide missing system variables: " + missingVariables;
+      LOGGER.error("validateCredentials:: {}", errorMessage);
+      throw new IllegalArgumentException(errorMessage);
     }
   }
 
