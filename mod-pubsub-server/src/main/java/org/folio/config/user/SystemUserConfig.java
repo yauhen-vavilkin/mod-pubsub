@@ -26,6 +26,7 @@ public class SystemUserConfig {
     @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password) {
 
     LOGGER.info("System.getenv(): {}", System.getenv());
+    LOGGER.info("System.getProperties(): {}", System.getProperties());
 
     String userName = System.getenv("SYSTEM_USER_NAME");
     String pwd = System.getenv("SYSTEM_USER_PASSWORD");
