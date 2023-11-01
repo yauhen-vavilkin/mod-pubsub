@@ -1,3 +1,6 @@
+## 2023-11-01 v2.11.1
+* [MODPUBSUB-278](https://issues.folio.org/browse/MODPUBSUB-278) Remove fallback values for system user credentials
+
 ## 2023-10-13 v2.11.0
 * [FOLIO-3678](https://issues.folio.org/browse/FOLIO-3678) Use API-related Workflows
 * [FOLIO-1021](https://issues.folio.org/browse/FOLIO-1021) Update copyright year
