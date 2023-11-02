@@ -1,3 +1,6 @@
+## 2023-11-02 v2.11.2
+* [MODPUBSUB-283](https://issues.folio.org/browse/MODPUBSUB-283) RMB 35.1.1, folio-di-support 2.0.1, kafka-clients 3.6.0
+
 ## 2023-11-01 v2.11.1
 * [MODPUBSUB-278](https://issues.folio.org/browse/MODPUBSUB-278) Remove fallback values for system user credentials
 
