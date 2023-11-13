@@ -40,15 +40,15 @@ public class PublishingServiceImpl implements PublishingService {
     this.executor = vertx.createSharedWorkerExecutor("event-publishing-thread-pool", THREAD_POOL_SIZE);
   }
 
-  @Override
   public Future<Void> sendEvent(Event event, String tenantId) {
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
-    return executor.executeBlocking(promise -> {
-        try {
-          KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx,
-            config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
 
-          sharedProducer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
+    return executor.executeBlocking(promise -> {
+
+      KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx, config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
+      try {
+        sharedProducer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
+          try {
             if (done.succeeded()) {
               LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
@@ -59,14 +59,16 @@ public class PublishingServiceImpl implements PublishingService {
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
               promise.fail(done.cause());
             }
+          } finally {
             sharedProducer.close();
-          });
-        } catch (Exception e) {
-          String errorMessage = "Error publishing event";
-          LOGGER.error(errorMessage, e);
-          auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
-          promise.fail(e);
-        }
-      });
+          }
+        });
+      } catch (Exception e) {
+        String errorMessage = "Error publishing event";
+        LOGGER.error(errorMessage, e);
+        auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
+        promise.fail(e);
+      }
+    });
   }
 }
