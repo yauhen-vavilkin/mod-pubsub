@@ -28,7 +28,7 @@ public class PublishingServiceImpl implements PublishingService {
 
   private static final int THREAD_POOL_SIZE =
     Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "30"));
-  private static final long MAX_EXECUTE_TIME = 10;
+  private static final long MAX_EXECUTE_TIME = 30;
 
   private KafkaConfig kafkaConfig;
   private WorkerExecutor executor;
