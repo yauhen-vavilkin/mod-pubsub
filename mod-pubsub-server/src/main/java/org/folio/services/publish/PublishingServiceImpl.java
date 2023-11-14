@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.services.util.AuditUtil.constructJsonAuditMessage;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
 public class PublishingServiceImpl implements PublishingService {
 
@@ -26,7 +28,7 @@ public class PublishingServiceImpl implements PublishingService {
 
   private static final int THREAD_POOL_SIZE =
     Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "20"));
-  private static final long MAX_EXECUTE_TIME = 5000;
+  private static final long MAX_EXECUTE_TIME = 5;
 
   private KafkaConfig kafkaConfig;
   private WorkerExecutor executor;
@@ -38,7 +40,8 @@ public class PublishingServiceImpl implements PublishingService {
     this.kafkaConfig = kafkaConfig;
     this.auditService = AuditService.createProxy(vertx);
     this.vertx = vertx;
-    this.executor = vertx.createSharedWorkerExecutor("event-publishing-thread-pool", THREAD_POOL_SIZE, MAX_EXECUTE_TIME);
+    this.executor = vertx.createSharedWorkerExecutor("event-publishing-thread-pool",
+      THREAD_POOL_SIZE, MAX_EXECUTE_TIME, TimeUnit.SECONDS);
   }
 
   public Future<Void> sendEvent(Event event, String tenantId) {
