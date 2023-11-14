@@ -57,7 +57,7 @@ public class PublishingServiceImpl implements PublishingService {
             auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
             promise.complete();
           } else {
-            String errorMessage = "Event was not sent";
+            String errorMessage = String.format("Event %s was not sent", event.getId());
             LOGGER.error(errorMessage, done.cause());
             auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
             promise.fail(done.cause());
@@ -69,6 +69,7 @@ public class PublishingServiceImpl implements PublishingService {
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
         promise.fail(e);
       } finally {
+        LOGGER.info("sendEvent:: closing sharedProducer");
         sharedProducer.close();
       }
     });
