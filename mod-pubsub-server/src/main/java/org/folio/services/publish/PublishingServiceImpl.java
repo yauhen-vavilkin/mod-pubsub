@@ -27,7 +27,7 @@ public class PublishingServiceImpl implements PublishingService {
   private static final Logger LOGGER = LogManager.getLogger();
 
   private static final int THREAD_POOL_SIZE =
-    Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "20"));
+    Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "30"));
   private static final long MAX_EXECUTE_TIME = 5;
 
   private KafkaConfig kafkaConfig;
