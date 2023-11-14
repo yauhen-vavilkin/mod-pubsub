@@ -70,7 +70,6 @@ public class PublishingServiceImpl implements PublishingService {
         promise.fail(e);
       } finally {
         sharedProducer.close();
-        executor.close(promise);
       }
     });
   }
