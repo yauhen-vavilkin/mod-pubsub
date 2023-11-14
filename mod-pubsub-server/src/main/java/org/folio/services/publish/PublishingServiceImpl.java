@@ -48,19 +48,23 @@ public class PublishingServiceImpl implements PublishingService {
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
 
     return executor.executeBlocking(promise -> {
-
-      KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx, config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
       try {
+        KafkaProducer<String, String> sharedProducer = KafkaProducer.createShared(vertx, config.getTopicName() + "_Producer", kafkaConfig.getProducerProps());
         sharedProducer.write(new KafkaProducerRecordImpl<>(config.getTopicName(), Json.encode(event)), done -> {
-          if (done.succeeded()) {
-            LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
-            auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
-            promise.complete();
-          } else {
-            String errorMessage = String.format("Event %s was not sent", event.getId());
-            LOGGER.error(errorMessage, done.cause());
-            auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
-            promise.fail(done.cause());
+          try {
+            if (done.succeeded()) {
+              LOGGER.info("Sent {} event with id '{}' to topic {}", event.getEventType(), event.getId(), config.getTopicName());
+              auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
+              promise.complete();
+            } else {
+              String errorMessage = String.format("Event %s was not sent", event.getId());
+              LOGGER.error(errorMessage, done.cause());
+              auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
+              promise.fail(done.cause());
+            }
+          } finally {
+            LOGGER.info("sendEvent:: closing sharedProducer");
+            sharedProducer.close();
           }
         });
       } catch (Exception e) {
@@ -68,9 +72,6 @@ public class PublishingServiceImpl implements PublishingService {
         LOGGER.error(errorMessage, e);
         auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
         promise.fail(e);
-      } finally {
-        LOGGER.info("sendEvent:: closing sharedProducer");
-        sharedProducer.close();
       }
     });
   }
