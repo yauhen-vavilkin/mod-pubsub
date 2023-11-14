@@ -28,7 +28,7 @@ public class PublishingServiceImpl implements PublishingService {
 
   private static final int THREAD_POOL_SIZE =
     Integer.parseInt(MODULE_SPECIFIC_ARGS.getOrDefault("event.publishing.thread.pool.size", "30"));
-  private static final long MAX_EXECUTE_TIME = 30;
+  private static final long MAX_EXECUTE_TIME = 2;
 
   private KafkaConfig kafkaConfig;
   private WorkerExecutor executor;
@@ -41,7 +41,7 @@ public class PublishingServiceImpl implements PublishingService {
     this.auditService = AuditService.createProxy(vertx);
     this.vertx = vertx;
     this.executor = vertx.createSharedWorkerExecutor("event-publishing-thread-pool",
-      THREAD_POOL_SIZE, MAX_EXECUTE_TIME, TimeUnit.SECONDS);
+      THREAD_POOL_SIZE, MAX_EXECUTE_TIME, TimeUnit.MINUTES);
   }
 
   public Future<Void> sendEvent(Event event, String tenantId) {
@@ -70,6 +70,7 @@ public class PublishingServiceImpl implements PublishingService {
         promise.fail(e);
       } finally {
         sharedProducer.close();
+        executor.close(promise);
       }
     });
   }
