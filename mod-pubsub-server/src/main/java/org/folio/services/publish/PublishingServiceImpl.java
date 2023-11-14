@@ -45,6 +45,8 @@ public class PublishingServiceImpl implements PublishingService {
   }
 
   public Future<Void> sendEvent(Event event, String tenantId) {
+    LOGGER.debug("sendEvent:: parameters event: {} with id: {}, tenantId: {}",
+      event.getEventType(), event.getId(), tenantId);
     PubSubConfig config = new PubSubConfig(kafkaConfig.getEnvId(), tenantId, event.getEventType());
 
     return executor.executeBlocking(promise -> {
@@ -57,13 +59,15 @@ public class PublishingServiceImpl implements PublishingService {
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.PUBLISHED));
               promise.complete();
             } else {
-              String errorMessage = String.format("Event %s was not sent", event.getId());
+              String errorMessage = String.format("Event %s with id %s was not sent",
+                event.getEventType(), event.getId());
               LOGGER.error(errorMessage, done.cause());
               auditService.saveAuditMessage(constructJsonAuditMessage(event, tenantId, AuditMessage.State.REJECTED, errorMessage));
               promise.fail(done.cause());
             }
           } finally {
-            LOGGER.info("sendEvent:: closing sharedProducer");
+            LOGGER.info("sendEvent:: closing sharedProducer for writing {} event with id {}",
+              event.getEventType(), event.getId());
             sharedProducer.close();
           }
         });
