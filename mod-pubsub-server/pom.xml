@@ -175,7 +175,7 @@
             <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
-          <generatedSourcesDirectory>${project.build.directory}/generated-sources/services/*</generatedSourcesDirectory>
+          <generatedSourcesDirectory>${project.build.directory}/generated-sources/services/org/folio/services/audit</generatedSourcesDirectory>
         </configuration>
       </plugin>
 
