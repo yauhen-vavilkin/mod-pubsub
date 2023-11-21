@@ -41,7 +41,7 @@ public class SystemUserConfigTest {
   }
 
   private static void testFailedValidation(String username, String password,
-    String... missingVariables) {
+                                           String... missingVariables) {
 
     try {
       new SystemUserConfig(username, password, true);
