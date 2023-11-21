@@ -150,22 +150,21 @@ If this variable is not set, default "folio" prefix will be used in topic names,
 
 ****System user credentials**** 
 
-`mod-pubsub` requires these credentials to be able to deliver events to subscribers.
+`mod-pubsub` requires these credentials to be able to deliver events to subscribers. Username and password for system user must be provided using system variables `SYSTEM_USER_NAME` and `SYSTEM_USER_PASSWORD`, otherwise application will crash at startup.
  ```
       {
         "name": "SYSTEM_USER_NAME",
-        "value": "pub-sub"
+        "value": "USERNAME_HERE"
       },
       {
         "name": "SYSTEM_USER_PASSWORD",
-        "value": "pubsub"
+        "value": "PASSWORD_HERE"
       },
       {
         "name": "SYSTEM_USER_CREATE",
         "value": "true"
       }
  ```
-Default username is `pub-sub`, password is `pubsub`. 
 
 If `SYSTEM_USER_CREATE` is set to `true` (default value), the system user will be created if it does not exist in the system.
 If `SYSTEM_USER_CREATE` is set to `false`, the system user will not be created.

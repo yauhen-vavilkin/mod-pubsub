@@ -19,7 +19,7 @@ public interface AuditService { //NOSONAR
   }
 
   static AuditService createProxy(Vertx vertx) {
-    return new AuditServiceVertxEBProxy(vertx, AUDIT_SERVICE_ADDRESS);
+    return new org.folio.services.audit.AuditServiceVertxEBProxy(vertx, AUDIT_SERVICE_ADDRESS);
   }
 
   /**
