@@ -4,12 +4,11 @@ import static org.apache.commons.collections4.IterableUtils.isEmpty;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.index.qual.NonNegative;
 import org.folio.dao.MessagingModuleDao;
 import org.folio.rest.jaxrs.model.MessagingModule;
 import org.folio.rest.util.ExpiryAwareToken;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Scheduler;
 
@@ -53,6 +51,7 @@ public class Cache {
       .buildAsync(k -> new HashSet<>());
     this.subscriptions = Caffeine.newBuilder().build();
     this.tenantAccessToken = Caffeine.newBuilder()
+      .executor(Executors.newCachedThreadPool())
       .scheduler(Scheduler.systemScheduler())
       .expireAfter(new HalfMaxAgeTokenExpiryPolicy())
       .removalListener((tenant, token, cause) -> {
@@ -64,6 +63,7 @@ public class Cache {
       })
       .build();
     this.tenantRefreshToken = Caffeine.newBuilder()
+      .executor(Executors.newCachedThreadPool())
       .scheduler(Scheduler.systemScheduler())
       .expireAfter(new HalfMaxAgeTokenExpiryPolicy())
       .removalListener((tenant, token, cause) -> {
