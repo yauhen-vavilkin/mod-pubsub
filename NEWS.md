@@ -1,3 +1,6 @@
+## 2023-12-04 v2.11.3
+* [MODPUBSUB-286](https://issues.folio.org/browse/MODPUBSUB-286) Fix memory leak issue related to Caffeine usage
+
 ## 2023-11-02 v2.11.2
 * [MODPUBSUB-283](https://issues.folio.org/browse/MODPUBSUB-283) RMB 35.1.1, folio-di-support 2.0.1, kafka-clients 3.6.0
 
