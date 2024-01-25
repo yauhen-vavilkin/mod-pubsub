@@ -159,8 +159,15 @@ If this variable is not set, default "folio" prefix will be used in topic names,
       {
         "name": "SYSTEM_USER_PASSWORD",
         "value": "PASSWORD_HERE"
+      },
+      {
+        "name": "SYSTEM_USER_CREATE",
+        "value": "true"
       }
  ```
+
+If `SYSTEM_USER_CREATE` is set to `true` (default value), the system user will be created if it does not exist in the system.
+If `SYSTEM_USER_CREATE` is set to `false`, the system user will not be created.
 
 ## Verifying the module can connect and work with kafka
 

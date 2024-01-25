@@ -105,9 +105,12 @@ public class SecurityManagerTest {
   private final MessagingModuleDao messagingModuleDao = new MessagingModuleDaoImpl();
   private final Cache cache = new Cache(vertx, messagingModuleDao);
   private final SystemUserConfig systemUserConfig = new SystemUserConfig(SYSTEM_USER_NAME,
-    SYSTEM_USER_PASSWORD);
+    SYSTEM_USER_PASSWORD, true);
   @Spy
   private final SecurityManagerImpl securityManager = new SecurityManagerImpl(cache, systemUserConfig);
+  @Spy
+  private final SecurityManagerImpl securityManagerNoSystemUser = new SecurityManagerImpl(
+    cache, new SystemUserConfig(SYSTEM_USER_NAME, SYSTEM_USER_PASSWORD, false));
 
   private final Context vertxContext = vertx.getOrCreateContext();
 
@@ -196,6 +199,27 @@ public class SecurityManagerTest {
       verify(0, new RequestPatternBuilder(POST, urlEqualTo(USERS_URL)));
 
       return null;
+    }).onComplete(context.asyncAssertSuccess());
+  }
+
+  @Test
+  public void shouldNotCreatePubSubUserIfDisabled(TestContext context) {
+    String userId = UUID.randomUUID().toString();
+    String userCollection = new JsonObject()
+      .put("users", new JsonArray().add(existingUpToDateUser(userId)))
+      .put("totalRecords", 1).encode();
+
+    stubFor(get(USERS_URL_WITH_QUERY).willReturn(ok().withBody(userCollection)));
+
+    OkapiConnectionParams params = new OkapiConnectionParams(headers, vertx);
+
+    securityManagerNoSystemUser.createPubSubUser(params)
+    .onSuccess(ar -> {
+      List<LoggedRequest> requests = findAll(RequestPatternBuilder.allRequests());
+      assertEquals(0, requests.size());
+
+      // Verify that user create request has not been sent
+      verify(0, new RequestPatternBuilder(POST, urlEqualTo(USERS_URL)));
     }).onComplete(context.asyncAssertSuccess());
   }
 

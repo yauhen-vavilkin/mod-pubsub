@@ -21,14 +21,20 @@ public class SystemUserConfig {
 
   @Getter
   private final String name;
+  @Getter
+  private final boolean createUser;
   private final String password;
 
   public SystemUserConfig(@Value("${SYSTEM_USER_NAME:#{null}}") String name,
-    @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password) {
+    @Value("${SYSTEM_USER_PASSWORD:#{null}}") String password,
+    @Value("${SYSTEM_USER_CREATE:true}") boolean createUser) {
 
-    validateCredentials(name, password);
+    if (createUser) {
+      validateCredentials(name, password);
+    }
     this.name = name;
     this.password = password;
+    this.createUser = createUser;
   }
 
   public JsonObject getUserCredentialsJson() {
